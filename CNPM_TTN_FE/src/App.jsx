@@ -11,6 +11,8 @@ import Orders from './pages/Orders';
 import Profile from './pages/Profile';
 import OrderDetail from './pages/OrderDetail';
 import EditOrder from './pages/EditOrder';
+import QuizCoffee from './components/QuizCoffee';
+import RecommendationResult from './pages/RecommendationResult';
 
 // Admin imports
 import AdminLayout from './layouts/AdminLayout';
@@ -37,9 +39,12 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="orders/:id" element={<OrderDetail />} />
           <Route path="/orders/edit/:id" element={<EditOrder />} />
-          
         </Route>
-        
+
+        {/* Quiz & Recommendation — layout riêng, không có Header/Footer của Layout */}
+        <Route path="/quiz" element={<QuizCoffee />} />
+        <Route path="/recommendation/result" element={<RecommendationResult />} />
+
         {/* Lớp Admin Routing */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />

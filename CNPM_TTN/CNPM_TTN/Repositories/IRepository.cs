@@ -1,0 +1,29 @@
+﻿﻿using System.Linq.Expressions;
+namespace CNPM_TTN.Repositories
+{
+    public interface IRepository<T> where T : class
+    {
+        Task<T?> GetByIdAsync(object id);
+        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
+        Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes);
+
+        // Command methods
+        Task<T> AddAsync(T entity);
+        Task AddRangeAsync(IEnumerable<T> entities);
+        Task UpdateAsync(T entity);
+        Task DeleteAsync(T entity);
+        Task DeleteByIdAsync(object id);
+
+        // Pagination
+        Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
+            int page,
+            int pageSize,
+            Expression<Func<T, bool>>? filter = null,
+            Expression<Func<T, object>>? orderBy = null,
+            bool descending = false);
+
+
+
+    }
+}

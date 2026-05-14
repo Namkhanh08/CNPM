@@ -2,12 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api.js';
 
-import image1 from '../assets/img/section2/image1.png';
-import image2 from '../assets/img/section2/image2.png';
-import image3 from '../assets/img/section2/image3.png';
-import image4 from '../assets/img/section2/image4.png';
-import image5 from '../assets/img/section2/image5.png';
-
 export default function Shop() {
   const [products, setProducts] = useState([]);
   const [filterType, setFilterType] = useState('all');
@@ -23,22 +17,16 @@ export default function Shop() {
     '2': 'Blend',
     '3': 'Robusta',
     '4': 'Fine Robusta',
-
   }
-
-  const ImageMap = {
-    '/assets/img/section2/image1.png': image1,
-    '/assets/img/section2/image2.png': image2,
-    '/assets/img/section2/image3.png': image3,
-    '/assets/img/section2/image4.png': image4,
-    '/assets/img/section2/image5.png': image5,
-  };
 
   const fetchProducts = async () => {
     try{
       const res = await API.getProducts();
-
-      const formattedProducts = res.data.map(p => ({
+      
+      // Kiểm tra cấu hình API trả về (Backend trả về { Items: [], TotalCount: ... })
+      const productList = res.data.Items || res.data; 
+      
+      const formattedProducts = productList.map(p => ({
         id: p.Id,
         name: p.Name,
         price: p.Price,
@@ -123,7 +111,7 @@ export default function Shop() {
               {filteredProducts.map(product => (
                 <div key={product.id} className="bg-white rounded-3xl p-6 flex flex-col hover:shadow-lg transition-all group">
                   <div className="flex justify-center mb-4 h-48 relative overflow-hidden">
-                    <img src={ImageMap[product.image] || product.image} alt={product.name} className="h-full object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
+                    <img src={product.image} alt={product.name} className="h-full object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="mt-auto">
                     <span className="text-xs font-nunito tracking-widest text-accent-1 uppercase font-bold mb-1 block">{CategoryMap[product.type] || product.type}</span>

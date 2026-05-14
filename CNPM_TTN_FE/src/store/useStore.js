@@ -128,11 +128,11 @@ const useStore = create(
 
       getTotalQuantityOrder: () =>
         get().orders.reduce((total, order) => {
-          const orderQty = order.OrderDetails.reduce(
-            (sum, detail) => sum + detail.Quantity,
+          const details = order.OrderDetails ?? order.orderDetails ?? [];
+          const orderQty = details.reduce(
+            (sum, detail) => sum + (detail.Quantity ?? detail.quantity ?? 0),
             0
           );
-
           return total + orderQty;
         }, 0),
 

@@ -3,12 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import API from '../services/api.js';
 
-import image1 from '../assets/img/section2/image1.png';
-import image2 from '../assets/img/section2/image2.png';
-import image3 from '../assets/img/section2/image3.png';
-import image4 from '../assets/img/section2/image4.png';
-import image5 from '../assets/img/section2/image5.png';
-
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,14 +16,6 @@ export default function ProductDetail() {
   const [flavorNotes, setFlavorNotes] = useState('Original');
   const [weights, setWeight] = useState("250g");
 
-
-  const ImageMap = {
-    '/assets/img/section2/image1.png': image1,
-    '/assets/img/section2/image2.png': image2,
-    '/assets/img/section2/image3.png': image3,
-    '/assets/img/section2/image4.png': image4,
-    '/assets/img/section2/image5.png': image5,
-  }
 
   const CategoryMap = {
     '1': 'Arabica',
@@ -64,18 +50,18 @@ export default function ProductDetail() {
         const p = res.data;
         const formatted = {
           id: p.Id,
-          name: p.product?.Name,
-          desc: p.product?.Description,
-          price: p.product?.Price,
-          image: p.product?.ImageUrl,
+          name: p.Product?.Name,
+          desc: p.Product?.Description,
+          price: p.Product?.Price,
+          image: p.Product?.ImageUrl,
           region: p.Region,
           process: p.Process,
           roast: p.Roast,
           flavorNotes: p.FlavorNotes,
-          type: p.product?.CategoryId,
+          type: p.Product?.CategoryId,
           grindingOptions: p.GrindingOption || [],
-          weight: p.Weight,
-          height: p.Height
+          weight: p.Weight || "250g",
+          height: p.Height || "1200m"
         };
         setProduct(formatted);
       } catch (err) {
@@ -128,7 +114,7 @@ export default function ProductDetail() {
           {/* Product Image Gallery */}
           <div className="w-full lg:w-1/2 flex items-center justify-center bg-pinky-gray rounded-3xl p-8 relative">
             <div className="absolute inset-0 bg-accent-1/5 opacity-50 rounded-3xl"></div>
-            <img src={ImageMap[product.image] || product.image} alt={product.name} className="max-h-[500px] object-contain drop-shadow-2xl relative z-10 hover:scale-110 transition-all duration-300" />
+            <img src={product.image} alt={product.name} className="max-h-[500px] object-contain drop-shadow-2xl relative z-10 hover:scale-110 transition-all duration-300" />
           </div>
 
           {/* Product Details Form */}

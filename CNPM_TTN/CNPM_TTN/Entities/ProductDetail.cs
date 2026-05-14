@@ -24,6 +24,18 @@ public partial class ProductDetail
 
     public string? FlavorNotes { get; set; }
 
+    public byte? AcidityLevel { get; set; }
+
+    public byte? BitternessLevel { get; set; }
+
+    public byte? BodyLevel { get; set; }
+
+    [StringLength(50)]
+    public string? BestTime { get; set; }
+
+    [StringLength(500)]
+    public string? MatchTags { get; set; }
+
     [ForeignKey("ProductId")]
     [InverseProperty("ProductDetails")]
     public virtual Product Product { get; set; } = null!;

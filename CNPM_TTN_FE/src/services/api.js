@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-// Tất cả đều đi qua Gateway
+// FE chỉ gọi 1 cổng duy nhất — cấu hình trong file .env (VITE_API_URL)
 const api = axios.create({
-    baseURL: "http://localhost:5096",
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:5126",
     headers: {
         "Content-Type": "application/json"
     },
 });
 
-// Tự động đính kèm JWT token vào mọi request
+// Request interceptor: tự động đính kèm JWT token vào mọi request
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -16,6 +16,19 @@ api.interceptors.request.use((config) => {
     }
     return config;
 });
+
+// Response interceptor: xử lý lỗi tập trung
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Token hết hạn → xóa token và redirect về trang chủ
+            localStorage.removeItem("token");
+            window.location.href = "/";
+        }
+        return Promise.reject(error);
+    }
+);
 
 const API = {
     // Auth — đi qua /auth/... → Gateway forward đến C# :7110

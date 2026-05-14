@@ -34,6 +34,7 @@ export default function Navbar() {
                         <li><Link to="/" className="hover:text-primary">Trang chủ</Link></li>
                         <li><Link to="/shop" className="hover:text-primary">Sản phẩm</Link></li>
                         <li><Link to="/subscription" className="hover:text-primary">Đăng ký</Link></li>
+                        <li><Link to="/quiz" className="hover:text-primary">Gợi ý cà phê</Link></li>
                         <li><Link to="/about" className="hover:text-primary">Về chúng tôi</Link></li>
                     </ul>
                 </div>
