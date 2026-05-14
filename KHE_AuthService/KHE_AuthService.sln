@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36203.30
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KHE_AuthService", "KHE_AuthService\KHE_AuthService.csproj", "{6F9B571D-49BA-4440-99BB-4696A73F379E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KHE_APIGateway", "KHE_APIGateway\KHE_APIGateway.csproj", "{B652E0D5-E6D6-4C05-9466-59E008816A1B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F9B571D-49BA-4440-99BB-4696A73F379E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F9B571D-49BA-4440-99BB-4696A73F379E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F9B571D-49BA-4440-99BB-4696A73F379E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F9B571D-49BA-4440-99BB-4696A73F379E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B652E0D5-E6D6-4C05-9466-59E008816A1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B652E0D5-E6D6-4C05-9466-59E008816A1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B652E0D5-E6D6-4C05-9466-59E008816A1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B652E0D5-E6D6-4C05-9466-59E008816A1B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {043B98DF-2AB8-40CE-B496-C691F6248C5F}
+	EndGlobalSection
+EndGlobal
