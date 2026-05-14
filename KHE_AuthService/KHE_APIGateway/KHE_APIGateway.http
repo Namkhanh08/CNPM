@@ -1,6 +1,0 @@
-@KHE_APIGateway_HostAddress = http://localhost:5096
-
-GET {{KHE_APIGateway_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
