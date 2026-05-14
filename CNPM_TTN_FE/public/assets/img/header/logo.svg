@@ -1,0 +1,27 @@
+<svg width="300" height="150" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .main { fill: #4A5A71; font-family: 'Montserrat', sans-serif; font-weight: 700; }
+    .sub { fill: #C49F7B; font-family: 'Montserrat', sans-serif; font-weight: 500; }
+  </style>
+
+  <!-- KHE -->
+  <text x="50%" y="60" text-anchor="middle" class="main" font-size="60">
+    KHE
+  </text>
+
+  <!-- Coffee -->
+  <text x="50%" y="110" text-anchor="middle" class="sub" font-size="28">
+    Coffee
+  </text>
+
+  <!-- Coffee Bean (center of H) -->
+  <ellipse cx="150" cy="50" rx="6" ry="12" fill="#C49F7B"/>
+  <line x1="150" y1="38" x2="150" y2="62" stroke="#4A5A71" stroke-width="1"/>
+
+  <!-- Leaf on K -->
+  <path d="M75 25 C65 10, 95 10, 85 30 Z" fill="#C49F7B"/>
+
+  <!-- Steam on E -->
+  <path d="M210 20 C220 5, 230 15, 220 30" stroke="#C49F7B" stroke-width="2" fill="none"/>
+  <path d="M220 20 C230 5, 240 15, 230 30" stroke="#C49F7B" stroke-width="2" fill="none"/>
+</svg>

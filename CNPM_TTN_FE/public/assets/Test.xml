@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/css" href="ch01_04.css"?>
+<document>
+    <heading>
+    Hello From XML
+    </heading>
+    <message>
+    This is an XML document
+    </message>
+</document>
