@@ -6,18 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Entities;
 
-public partial class GrindingOption
+public partial class Cart
 {
     [Key]
     public int Id { get; set; }
 
-    [StringLength(100)]
-    public string Name { get; set; } = null!;
+   
+    public string UserId { get; set; } = null!;
 
-    [InverseProperty("GrindingOption")]
+  
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
-    [ForeignKey("GrindingOptionId")]
-    [InverseProperty("GrindingOptions")]
-    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+   
+    public virtual User User { get; set; } = null!;
 }

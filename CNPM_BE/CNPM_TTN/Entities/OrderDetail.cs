@@ -19,19 +19,16 @@ public partial class OrderDetail
 
     public int Quantity { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
     public decimal UnitPrice { get; set; }
 
-    [StringLength(250)]
+
     public string? FlavorNotes { get; set; }
 
     public int? GrindingOptionId { get; set; }
 
-    [ForeignKey("OrderId")]
-    [InverseProperty("OrderDetails")]
+   
     public virtual Order Order { get; set; } = null!;
 
-    [ForeignKey("ProductId")]
-    [InverseProperty("OrderDetails")]
+  
     public virtual Product Product { get; set; } = null!;
 }

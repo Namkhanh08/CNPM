@@ -13,18 +13,17 @@ public partial class ProductDetail
 
     public int ProductId { get; set; }
 
-    [StringLength(255)]
+  
     public string? Region { get; set; }
 
-    [StringLength(255)]
+    
     public string? Process { get; set; }
 
-    [StringLength(100)]
+  
     public string? Roast { get; set; }
 
     public string? FlavorNotes { get; set; }
 
-    [ForeignKey("ProductId")]
-    [InverseProperty("ProductDetails")]
+
     public virtual Product Product { get; set; } = null!;
 }

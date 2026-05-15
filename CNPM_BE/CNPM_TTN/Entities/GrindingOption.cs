@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Entities;
 
-public partial class Category
+public partial class GrindingOption
 {
     [Key]
     public int Id { get; set; }
@@ -14,9 +14,10 @@ public partial class Category
     [StringLength(100)]
     public string Name { get; set; } = null!;
 
-    [StringLength(500)]
-    public string Description { get; set; } = null!;
+   
+    public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
-    [InverseProperty("Category")]
-    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+  
+
+    
 }

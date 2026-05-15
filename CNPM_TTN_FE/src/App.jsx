@@ -1,4 +1,5 @@
 import React from 'react';
+import ProtectedRoute from './components/ProtectedRoute';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './layouts/Layout';
 import Home from './pages/Home';
@@ -41,13 +42,16 @@ function App() {
         </Route>
         
         {/* Lớp Admin Routing */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="orders" element={<AdminOrders />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="batches" element={<AdminBatches />} />
-          <Route path="inventory" element={<AdminInventory />} />
+        <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="batches" element={<AdminBatches />} />
+            <Route path="inventory" element={<AdminInventory />} />
+          </Route>
         </Route>
+        
       </Routes>
     </Router>
   );
