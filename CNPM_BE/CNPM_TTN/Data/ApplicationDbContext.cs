@@ -23,5 +23,7 @@ namespace CNPM_TTN.Data
         public DbSet<Product> Products { get; set; }
 
         public DbSet<ProductDetail> ProductDetails { get; set; }
+        public DbSet<InventoryLog> inventoryLogs { get; set; }
+        public DbSet<RoastingBatch> roastingBatches { get; set; }
     }
 }
