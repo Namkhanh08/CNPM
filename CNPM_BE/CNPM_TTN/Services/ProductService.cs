@@ -1,17 +1,16 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using CNPM_TTN.Entities;
-using CNPM_TTN.Dtos;
 using CNPM_TTN.Repositories;
-
+using CNPM_TTN.Dtos;
+using System.Linq.Expressions;
 namespace CNPM_TTN.Services
 {
     public class ProductService : IProductService
     {
         private readonly IRepository<Product> _productRepository;
-
         public ProductService(IRepository<Product> productRepository)
         {
             _productRepository = productRepository;
@@ -28,19 +27,19 @@ namespace CNPM_TTN.Services
             var pagedResult = await _productRepository.GetPagedAsync(page, pageSize, filter);
 
             var items = pagedResult.Items.Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Price = p.Price,
-                    Stock = p.Stock,
-                    ImageUrl = p.ImageUrl,
-                    Description = p.Description,
-                    CategoryId = p.CategoryId
-                }).ToList();
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Stock = p.Stock,
+                ImageUrl = p.ImageUrl,
+                Description = p.Description,
+                CategoryId = p.CategoryId
+            }).ToList();
 
             return (items, pagedResult.TotalCount);
         }
-        
+
 
         public async Task<ProductDetailDto?> GetProductByIdAsync(int id)
         {
@@ -106,5 +105,7 @@ namespace CNPM_TTN.Services
             await _productRepository.DeleteAsync(product);
             return true;
         }
+
+
     }
 }

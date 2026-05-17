@@ -1,11 +1,10 @@
-﻿﻿﻿﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using CNPM_TTN.Entities;
-
-
 namespace CNPM_TTN.Repositories
 {
     public class Repository<T> : IRepository<T> where T : class
+
     {
         protected readonly ShopCoffeeContext _context;
         protected readonly DbSet<T> _dbSet;
@@ -38,7 +37,7 @@ namespace CNPM_TTN.Repositories
             {
                 query = query.Include(include);
             }
-            
+
             return await query.FirstOrDefaultAsync(predicate);
         }
 
@@ -107,6 +106,7 @@ namespace CNPM_TTN.Repositories
 
             return (items, totalCount);
         }
+
 
     }
 }

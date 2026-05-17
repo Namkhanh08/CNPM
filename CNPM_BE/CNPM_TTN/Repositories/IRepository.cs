@@ -1,4 +1,6 @@
-﻿﻿using System.Linq.Expressions;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using CNPM_TTN.Entities;
 namespace CNPM_TTN.Repositories
 {
     public interface IRepository<T> where T : class
@@ -22,8 +24,6 @@ namespace CNPM_TTN.Repositories
             Expression<Func<T, bool>>? filter = null,
             Expression<Func<T, object>>? orderBy = null,
             bool descending = false);
-
-
 
     }
 }

@@ -36,10 +36,16 @@ public partial class Product
     public virtual Category Category { get; set; } = null!;
 
     [InverseProperty("Product")]
+    public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+
+    [InverseProperty("Product")]
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     [InverseProperty("Product")]
     public virtual ICollection<ProductDetail> ProductDetails { get; set; } = new List<ProductDetail>();
+
+    [InverseProperty("Product")]
+    public virtual ICollection<RoastingBatch> RoastingBatches { get; set; } = new List<RoastingBatch>();
 
     [ForeignKey("ProductId")]
     [InverseProperty("Products")]

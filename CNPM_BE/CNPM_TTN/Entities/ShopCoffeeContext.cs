@@ -23,6 +23,8 @@ public partial class ShopCoffeeContext : DbContext
 
     public virtual DbSet<GrindingOption> GrindingOptions { get; set; }
 
+    public virtual DbSet<InventoryLog> InventoryLogs { get; set; }
+
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
@@ -31,17 +33,15 @@ public partial class ShopCoffeeContext : DbContext
 
     public virtual DbSet<ProductDetail> ProductDetails { get; set; }
 
-    public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<RoastingBatch> RoastingBatches { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=CẢNHHIỆP273;Database=Dataset;Trusted_Connection=True;TrustServerCertificate=True");
+    public virtual DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Carts__3214EC0729294429");
+            entity.HasKey(e => e.Id).HasName("PK__Carts__3214EC0779D0F81D");
 
             entity.HasOne(d => d.User).WithMany(p => p.Carts)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -50,7 +50,7 @@ public partial class ShopCoffeeContext : DbContext
 
         modelBuilder.Entity<CartItem>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__CartItem__3214EC073FDAD60C");
+            entity.HasKey(e => e.Id).HasName("PK__CartItem__3214EC071C398D6B");
 
             entity.Property(e => e.Quantity).HasDefaultValue(1);
 
@@ -63,6 +63,15 @@ public partial class ShopCoffeeContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.CartItems)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CartItems_Products");
+        });
+
+        modelBuilder.Entity<InventoryLog>(entity =>
+        {
+            entity.HasOne(d => d.Product).WithMany(p => p.InventoryLogs)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_InventoryLogs_Products");
+
+            entity.HasOne(d => d.User).WithMany(p => p.InventoryLogs).HasConstraintName("FK_InventoryLogs_Users");
         });
 
         modelBuilder.Entity<Order>(entity =>
@@ -99,11 +108,24 @@ public partial class ShopCoffeeContext : DbContext
 
         modelBuilder.Entity<ProductDetail>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ProductD__3214EC07E5557A5E");
+            entity.HasKey(e => e.Id).HasName("PK__ProductD__3214EC07BA243111");
 
             entity.HasOne(d => d.Product).WithMany(p => p.ProductDetails)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductDetails_Products");
+        });
+
+        modelBuilder.Entity<RoastingBatch>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Roasting__3214EC071AC1EAA3");
+
+            entity.Property(e => e.RoastDate).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.RoastingBatches)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RoastingBatches_Products");
+
+            entity.HasOne(d => d.User).WithMany(p => p.RoastingBatches).HasConstraintName("FK_RoastingBatches_Users");
         });
 
         OnModelCreatingPartial(modelBuilder);

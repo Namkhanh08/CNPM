@@ -12,28 +12,26 @@ public partial class User
     [Key]
     public string Id { get; set; } = null!;
 
-    [StringLength(100)]
+ 
     public string Name { get; set; } = null!;
 
-    [StringLength(50)]
     public string UserName { get; set; } = null!;
 
-    [StringLength(255)]
     public string Password { get; set; } = null!;
 
     public byte[] Salt { get; set; } = null!;
 
-    public string Contact { get; set; } = null!;
+    public string? Contact { get; set; }
 
-    [StringLength(100)]
+   
     public string Email { get; set; } = null!;
 
-    [StringLength(20)]
-    public string Phone { get; set; } = null!;
+   
+    public string? Phone { get; set; }
 
-    public string Position { get; set; } = null!;
+    public string? Position { get; set; }
 
-    public string Image { get; set; } = null!;
+    public string? Image { get; set; }
 
     public bool IsActive { get; set; }
 
@@ -45,5 +43,11 @@ public partial class User
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     [InverseProperty("User")]
+    public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+
+    [InverseProperty("User")]
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    [InverseProperty("User")]
+    public virtual ICollection<RoastingBatch> RoastingBatches { get; set; } = new List<RoastingBatch>();
 }

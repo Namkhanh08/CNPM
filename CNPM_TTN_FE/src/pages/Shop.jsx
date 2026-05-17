@@ -24,16 +24,25 @@ export default function Shop() {
       const res = await API.getProducts();
       
       // Kiểm tra cấu hình API trả về (Backend trả về { Items: [], TotalCount: ... })
-      const productList = res.data.Items || res.data; 
+      const productList =
+        res.data?.data?.items ||
+        res.data?.data?.Items ||
+        res.data?.Items ||
+        res.data?.items ||
+        res.data;
+
+      if (!Array.isArray(productList)) {
+        throw new Error("API sản phẩm không trả về danh sách hợp lệ");
+      }
       
       const formattedProducts = productList.map(p => ({
-        id: p.Id,
-        name: p.Name,
-        price: p.Price,
-        image: p.ImageUrl,
-        description : p.Description,
-        type: p.CategoryId,
-        stock: p.Stock,
+        id: p.Id ?? p.id,
+        name: p.Name ?? p.name,
+        price: p.Price ?? p.price,
+        image: p.ImageUrl ?? p.imageUrl,
+        description : p.Description ?? p.description,
+        type: String(p.CategoryId ?? p.categoryId),
+        stock: p.Stock ?? p.stock,
       }));
 
       setProducts(formattedProducts);

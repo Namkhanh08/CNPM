@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using CNPM_TTN.Dtos;
 
 namespace CNPM_TTN.Services
