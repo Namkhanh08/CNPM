@@ -1,27 +1,28 @@
-import React from 'react';
-import ProtectedRoute from './components/ProtectedRoute';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './layouts/Layout';
-import Home from './pages/Home';
-import Shop from './pages/Shop';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Subscription from './pages/Subscription';
-import Orders from './pages/Orders';
-import Profile from './pages/Profile';
-import OrderDetail from './pages/OrderDetail';
-import EditOrder from './pages/EditOrder';
+import React from "react";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./layouts/Layout";
+import Home from "./pages/Home";
+import Shop from "./pages/Shop";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Subscription from "./pages/Subscription";
+import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
+import OrderDetail from "./pages/OrderDetail";
+import EditOrder from "./pages/EditOrder";
 
 // Admin imports
-import AdminLayout from './layouts/AdminLayout';
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminOrders from './pages/admin/Orders';
-import AdminProducts from './pages/admin/Products';
-import AdminBatches from './pages/admin/Batches';
-import AdminInventory from './pages/admin/Inventory';
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminOrders from "./pages/admin/Orders";
+import AdminProducts from "./pages/admin/Products";
+import AdminBatches from "./pages/admin/Batches";
+import AdminInventory from "./pages/admin/Inventory";
+import AdminUsers from './pages/admin/Users';
 
-import './App.css';
+import "./App.css";
 
 function App() {
   return (
@@ -38,9 +39,8 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="orders/:id" element={<OrderDetail />} />
           <Route path="/orders/edit/:id" element={<EditOrder />} />
-          
         </Route>
-        
+
         {/* Lớp Admin Routing */}
         <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -49,9 +49,11 @@ function App() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="batches" element={<AdminBatches />} />
             <Route path="inventory" element={<AdminInventory />} />
+            <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+              <Route path="users" element={<AdminUsers />} />
+            </Route>
           </Route>
         </Route>
-        
       </Routes>
     </Router>
   );

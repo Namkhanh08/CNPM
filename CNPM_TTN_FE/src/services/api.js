@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Tất cả request đều đi qua Gateway này
+
 const api = axios.create({
     baseURL: "http://localhost:5126",
     headers: {
@@ -8,7 +8,7 @@ const api = axios.create({
     },
 });
 
-// Interceptor: Tự động đính kèm JWT token vào header nếu có
+
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -19,12 +19,12 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-// Xử lý lỗi tập trung (Ví dụ: Token hết hạn)
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            // Có thể xử lý logout tự động ở đây nếu token hết hạn
+           
             localStorage.clear();
         }
         return Promise.reject(error);
@@ -63,7 +63,36 @@ const API = {
     getInventory: () => api.get("/admin/inventory"),
     getBatches: () => api.get("/admin/batches"),
 
-   
+    // Inventory Management
+    getProducts: () => api.get('/api/inventory/products'),
+    updateStock: (productId, quantity, reason) => 
+      api.post(`/api/inventory/update-stock?productId=${productId}&quantity=${quantity}&reason=${reason}`),
+    getLogs: () => api.get('/api/inventory/logs'),
+    getTotalStock: () => api.get('/api/inventory/total-stock'),
+
+    // Quản lý mẻ rang 
+    getBatchesDetail: () => api.get('/api/inventory/batches'), 
+    createBatchDetail: (productId, batchCode, roastLevel, inputWeight, status) => 
+    api.post(`/api/inventory/create-batch-detail?productId=${productId}&batchCode=${batchCode}&roastLevel=${roastLevel}&inputWeight=${inputWeight}&status=${status}`),
+
+    // User Profile
+    getUserProfile: (id) => api.get(`/api/users/${id}`),
+    updateUserProfile: (id, data) => api.put(`/api/users/${id}`, data),
+
+    // Quản lý người dùng (Admin)
+    adminGetUsers: () => api.get("/api/users"),
+    adminDeleteUser: (id) => api.delete(`/api/users/${id}`),
+    adminUpdateUser: (id, data) => api.put(`/api/users/${id}`, data),
+    adminCreateUser: (data) => api.post('/api/users', data),
+    
+    // Hàm dùng FormData để gửi file
+    uploadUserImage: (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return api.post("/api/upload/user-image", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+    },
  
 };
 

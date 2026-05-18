@@ -1,7 +1,3 @@
-//ĐÂY LÀ CODE CŨ XỬ LÝ API
-
-
-
 
 
 import { create } from 'zustand';
@@ -30,21 +26,22 @@ const useStore = create(
 
       loadCart: async () => {
         try {
-          const res = await API.getCart();
-          const items = res.data?.items || [];
-          const mapped = items.map(item => {
-            const existed = get().cart.find(i =>
-              i.ProductId === item.ProductId &&
-              i.GrindingOptionId === item.GrindingOptionId &&
-              i.FlavorNotes === item.FlavorNotes && 
-              i.Weight === item.Weight
-            );
-            return {
-              ...item,
-              selected: existed ? existed.selected : true
-            };
-          });
-          set({ cart: mapped });
+          // const res = await API.getCart();
+          // const items = res.data?.items || [];
+          // const mapped = items.map(item => {
+          //   const existed = get().cart.find(i =>
+          //     i.ProductId === item.ProductId &&
+          //     i.GrindingOptionId === item.GrindingOptionId &&
+          //     i.FlavorNotes === item.FlavorNotes && 
+          //     i.Weight === item.Weight
+          //   );
+          //   return {
+          //     ...item,
+          //     selected: existed ? existed.selected : true
+          //   };
+          // });
+          // set({ cart: mapped });
+          set({ cart: [] });
         } catch (err) {
           console.error("Load cart failed:", err.response?.data?.message || err.message);
         }
@@ -159,8 +156,9 @@ const useStore = create(
 
       fetchOrders: async () => {
         try {
-          const res = await API.getMyOrders();
-          set({ orders: res.data || [] });
+          // const res = await API.getMyOrders();
+          // set({ orders: res.data || [] });
+          set({ orders: [] });
         } catch (err) {
           console.error("Fetch orders failed:", err.response?.data?.message || err.message);
         }

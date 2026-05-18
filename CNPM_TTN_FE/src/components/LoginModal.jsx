@@ -6,9 +6,9 @@ import API from "../services/api";
 
 export default function LoginModal({ isOpen, onClose }) {
     const navigate = useNavigate();
-    const [isActive, setIsActive] = useState(false); // Chuyển đổi giữa Login và Register
+    const [isActive, setIsActive] = useState(false); 
     
-    // Lấy các hàm từ Store toàn cục
+   
     const setUser = useStore((state) => state.setUser);
     const loadCart = useStore((state) => state.loadCart);
     const loadOrder = useStore((state) => state.fetchOrders);
@@ -24,7 +24,7 @@ export default function LoginModal({ isOpen, onClose }) {
         password: "" 
     });
 
-    // Xử lý Đăng nhập
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -38,21 +38,22 @@ export default function LoginModal({ isOpen, onClose }) {
                 localStorage.setItem("userId", result.userId);
                 localStorage.setItem("userName", result.userName);
                 localStorage.setItem("userType", result.userType); 
-
+                localStorage.setItem("displayName", result.name);
                 // 2. Cập nhật State toàn cục
                 setUser({
                     id: result.userId,
                     userName: result.userName,
                     userType: result.userType,
+                    name: result.name,
                 });   
 
                 // 3. Load dữ liệu người dùng
                 await loadCart();
                 await loadOrder();
                 
-                onClose(); // Đóng Modal
+                onClose(); 
 
-                // 4. Điều hướng dựa trên UserType (0: User, 1: Admin, 2: Staff, 3: Stock)
+                
                 const role = parseInt(result.userType);
                 if (role === 1) {
                     navigate("/admin"); 

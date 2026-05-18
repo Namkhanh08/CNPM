@@ -70,6 +70,7 @@ namespace CNPM_TTN.Controllers
                 data = token,
                 userId = user.Id,
                 userName = user.UserName,
+                name = user.Name,
                 userType = user.UserType
             });
         }

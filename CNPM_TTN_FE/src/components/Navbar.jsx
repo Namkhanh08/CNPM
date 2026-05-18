@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Thêm useNavigate
 import useStore from "../store/useStore";
 import LoginModal from "./LoginModal";
 
@@ -8,12 +8,19 @@ import cartIcon from "../assets/img/header/cart-icon.svg";
 import { FaShoppingBag, FaUserCircle } from "react-icons/fa";
 
 export default function Navbar() {
+    const navigate = useNavigate(); // Khởi tạo điều hướng
     const totalItems = useStore((state) => state.getTotalQuantity());
     const totalOrders = useStore((state) => state.getTotalQuantityOrder());
     const user = useStore((state) => state.user);
     const logout = useStore((state) => state.logout);
 
     const [openLogin, setOpenLogin] = useState(false);
+
+    // Hàm xử lý đăng xuất và điều hướng
+    const handleLogout = () => {
+        logout();
+        navigate("/"); // Đưa về trang chủ
+    };
 
     return (
         <>
@@ -70,7 +77,7 @@ export default function Navbar() {
                                 </div>
 
                                 <span className="hidden md:block text-white font-semibold font-nunito text-sm">
-                                    {user.name || user.username || "User"}
+                                    {user.name || "User"}
                                 </span>
                             </div>
 
@@ -79,7 +86,7 @@ export default function Navbar() {
                                 <Link to="/orders" className="block px-4 py-3 hover:bg-gray-100">Đơn hàng</Link>
 
                                 <button
-                                    onClick={logout}
+                                    onClick={handleLogout} // Đổi từ logout thành handleLogout
                                     className="w-full text-center px-4 py-3 text-red-500 hover:bg-gray-100"
                                 >
                                     Đăng xuất
