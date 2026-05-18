@@ -4,7 +4,7 @@ namespace CNPM_TTN.Services
 {
     public interface IProductService
     {
-        Task<(IEnumerable<ProductDto> Items, int TotalCount)> GetProductsAsync(string? searchTerm, int page, int pageSize);
+        Task<(IEnumerable<ProductDto> Items, int TotalCount)> GetProductsAsync(ProductFilterDto filterDto);
         Task<ProductDetailDto?> GetProductByIdAsync(int id);
         Task<ProductDto> CreateProductAsync(CreateProductDto dto);
         Task<bool> UpdateProductAsync(int id, UpdateProductDto dto);

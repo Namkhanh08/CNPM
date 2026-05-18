@@ -12,11 +12,23 @@ export default function AdminProducts() {
     try {
       setLoading(true);
       const res = await API.getAll();
-      if (res.data) {
-        setProducts(res.data);
+      
+      const productList =
+        res.data?.data?.items ||
+        res.data?.data?.Items ||
+        res.data?.Items ||
+        res.data?.items ||
+        res.data;
+
+      if (Array.isArray(productList)) {
+        setProducts(productList);
+      } else {
+        console.error("API không trả về một mảng sản phẩm hợp lệ:", res);
+        setProducts([]);
       }
     } catch (err) {
       console.error("Lỗi lấy danh sách sản phẩm:", err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,3 @@
-﻿using CNPM_TTN.Data;
 using CNPM_TTN.Repositories;
 using CNPM_TTN.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,9 +17,6 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod();
         });
 });
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDbContext<CNPM_TTN.Entities.ShopCoffeeContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -51,9 +47,9 @@ builder.Services.AddAuthentication(options => {
 // Trong Program.cs
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

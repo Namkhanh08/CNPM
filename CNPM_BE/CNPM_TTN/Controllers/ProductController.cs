@@ -16,24 +16,21 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(
-            [FromQuery] string? searchTerm,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAll([FromQuery] ProductFilterDto filterDto)
         {
-            if (page < 1 || pageSize < 1)
+            if (filterDto.Page < 1 || filterDto.PageSize < 1)
             {
                 return BadRequest(ApiResponse<string>.FailureResponse("Page và pageSize phải lớn hơn 0"));
             }
 
-            var result = await _productService.GetProductsAsync(searchTerm, page, pageSize);
+            var result = await _productService.GetProductsAsync(filterDto);
 
             return Ok(ApiResponse<object>.SuccessResponse(new
             {
                 result.Items,
                 result.TotalCount,
-                Page = page,
-                PageSize = pageSize
+                filterDto.Page,
+                filterDto.PageSize
             }));
         }
 

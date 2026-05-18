@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,15 +16,38 @@ namespace CNPM_TTN.Services
             _productRepository = productRepository;
         }
 
-        public async Task<(IEnumerable<ProductDto> Items, int TotalCount)> GetProductsAsync(string? searchTerm, int page, int pageSize)
+        public async Task<(IEnumerable<ProductDto> Items, int TotalCount)> GetProductsAsync(ProductFilterDto filterDto)
         {
-            Expression<Func<Product, bool>>? filter = null;
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            var searchTerm = filterDto.SearchTerm?.Trim();
+            var categoryId = filterDto.CategoryId;
+            var minPrice = filterDto.MinPrice;
+            var maxPrice = filterDto.MaxPrice;
+
+            Expression<Func<Product, bool>> filter = p =>
+                (string.IsNullOrEmpty(searchTerm) || p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm)) &&
+                (!categoryId.HasValue || p.CategoryId == categoryId.Value) &&
+                (!minPrice.HasValue || p.Price >= minPrice.Value) &&
+                (!maxPrice.HasValue || p.Price <= maxPrice.Value);
+
+            Expression<Func<Product, object>> orderBy = p => p.Id;
+            if (!string.IsNullOrWhiteSpace(filterDto.SortBy))
             {
-                filter = p => p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm);
+                orderBy = filterDto.SortBy.ToLower() switch
+                {
+                    "price" => p => p.Price,
+                    "name" => p => p.Name,
+                    "stock" => p => p.Stock,
+                    _ => p => p.Id
+                };
             }
 
-            var pagedResult = await _productRepository.GetPagedAsync(page, pageSize, filter);
+            var pagedResult = await _productRepository.GetPagedAsync(
+                filterDto.Page, 
+                filterDto.PageSize, 
+                filter, 
+                orderBy, 
+                filterDto.Descending
+            );
 
             var items = pagedResult.Items.Select(p => new ProductDto
             {
