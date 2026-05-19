@@ -49,5 +49,33 @@ namespace CNPM_TTN.Controllers
                 return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
             }
         }
+
+        [HttpPost("product-image")]
+        public async Task<IActionResult> UploadProductImage(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest("Vui lòng chọn ảnh sản phẩm.");
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var extension = Path.GetExtension(file.FileName).ToLower();
+                if (!allowedExtensions.Contains(extension))
+                    return BadRequest("Ảnh sản phẩm phải có định dạng jpg, png hoặc webp.");
+                var fileName = "prod_" + Guid.NewGuid().ToString().Substring(0, 8) + "_" + DateTime.Now.Ticks + extension;
+                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "products");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                return Ok(new { url = $"/uploads/products/{fileName}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống khi upload ảnh sản phẩm: {ex.Message}");
+            }
+        }
     }
 }

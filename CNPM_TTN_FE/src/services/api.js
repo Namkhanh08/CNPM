@@ -36,10 +36,15 @@ const API = {
     login: (data) => api.post("/auth/login", data),
     register: (data) => api.post("/auth/register", data),
 
+    // Danh mục
+    getCategories: () => api.get("/api/admin/categories"),
+
     // Sản phẩm
     getAll: () => api.get("/api/admin/products"),
-    getProductById: (id) => api.get(`/admin/products/${id}`),
-    deleteProduct: (id) => api.delete(`/admin/products/${id}`),
+    getProductById: (id) => api.get(`/api/admin/products/${id}`),
+    createProduct: (data) => api.post("/api/admin/products", data),
+    updateProduct: (id, data) => api.put(`/api/admin/products/${id}`, data),
+    deleteProduct: (id) => api.delete(`/api/admin/products/${id}`),
 
     // Giỏ hàng
     getCart: () => api.get("/carts"),
@@ -85,7 +90,7 @@ const API = {
     adminUpdateUser: (id, data) => api.put(`/api/users/${id}`, data),
     adminCreateUser: (data) => api.post('/api/users', data),
     
-    // Hàm dùng FormData để gửi file
+    // upload ảnh đại diện người dùng
     uploadUserImage: (file) => {
         const formData = new FormData();
         formData.append("file", file);
@@ -93,7 +98,15 @@ const API = {
             headers: { "Content-Type": "multipart/form-data" }
         });
     },
- 
+  
+    // upload sản phẩm
+    uploadProductImage: (file) => {
+        const formData = new FormData();
+        formData.append("file", file); 
+        return api.post("/api/upload/product-image", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+    },
 };
 
 export default API;

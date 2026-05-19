@@ -1,11 +1,13 @@
 ﻿using CNPM_TTN.Dtos;
 using CNPM_TTN.Entities;
 using CNPM_TTN.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CNPM_TTN.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Roles = "1")]
     [ApiController]
     public class UsersController : ControllerBase
     {

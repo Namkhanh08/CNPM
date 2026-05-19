@@ -1,4 +1,5 @@
-﻿using CNPM_TTN.Entities;
+﻿using CNPM_TTN.Dtos;
+using CNPM_TTN.Entities;
 
 namespace CNPM_TTN.Repositories
 {
@@ -6,8 +7,10 @@ namespace CNPM_TTN.Repositories
     {
         Task<IEnumerable<object>> GetAllProductsAsync();
         Task<Product?> GetProductByIdAsync(int id);
-        Task<bool> AddProductAsync(Product product);
-        Task<bool> UpdateProductAsync(Product product);
+        Task<bool> AddProductAsync(ProductRequest request);
+        Task<bool> UpdateProductAsync(ProductRequest request);
         Task<bool> DeleteProductAsync(int id);
+
+      
     }
 }

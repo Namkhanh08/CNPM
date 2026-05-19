@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Entities;
 
-public partial class Product
+public class Product
 {
     [Key]
     public int Id { get; set; }
