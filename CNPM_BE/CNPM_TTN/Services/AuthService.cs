@@ -35,6 +35,11 @@ namespace CNPM_TTN.Services
                 return ApiResponse<string>.FailureResponse("Vui lòng nhập đầy đủ thông tin đăng ký");
             }
 
+            if (request.UserType != 0)
+            {
+                return ApiResponse<string>.FailureResponse("Khong the tao tai khoan quan tri tu endpoint dang ky cong khai");
+            }
+
             var existingUserByUsername = await _userRepository.FindAsync(u => u.UserName == userName);
             if (existingUserByUsername.Any())
             {
@@ -53,7 +58,7 @@ namespace CNPM_TTN.Services
                 Name = name,
                 UserName = userName,
                 Email = email,
-                UserType = request.UserType,
+                UserType = 0,
                 IsActive = true,
                 Created = DateTime.Now,
                 Salt = RandomNumberGenerator.GetBytes(16),

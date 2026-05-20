@@ -24,6 +24,8 @@ builder.Services.AddDbContext<CNPM_TTN.Entities.ShopCoffeeContext>(options =>
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var jwtKey = jwtSettings["Key"] ?? throw new InvalidOperationException("Missing Jwt:Key configuration.");
+var jwtIssuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("Missing Jwt:Issuer configuration.");
+var jwtAudience = jwtSettings["Audience"] ?? throw new InvalidOperationException("Missing Jwt:Audience configuration.");
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(options => {
@@ -38,8 +40,8 @@ builder.Services.AddAuthentication(options => {
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });

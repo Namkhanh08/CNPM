@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CNPM_TTN.Dtos
 {
@@ -32,21 +33,45 @@ namespace CNPM_TTN.Dtos
 
     public class CreateProductDto
     {
-        public string Name { get; set; } = null!;
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Range(0.01, double.MaxValue)]
         public decimal Price { get; set; }
+
+        [Range(0, int.MaxValue)]
         public int Stock { get; set; }
-        public string ImageUrl { get; set; } = null!;
-        public string Description { get; set; } = null!;
+
+        [StringLength(500)]
+        public string ImageUrl { get; set; } = string.Empty;
+
+        [StringLength(4000)]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
     }
 
     public class UpdateProductDto
     {
-        public string Name { get; set; } = null!;
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Range(0.01, double.MaxValue)]
         public decimal Price { get; set; }
+
+        [Range(0, int.MaxValue)]
         public int Stock { get; set; }
-        public string ImageUrl { get; set; } = null!;
-        public string Description { get; set; } = null!;
+
+        [StringLength(500)]
+        public string ImageUrl { get; set; } = string.Empty;
+
+        [StringLength(4000)]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
     }
 

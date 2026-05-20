@@ -1,10 +1,12 @@
 using CNPM_TTN.Dtos;
 using CNPM_TTN.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CNPM_TTN.Controllers
 {
     [Route("api/admin/products")]
+    [Authorize(Roles = "1")]
     [ApiController]
     public class ProductController : ControllerBase
     {
