@@ -41,15 +41,16 @@ function App() {
           <Route path="/orders/edit/:id" element={<EditOrder />} />
         </Route>
 
-        {/* Lớp Admin Routing */}
-        <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} />}>
+        <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} fallbackTo="/" />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="batches" element={<AdminBatches />} />
             <Route path="inventory" element={<AdminInventory />} />
-            <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+            
+          
+            <Route element={<ProtectedRoute allowedRoles={[1]} fallbackTo="/admin" />}>
               <Route path="users" element={<AdminUsers />} />
             </Route>
           </Route>

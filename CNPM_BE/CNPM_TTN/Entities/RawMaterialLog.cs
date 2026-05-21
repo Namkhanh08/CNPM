@@ -17,10 +17,10 @@ namespace CNPM_TTN.Entities
 
         [Required]
         [StringLength(100)]
-        public string Action { get; set; } // 'NHAP_KHO', 'XUAT_RANG', 'HUY_HANG'
+        public string Action { get; set; }
 
         [Required]
-        public double OldQuantity { get; set; } // Sử dụng double hoặc float khớp với SQL Float
+        public double OldQuantity { get; set; } 
 
         [Required]
         public double NewQuantity { get; set; }
@@ -29,15 +29,12 @@ namespace CNPM_TTN.Entities
         public string Reason { get; set; }
 
         [StringLength(450)]
-        public string ModifiedBy { get; set; } // Kiểu chuỗi liên kết sang Id của ApplicationUser
+        public string ModifiedBy { get; set; } 
 
         [Required]
         public DateTime ModifiedDate { get; set; } = DateTime.Now;
 
 
-        // ==========================================
-        // KHAI BÁO LIÊN KẾT KHÓA NGOẠI (NAVIGATION PROPERTIES)
-        // ==========================================
 
         [ForeignKey("RawMaterialId")]
         public virtual RawMaterial RawMaterial { get; set; }
@@ -46,6 +43,6 @@ namespace CNPM_TTN.Entities
         public virtual InventoryReceipt InventoryReceipt { get; set; }
 
         [ForeignKey("ModifiedBy")]
-        public virtual User User { get; set; } // Thay 'User' thành tên Class User của bạn nếu có tên khác (ví dụ ApplicationUser)
+        public virtual User User { get; set; } 
     }
 }

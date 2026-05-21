@@ -8,5 +8,6 @@
         public string RoastLevel { get; set; }
         public double InputWeight { get; set; }
         public string Status { get; set; }
+        public double? OutputWeight { get; set; }
     }
 }

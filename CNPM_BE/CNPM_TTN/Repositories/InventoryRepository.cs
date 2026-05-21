@@ -1,4 +1,5 @@
 ﻿using CNPM_TTN.Data;
+using CNPM_TTN.Dtos;
 using CNPM_TTN.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -89,17 +90,20 @@ namespace CNPM_TTN.Repositories
         {
             return await _context.RawMaterialLogs
                 .Include(l => l.RawMaterial)
+                .Include(l => l.User) 
                 .OrderByDescending(l => l.ModifiedDate)
                 .Select(l => new
                 {
                     id = l.Id,
                     rawMaterialId = l.RawMaterialId,
-                    rawMaterialName = l.RawMaterial.Name, 
+                    rawMaterialName = l.RawMaterial.Name,
                     action = l.Action,
                     oldQuantity = l.OldQuantity,
                     newQuantity = l.NewQuantity,
                     reason = l.Reason,
                     modifiedBy = l.ModifiedBy,
+                 
+                    modifiedByName = l.User != null ? l.User.Name : "Hệ thống",
                     modifiedDate = l.ModifiedDate
                 })
                 .ToListAsync();
@@ -118,15 +122,21 @@ namespace CNPM_TTN.Repositories
                     ProductName = batch.Product.Name,
                     RawMaterialName = batch.InventoryReceipt != null ? batch.InventoryReceipt.RawMaterial.Name : "N/A",
                     batch.RoastLevel,
-                    Weight = batch.InputWeight,
+                    InputWeight = batch.InputWeight,
+                    OutputWeight = batch.OutputWeight ?? 0, 
+
+                    
+                    RecoveryRate = batch.OutputWeight.HasValue && batch.InputWeight > 0
+                        ? Math.Round(((double)batch.OutputWeight.Value / (double)batch.InputWeight) * 100, 1)
+                        : 0,
+
                     RoasterName = batch.User != null ? batch.User.Name : "N/A",
                     batch.Status,
                     Date = batch.RoastDate
                 })
                 .ToListAsync();
         }
-
-        public async Task<bool> CreateRoastingBatchAsync(int productId, int inventoryReceiptId, string batchCode, string roastLevel, double inputWeight, string status, string userId)
+        public async Task<InventoryResult> CreateRoastingBatchAsync(int productId, int inventoryReceiptId, string batchCode, string roastLevel, double inputWeight, string status, double? outputWeight, string userId)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -134,16 +144,33 @@ namespace CNPM_TTN.Repositories
                 var product = await _context.Products.FindAsync(productId);
                 var receipt = await _context.InventoryReceipts.FindAsync(inventoryReceiptId);
 
-                if (product == null || receipt == null) return false;
-                if (receipt.RemainingQuantity < inputWeight) return false;
+                if (product == null || receipt == null)
+                    return new InventoryResult { Success = false, Message = "Sản phẩm hoặc lô nguyên liệu không tồn tại." };
+
+                if (receipt.RemainingQuantity < inputWeight)
+                    return new InventoryResult { Success = false, Message = "Tạo mẻ rang thất bại. Lô nguyên liệu không đủ số lượng tồn kho!" };
+
+                
+                if ((status == "Đã đóng gói" || status == "Hoàn thành") && outputWeight.HasValue)
+                {
+                    if (outputWeight.Value > inputWeight)
+                    {
+                        return new InventoryResult  
+                        {
+                            Success = false,
+                            Message = $"Khối lượng thành phẩm đầu ra ({outputWeight.Value} kg) không được lớn hơn khối lượng thô đầu vào ({inputWeight} kg)!"
+                        };
+                    }
+                }
 
                 double oldRawMaterialQty = receipt.RemainingQuantity;
-
                 receipt.RemainingQuantity -= inputWeight;
 
+            
                 if (status == "Đã đóng gói")
                 {
-                    product.Stock += (int)inputWeight;
+                    double finalWeight = outputWeight.HasValue ? outputWeight.Value : inputWeight;
+                    product.Stock += (int)finalWeight;
                 }
 
                 var newBatch = new RoastingBatch
@@ -153,6 +180,7 @@ namespace CNPM_TTN.Repositories
                     BatchCode = batchCode,
                     RoastLevel = roastLevel,
                     InputWeight = inputWeight,
+                    OutputWeight = outputWeight, 
                     Status = status,
                     UserId = userId,
                     RoastDate = DateTime.Now
@@ -173,59 +201,70 @@ namespace CNPM_TTN.Repositories
                 _context.RoastingBatches.Add(newBatch);
                 _context.RawMaterialLogs.Add(log);
 
-                var success = await _context.SaveChangesAsync() > 0;
-                if (success)
-                {
-                    await transaction.CommitAsync();
-                    return true;
-                }
-                return false;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return new InventoryResult { Success = true, Message = "Tạo mẻ rang mới thành công!" };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                return new InventoryResult { Success = false, Message = "Lỗi hệ thống: " + ex.Message };
             }
         }
 
-        public async Task<bool> UpdateBatchStatusAsync(int batchId, string newStatus, string userId)
+        public async Task<InventoryResult> UpdateBatchStatusAsync(int batchId, string newStatus, double? outputWeight, string userId)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var batch = await _context.RoastingBatches.FindAsync(batchId);
-                if (batch == null) return false;
+                if (batch == null)
+                    return new InventoryResult { Success = false, Message = "Không tìm thấy thông tin mẻ rang." };
 
-                if (batch.Status == "Đã đóng gói" && newStatus != "Đã đóng gói") return false;
+                if (batch.Status == "Đã đóng gói" && newStatus != "Đã đóng gói")
+                    return new InventoryResult { Success = false, Message = "Mẻ rang đã đóng gói, không thể thay đổi ngược lại trạng thái." };
 
-                if (batch.Status == newStatus) return true;
+                if (batch.Status == newStatus)
+                    return new InventoryResult { Success = true, Message = "Trạng thái không thay đổi." };
 
+             
+                if (outputWeight.HasValue && outputWeight.Value > batch.InputWeight)
+                {
+                    return new InventoryResult
+                    {
+                        Success = false,
+                        Message = $"Khối lượng thành phẩm đầu ra ({outputWeight.Value} kg) không được phép lớn hơn khối lượng thô đầu vào ({batch.InputWeight} kg)!"
+                    };
+                }
+
+           
                 if (batch.Status != "Đã đóng gói" && newStatus == "Đã đóng gói")
                 {
                     var product = await _context.Products.FindAsync(batch.ProductId);
                     if (product != null)
                     {
-                        product.Stock += (int)batch.InputWeight;
+                        double finalWeight = outputWeight.HasValue ? outputWeight.Value : (double)batch.InputWeight;
+                        product.Stock += (int)finalWeight;
                     }
                 }
 
-             
                 batch.Status = newStatus;
-
-                var success = await _context.SaveChangesAsync() > 0;
-                if (success)
+                if (outputWeight.HasValue)
                 {
-                    await transaction.CommitAsync();
-                    return true;
+                    batch.OutputWeight = outputWeight.Value; 
                 }
-                return false;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return new InventoryResult { Success = true, Message = "Cập nhật trạng thái mẻ rang thành công!" };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                return new InventoryResult { Success = false, Message = "Lỗi hệ thống: " + ex.Message };
             }
         }
+      
         public async Task<double> GetTotalQuantityAsync()
         {
             return await _context.Products.SumAsync(p => p.Stock);

@@ -41,4 +41,5 @@ public partial class RoastingBatch
     public virtual User? User { get; set; }
 
     public virtual InventoryReceipt? InventoryReceipt { get; set; }
+    public double? OutputWeight { get; set; }
 }
