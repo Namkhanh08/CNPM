@@ -2,12 +2,13 @@
 using CNPM_TTN.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
-
+using System.Threading.Tasks;
+using CNPM_TTN.Dtos;
 namespace CNPM_TTN.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Roles ="1,3")]
     [ApiController]
     public class InventoryController : ControllerBase
     {
@@ -19,45 +20,80 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet("products")]
+        [Authorize(Roles = "1,2,3")]
         public async Task<IActionResult> GetProducts()
         {
             var products = await _inventoryRepo.GetAllProductAsync();
             return Ok(new { data = products });
         }
 
-        [HttpPost("update-stock")]
-        public async Task<IActionResult> UpdateStock(int productId, int quantity, string reason)
+        [HttpGet("raw-materials")]
+        [Authorize(Roles = "1,2,3")]
+        public async Task<IActionResult> GetRawMaterials()
         {
+            var materials = await _inventoryRepo.GetAllRawMaterialsAsync();
+            return Ok(new { data = materials });
+        }
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var result = await _inventoryRepo.UpdateStockAsync(productId, quantity, userId, reason);
-            if (!result) return BadRequest("Cập nhật kho thất bại");
+        [HttpGet("receipts")]
+        [Authorize(Roles = "1,2,3")]
+        public async Task<IActionResult> GetInventoryReceipts()
+        {
+            var receipts = await _inventoryRepo.GetInventoryReceiptsAsync();
+            return Ok(new { data = receipts });
+        }
 
-            return Ok(new { message = "Cập nhật thành công" });
+
+        [HttpPost("import-material")]
+        [Authorize(Roles = "1,3")]
+        public async Task<IActionResult> ImportMaterial([FromBody] ImportMaterialRequest request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+
+            var result = await _inventoryRepo.ImportRawMaterialAsync(
+                request.RawMaterialId,
+                request.Supplier,
+                request.Quantity,
+                request.ImportDate,
+                request.ExpiryDate,
+                userId
+            );
+
+            if (!result) return BadRequest("Nhập kho lô nguyên liệu mới thất bại. Vui lòng kiểm tra lại dữ liệu hợp lệ!");
+            return Ok(new { message = "Nhập kho nguyên liệu thành công" });
         }
 
         [HttpGet("logs")]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> GetLogs()
         {
-            var logs = await _inventoryRepo.GetInventoryLogsAsync();
+            var logs = await _inventoryRepo.GetRawMaterialLogsAsync();
             return Ok(new { data = logs });
         }
 
         [HttpPost("create-batch-detail")]
-        public async Task<IActionResult> CreateBatchDetail(int productId, string batchCode, string roastLevel, double inputWeight, string status)
+        [Authorize(Roles = "1,2")]
+        public async Task<IActionResult> CreateBatchDetail([FromBody] CreateBatchRequest request)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
 
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var result = await _inventoryRepo.CreateRoastingBatchAsync(
+                request.ProductId,
+                request.InventoryReceiptId,
+                request.BatchCode,
+                request.RoastLevel,
+                request.InputWeight,
+                request.Status,
+                userId
+            );
 
-
-            var result = await _inventoryRepo.CreateRoastingBatchAsync(productId, batchCode, roastLevel, inputWeight, status, userId);
-
-            if (!result) return BadRequest("Tạo mẻ rang thất bại");
-            return Ok(new { message = "Tạo mẻ rang thành công" });
+            if (!result) return BadRequest("Tạo mẻ rang thất bại. Lô nguyên liệu không đủ số lượng tồn kho!");
+            return Ok(new { message = "Tạo mẻ rang thành công và cập nhật kho thành phẩm" });
         }
 
         [HttpGet("batches")]
+        [Authorize(Roles = "1,2,3")]
         public async Task<IActionResult> GetBatches()
         {
             var batches = await _inventoryRepo.GetRoastingBatchesAsync();
@@ -68,10 +104,22 @@ namespace CNPM_TTN.Controllers
         public async Task<IActionResult> GetTotalStock()
         {
             var totalWeight = await _inventoryRepo.GetTotalQuantityAsync();
-
             return Ok(new { TotalWeight = totalWeight });
+        }
+
+        [HttpPut("update-batch-status/{id}")]
+        [Authorize(Roles = "1,3")] 
+        public async Task<IActionResult> UpdateBatchStatus(int id, [FromBody] UpdateBatchStatusRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Status)) return BadRequest("Trạng thái không được để trống");
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            var result = await _inventoryRepo.UpdateBatchStatusAsync(id, request.Status, userId);
+
+            if (!result) return BadRequest("Cập nhật trạng thái mẻ rang thất bại. Mẻ rang không tồn tại hoặc đã được đóng gói trước đó!");
+            return Ok(new { message = "Cập nhật trạng thái mẻ rang và đồng bộ kho thành phẩm thành công" });
         }
     }
 
-
+    
 }

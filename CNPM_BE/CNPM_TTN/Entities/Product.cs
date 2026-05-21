@@ -30,8 +30,7 @@ public class Product
     [InverseProperty("Products")]
     public virtual Category Category { get; set; } = null!;
 
-    [InverseProperty("Product")]
-    public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+  
 
     [InverseProperty("Product")]
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

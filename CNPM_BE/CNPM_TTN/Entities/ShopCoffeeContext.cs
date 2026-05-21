@@ -23,7 +23,7 @@ public partial class ShopCoffeeContext : DbContext
 
     public virtual DbSet<GrindingOption> GrindingOptions { get; set; }
 
-    public virtual DbSet<InventoryLog> InventoryLogs { get; set; }
+   
 
     public virtual DbSet<Order> Orders { get; set; }
 
@@ -69,14 +69,7 @@ public partial class ShopCoffeeContext : DbContext
                 .HasConstraintName("FK_CartItems_Products");
         });
 
-        modelBuilder.Entity<InventoryLog>(entity =>
-        {
-            entity.HasOne(d => d.Product).WithMany(p => p.InventoryLogs)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_InventoryLogs_Products");
-
-            entity.HasOne(d => d.User).WithMany(p => p.InventoryLogs).HasConstraintName("FK_InventoryLogs_Users");
-        });
+     
 
         modelBuilder.Entity<Order>(entity =>
         {

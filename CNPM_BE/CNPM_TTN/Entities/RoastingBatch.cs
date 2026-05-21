@@ -24,6 +24,8 @@ public partial class RoastingBatch
     [StringLength(50)]
     public string? Status { get; set; }
 
+    public int? InventoryReceiptId { get; set; }
+
     [Column(TypeName = "datetime")]
     public DateTime? RoastDate { get; set; }
 
@@ -37,4 +39,6 @@ public partial class RoastingBatch
     [ForeignKey("UserId")]
     [InverseProperty("RoastingBatches")]
     public virtual User? User { get; set; }
+
+    public virtual InventoryReceipt? InventoryReceipt { get; set; }
 }

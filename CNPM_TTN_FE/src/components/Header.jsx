@@ -263,8 +263,9 @@ export default function Header() {
                     />
 
                     {/* FLOAT BUTTON */}
-                    <button
-                      className="
+                    <Link to="/shop">
+                      <button
+                        className="
                         absolute top-24 left-0
                         px-6 py-4
                         rounded-full
@@ -277,9 +278,10 @@ export default function Header() {
                         hover:scale-105
                         transition-all duration-300 hover:-translate-y-1
                       "
-                    >
-                      Đặt hàng ngay!
-                    </button>
+                      >
+                        Đặt hàng ngay!
+                      </button>
+                    </Link>
 
                   </div>
                 </div>

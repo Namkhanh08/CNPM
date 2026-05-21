@@ -43,7 +43,7 @@ public partial class User
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     [InverseProperty("User")]
-    public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+    public virtual ICollection<RawMaterialLog> RawMaterialLogs { get; set; } = new List<RawMaterialLog>();
 
     [InverseProperty("User")]
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
