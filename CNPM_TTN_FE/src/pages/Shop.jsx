@@ -8,11 +8,8 @@ export default function Shop() {
   const [searchTerm, setSearchTerm] = useState('');
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(500000);
-  const [regions, setRegions] = useState({
-    'Đà Lạt': false,
-    'Đắk Lắk': false,
-    'Cầu Đất': false
-  });
+  const [availableRegions, setAvailableRegions] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
@@ -20,8 +17,20 @@ export default function Shop() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
+    const loadRegions = async () => {
+      try {
+        const res = await API.getRegions();
+        setAvailableRegions(res.data?.data || res.data?.Data || []);
+      } catch (err) {
+        console.error("Lỗi lấy danh sách vùng trồng: ", err);
+      }
+    };
+    loadRegions();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
-  }, [page, searchTerm, filterType, minPrice, maxPrice]);
+  }, [page, searchTerm, filterType, minPrice, maxPrice, selectedRegion]);
 
   const CategoryMap = {
     '1': 'Arabica',
@@ -38,6 +47,7 @@ export default function Shop() {
         pageSize,
         searchTerm: searchTerm.trim() || undefined,
         categoryId: filterType === 'all' ? undefined : Number(filterType),
+        region: selectedRegion === 'all' ? undefined : selectedRegion,
         minPrice,
         maxPrice,
       });
@@ -64,6 +74,7 @@ export default function Shop() {
         description: p.Description ?? p.description,
         type: String(p.CategoryId ?? p.categoryId),
         stock: p.Stock ?? p.stock,
+        region: p.Region ?? p.region,
       }));
 
       setTotalCount(pageData.totalCount || pageData.TotalCount || formattedProducts.length);
@@ -77,10 +88,8 @@ export default function Shop() {
   };
 
   const handleRegionChange = (regionName) => {
-    setRegions(prev => ({
-      ...prev,
-      [regionName]: !prev[regionName]
-    }));
+    setSelectedRegion(regionName);
+    setPage(1);
   };
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -91,11 +100,7 @@ export default function Shop() {
     setMinPrice(0);
     setMaxPrice(500000);
     setPage(1);
-    setRegions({
-      'Đà Lạt': false,
-      'Đắk Lắk': false,
-      'Cầu Đất': false
-    });
+    setSelectedRegion('all');
   };
 
   // Thuật toán lọc phía Client cực kỳ mượt mà, cập nhật tức thì (Real-time Filtering)
@@ -112,12 +117,8 @@ export default function Shop() {
     // 3. Lọc theo khoảng giá
     const matchesPrice = p.price >= minPrice && p.price <= maxPrice;
 
-    // 4. Lọc theo vùng trồng trong mô tả / tên
-    const selectedRegionsList = Object.keys(regions).filter(r => regions[r]);
-    const matchesRegion = selectedRegionsList.length === 0 || selectedRegionsList.some(r => 
-      p.description.toLowerCase().includes(r.toLowerCase()) || 
-      p.name.toLowerCase().includes(r.toLowerCase())
-    );
+    // 4. Lọc theo vùng trồng
+    const matchesRegion = selectedRegion === 'all' || p.region === selectedRegion;
 
     return matchesSearch && matchesCategory && matchesPrice && matchesRegion;
   });
@@ -164,7 +165,7 @@ export default function Shop() {
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
               <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                 <h2 className="font-montserrat font-bold text-xl text-primary uppercase">Bộ Lọc</h2>
-                {(searchTerm || filterType !== 'all' || minPrice > 0 || maxPrice < 500000 || Object.values(regions).some(v => v)) && (
+                {(searchTerm || filterType !== 'all' || minPrice > 0 || maxPrice < 500000 || selectedRegion !== 'all') && (
                   <button onClick={resetFilters} className="text-xs font-nunito font-bold text-accent-1 hover:underline">
                     Xóa bộ lọc
                   </button>
@@ -242,17 +243,27 @@ export default function Shop() {
                 </div>
               </div>
 
-              {/* Vùng trồng */}
               <div className="mb-6 border-t border-gray-50 pt-4">
                 <h3 className="font-montserrat font-bold text-primary mb-3">Vùng trồng</h3>
                 <div className="space-y-2 font-nunito text-primary/80">
-                  {Object.keys(regions).map(region => (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="region" 
+                      checked={selectedRegion === 'all'} 
+                      onChange={() => handleRegionChange('all')}
+                      className="accent-accent-1" 
+                    /> 
+                    <span>Tất cả</span>
+                  </label>
+                  {availableRegions.map(region => (
                     <label key={region} className="flex items-center gap-2 cursor-pointer">
                       <input 
-                        type="checkbox" 
-                        checked={regions[region]} 
+                        type="radio" 
+                        name="region"
+                        checked={selectedRegion === region} 
                         onChange={() => handleRegionChange(region)}
-                        className="accent-accent-1 rounded" 
+                        className="accent-accent-1" 
                       /> 
                       <span>{region}</span>
                     </label>

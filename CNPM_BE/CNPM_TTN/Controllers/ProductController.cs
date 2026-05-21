@@ -38,6 +38,14 @@ namespace CNPM_TTN.Controllers
             }));
         }
 
+        [HttpGet("regions")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetRegions()
+        {
+            var regions = await _productService.GetRegionsAsync();
+            return Ok(ApiResponse<IEnumerable<string>>.SuccessResponse(regions));
+        }
+
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)

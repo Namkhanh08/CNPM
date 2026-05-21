@@ -1,10 +1,22 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ShoppingCart, Package, Archive, Database, LogOut, Users } from 'lucide-react';
+import useStore from '../store/useStore';
 
 export default function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
+  const logout = useStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userType");
+    navigate('/');
+  };
 
   const navItems = [
     { name: 'Tổng quan', path: '/admin', icon: <LayoutDashboard size={20} /> },
@@ -45,9 +57,9 @@ export default function AdminLayout() {
         </nav>
         
         <div className="p-4 border-t border-gray-100">
-          <Link to="/" className="flex items-center justify-center gap-2 w-full py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl transition-colors">
+          <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl transition-colors">
             <LogOut size={20} /> Thoát hệ thống
-          </Link>
+          </button>
         </div>
       </aside>
 

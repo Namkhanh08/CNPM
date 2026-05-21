@@ -6,6 +6,7 @@ using CNPM_TTN.Entities;
 using CNPM_TTN.Repositories;
 using CNPM_TTN.Dtos;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 namespace CNPM_TTN.Services
 {
     public class ProductService : IProductService
@@ -22,34 +23,60 @@ namespace CNPM_TTN.Services
             var categoryId = filterDto.CategoryId;
             var minPrice = filterDto.MinPrice;
             var maxPrice = filterDto.MaxPrice;
+            var region = filterDto.Region?.Trim();
 
-            Expression<Func<Product, bool>> filter = p =>
-                (string.IsNullOrEmpty(searchTerm) || p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm)) &&
-                (!categoryId.HasValue || p.CategoryId == categoryId.Value) &&
-                (!minPrice.HasValue || p.Price >= minPrice.Value) &&
-                (!maxPrice.HasValue || p.Price <= maxPrice.Value);
+            var query = _productRepository.Query().Include(p => p.ProductDetails).AsQueryable();
 
-            Expression<Func<Product, object>> orderBy = p => p.Id;
-            if (!string.IsNullOrWhiteSpace(filterDto.SortBy))
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                orderBy = filterDto.SortBy.ToLower() switch
-                {
-                    "price" => p => p.Price,
-                    "name" => p => p.Name,
-                    "stock" => p => p.Stock,
-                    _ => p => p.Id
-                };
+                query = query.Where(p => p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm));
             }
 
-            var pagedResult = await _productRepository.GetPagedAsync(
-                filterDto.Page, 
-                filterDto.PageSize, 
-                filter, 
-                orderBy, 
-                filterDto.Descending
-            );
+            if (categoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
 
-            var items = pagedResult.Items.Select(p => new ProductDto
+            if (minPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= maxPrice.Value);
+            }
+
+            if (!string.IsNullOrEmpty(region))
+            {
+                query = query.Where(p => p.ProductDetails.Any(d => d.Region == region));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            if (!string.IsNullOrWhiteSpace(filterDto.SortBy))
+            {
+                var sort = filterDto.SortBy.ToLower();
+                if (sort == "price")
+                    query = filterDto.Descending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price);
+                else if (sort == "name")
+                    query = filterDto.Descending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name);
+                else if (sort == "stock")
+                    query = filterDto.Descending ? query.OrderByDescending(p => p.Stock) : query.OrderBy(p => p.Stock);
+                else
+                    query = filterDto.Descending ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id);
+            }
+            else
+            {
+                query = filterDto.Descending ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id);
+            }
+
+            var pagedProducts = await query
+                .Skip((filterDto.Page - 1) * filterDto.PageSize)
+                .Take(filterDto.PageSize)
+                .ToListAsync();
+
+            var items = pagedProducts.Select(p => new ProductDto
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -57,10 +84,22 @@ namespace CNPM_TTN.Services
                 Stock = p.Stock,
                 ImageUrl = p.ImageUrl,
                 Description = p.Description,
-                CategoryId = p.CategoryId
+                CategoryId = p.CategoryId,
+                Region = p.ProductDetails?.FirstOrDefault()?.Region
             }).ToList();
 
-            return (items, pagedResult.TotalCount);
+            return (items, totalCount);
+        }
+
+        public async Task<IEnumerable<string>> GetRegionsAsync()
+        {
+            var regions = await _productRepository.Query()
+                .SelectMany(p => p.ProductDetails)
+                .Where(d => !string.IsNullOrEmpty(d.Region))
+                .Select(d => d.Region!)
+                .Distinct()
+                .ToListAsync();
+            return regions;
         }
 
 

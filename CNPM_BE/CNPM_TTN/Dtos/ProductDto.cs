@@ -12,6 +12,7 @@ namespace CNPM_TTN.Dtos
         public string ImageUrl { get; set; } = null!;
         public string Description { get; set; } = null!;
         public int CategoryId { get; set; }
+        public string? Region { get; set; }
     }
 
     public class ProductDetailDto
@@ -79,6 +80,7 @@ namespace CNPM_TTN.Dtos
     {
         public string? SearchTerm { get; set; }
         public int? CategoryId { get; set; }
+        public string? Region { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public int Page { get; set; } = 1;
