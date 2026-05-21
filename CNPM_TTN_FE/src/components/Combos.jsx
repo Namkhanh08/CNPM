@@ -1,331 +1,78 @@
 import React from 'react';
-import combo1 from '../assets/img/section4/combo1.png';
-import combo2 from '../assets/img/section4/combo2.png';
-import combo3 from '../assets/img/section4/combo3.png';
+// Import bức ảnh ly cà phê hoặc gói sản phẩm đẹp nhất của bạn ở đây
+import coffeeMain from '../assets/img/header/revo1.png'; 
 
-import useStore from '../store/useStore';
-
-import Slider from "react-slick";
-
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-
-const combos = [
-  {
-    id: 1,
-    name: 'COMBO 1',
-    image: combo1,
-    originalPrice: '145.000',
-    discountPrice: '119.000',
-  },
-
-  {
-    id: 2,
-    name: 'COMBO 2',
-    image: combo2,
-    originalPrice: '175.000',
-    discountPrice: '139.000',
-  },
-
-  {
-    id: 3,
-    name: 'COMBO 3',
-    image: combo3,
-    originalPrice: '210.000',
-    discountPrice: '169.000',
-  },
-
-  {
-    id: 4,
-    name: 'COMBO 4',
-    image: combo1,
-    originalPrice: '240.000',
-    discountPrice: '199.000',
-  },
-
-  {
-    id: 5,
-    name: 'COMBO 5',
-    image: combo2,
-    originalPrice: '320.000',
-    discountPrice: '259.000',
-  },
-
-  {
-    id: 6,
-    name: 'COMBO 6',
-    image: combo3,
-    originalPrice: '390.000',
-    discountPrice: '299.000',
-  },
-];
-
-export default function Combos() {
-
-  const addToCart = useStore((state) => state.addToCart);
-
-  const handleAddCombo = (combo) => {
-
-    addToCart(
-      {
-        id: `combo-${combo.id}`,
-        name: combo.name,
-        price: parseInt(combo.discountPrice.replace('.', '')),
-        image: combo.image,
-        grindType: 'Combo Gói',
-      },
-      1,
-      'Combo Gói'
-    );
-
-    alert(`Đã thêm ${combo.name} vào giỏ hàng!`);
-  };
-
-  const settings = {
-    dots: true,
-    arrows: false,
-
-    infinite: true,
-
-    speed: 800,
-
-    slidesToShow: 3,
-    slidesToScroll: 1,
-
-    autoplay: true,
-    autoplaySpeed: 2500,
-
-    cssEase: "ease-in-out",
-
-    pauseOnHover: true,
-
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-
-      {
-        breakpoint: 640,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
-  };
-
+export default function CoffeeStory() {
   return (
     <section
-      id="combos"
-      className="py-24 bg-white relative overflow-hidden"
+      id="coffee-story"
+      className="py-28 bg-white relative overflow-hidden"
     >
-
-      {/* BACKGROUND BLUR */}
-      <div
-        className="
-          absolute
-          left-0
-          bottom-0
-          w-72
-          h-72
-          bg-accent-1/10
-          rounded-full
-          blur-3xl
-          pointer-events-none
-        "
-      ></div>
-
-      <div className="container mx-auto px-6 lg:px-12 max-w-7xl relative z-10">
-
-        {/* HEADER */}
-        <div className="text-center mb-16">
-
-          <p
-            className="
-              text-accent-1
-              font-nunito
-              font-bold
-              tracking-[0.2em]
-              uppercase
-              mb-4
-            "
-          >
-            Combo Tiết Kiệm
-          </p>
-
-          <h2
-            className="
-              text-4xl
-              md:text-5xl
-              font-nunito
-              font-bold
-              text-primary
-              mb-4
-            "
-          >
-            TẬN HƯỞNG TRỌN VẸN
-          </h2>
-
-          <p
-            className="
-              font-nunito
-              text-primary/70
-              leading-relaxed
-              max-w-2xl
-              mx-auto
-            "
-          >
-            Những combo cà phê được tuyển chọn đặc biệt,
-            giúp bạn thưởng thức hương vị trọn vẹn
-            với mức giá tiết kiệm hơn.
-          </p>
-        </div>
-
-        {/* SLIDER */}
-        <Slider {...settings}>
-
-          {combos.map((combo) => (
-
-            <div key={combo.id} className="p-4">
-
-              {/* CARD */}
-              <div
-                className="
-                  bg-white
-                  rounded-[40px]
-                  overflow-hidden
-                  border
-                  border-gray-100
-                  hover:border-accent-1
-                  hover:shadow-2xl
-                  transition-all duration-500
-                  hover:-translate-y-2
-                  group
-                "
-              >
-
-                {/* IMAGE */}
-                <div
-                  className="
-                    bg-pinky-gray
-                    flex justify-center items-center
-                    p-10
-                    relative
-                    overflow-hidden
-                  "
-                >
-
-                  <div
-                    className="
-                      absolute inset-0
-                      bg-primary/5
-                      opacity-0
-                      group-hover:opacity-100
-                      transition-opacity duration-500
-                    "
-                  ></div>
-
-                  <img
-                    src={combo.image}
-                    alt={combo.name}
-                    className="
-                      h-[220px]
-                      object-contain
-                      drop-shadow-2xl
-                      group-hover:scale-105
-                      transition-transform duration-500
-                      relative z-10
-                    "
-                  />
-                </div>
-
-                {/* CONTENT */}
-                <div className="p-8 text-center">
-
-                  <h3
-                    className="
-                      font-montserrat
-                      font-black
-                      text-3xl
-                      text-primary
-                      mb-3
-                    "
-                  >
-                    {combo.name}
-                  </h3>
-
-                  <p
-                    className="
-                      font-nunito
-                      text-primary/60
-                      italic
-                      mb-6
-                    "
-                  >
-                    Tiết kiệm hơn khi mua theo combo
-                  </p>
-
-                  {/* PRICE */}
-                  <div
-                    className="
-                      flex
-                      items-end
-                      justify-center
-                      gap-4
-                      mb-8
-                    "
-                  >
-
-                    <span
-                      className="
-                        text-primary/40
-                        line-through
-                        text-xl
-                        font-medium
-                      "
-                    >
-                      {combo.originalPrice}đ
-                    </span>
-
-                    <span
-                      className="
-                        font-montserrat
-                        font-black
-                        text-4xl
-                        text-red-500
-                      "
-                    >
-                      {combo.discountPrice}đ
-                    </span>
-                  </div>
-
-                  {/* BUTTON */}
-                  <button
-                    onClick={() => handleAddCombo(combo)}
-                    className="
-                      w-full
-                      bg-primary
-                      hover:bg-accent-1
-                      text-white
-                      font-bold
-                      py-4
-                      rounded-full
-                      shadow-lg
-                      hover:shadow-2xl
-                      transition-all duration-300
-                      hover:scale-105
-                      tracking-wider
-                    "
-                  >
-                    THÊM VÀO GIỎ
-                  </button>
-                </div>
-              </div>
+      <div className="container mx-auto px-6 lg:px-16 max-w-6xl relative z-10">
+        
+        {/* LƯỚI HAI CỘT ĐỨNG YÊN TỐI GIẢN */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+          
+          {/* CỘT TRÁI: HÌNH ẢNH NỔI BẬT TRÊN NỀN TRẮNG (Chiếm 5/12 cột) */}
+          <div className="lg:col-span-5 flex justify-center relative">
+            <div className="w-full max-w-[340px] md:max-w-[450px] aspect-square flex items-center justify-center relative group">
+              
+              {/* Ảnh ly cà phê tách nền sắc nét */}
+              <img
+                src={coffeeMain}
+                alt="Revo Coffee Original"
+                className="h-[300px] md:h-[450px] object-contain drop-shadow-[10px_20px_35px_rgba(0,0,0,0.4)] group-hover:scale-105 transition-transform duration-500 z-10"
+              />
+              
+              {/* Bóng đổ chân thực tinh tế */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-44 h-4 bg-black/[0.03] rounded-full blur-lg z-0"></div>
             </div>
-          ))}
-        </Slider>
+          </div>
+
+          {/* CỘT PHẢI: NỘI DUNG CÂU CHUYỆN (Chiếm 7/12 cột) */}
+          <div className="lg:col-span-7 font-nunito text-left">
+            <span className="text-[#8c4f2b] font-bold tracking-[0.25em] uppercase text-xs block mb-3">
+              Hành trình hạt cà phê Revo
+            </span>
+            
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-nunito font-bold text-primary mb-8 leading-tight uppercase tracking-tight">
+              Giọt Đắng Khởi Đầu <br />
+              <span className="text-[#8c4f2b] font-light italic lowercase">vị</span> Đậm Nghệ Thuật
+            </h2>
+
+            {/* NỘI DUNG CÂU CHUYỆN */}
+            <div className="space-y-6 text-gray-600 text-base md:text-lg leading-relaxed font-light text-justify">
+              <p>
+                Tại <strong className="font-semibold text-black">REVO Coffee</strong>, chúng tôi không định nghĩa cà phê bằng những chiếc máy pha công nghiệp vội vã, mà gói gọn nó trong hai chữ: <span className="italic text-[#8c4f2b] font-medium">"Kiên nhẫn"</span>.
+              </p>
+              
+              <p>
+                Mỗi hạt cà phê chảy qua tách nước của bạn hôm nay đều bắt đầu từ hành trình băng qua những sườn đồi lộng gió tại đất ngàn mây LangBiang. Chúng được hái tay thủ công khi vừa chín mọng đỏ, trải qua hàng trăm giờ ủ men tự nhiên để đánh thức tầng hương tinh túy nhất của đất trời trước khi bước vào công đoạn rang củi mộc mạc.
+              </p>
+
+              {/* Khối trích dẫn tối giản trên nền trắng */}
+              <blockquote className="border-l-4 border-black pl-5 my-8 text-black font-medium italic text-lg bg-gray-50 py-4 pr-4 rounded-r-xl">
+                "Có những ngày ví tiền thật mỏng, nhưng nỗi lòng thì lại quá dày. Đó là lúc bạn cần một ngụm đắng đủ đậm để cân bằng lại thế giới."
+              </blockquote>
+
+              <p>
+                Nằm sâu trong lòng phố thị, REVO là nơi dừng chân của những tâm hồn tìm kiếm sự yên ả. Không ồn ào phô diễn, chỉ có tiếng hạt xay lách tách, hương thơm nồng nàn lan tỏa và một ly cà phê nguyên bản đủ đậm sâu để bạn nhớ mãi không quên.
+              </p>
+            </div>
+
+            {/* NÚT BẤM ĐEN/TRẮNG CHUẨN LOOKBOOK */}
+            <div className="mt-10">
+              <a
+                href="/shop"
+                className="inline-block bg-accent-1 hover:bg-[#8c4f2b] text-white text-xs font-nunito font-bold tracking-widest uppercase px-8 py-4 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 transform active:scale-95"
+              >
+                Khám phá menu thưởng thức
+              </a>
+            </div>
+          </div>
+
+        </div>
+        
       </div>
     </section>
   );
