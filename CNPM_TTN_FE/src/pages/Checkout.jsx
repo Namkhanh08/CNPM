@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
-import { Check, Info } from 'lucide-react';
+import { Check, Info, CreditCard, X, QrCode } from 'lucide-react';
 import addressData from 'vietnam-address-database';
 import axios from 'axios';
 import Giftsets from '../components/Giftsets';
 import Combos from '../components/Combos';
+import API from '../services/api';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -20,6 +21,34 @@ export default function Checkout() {
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
   const [finalTotal, setFinalTotal] = useState(0);
+  
+  // Voucher & Loyalty states
+  const [voucherCodeInput, setVoucherCodeInput] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState('');
+  const [voucherSuccess, setVoucherSuccess] = useState('');
+  const [showVNPayModal, setShowVNPayModal] = useState(false);
+  const [countdown, setCountdown] = useState(900);
+  useEffect(() => {
+    if (!showVNPayModal) return;
+    setCountdown(900);
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showVNPayModal]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleProvinceChange = async (e) => {
     const provinceName = e.target.value;
@@ -74,6 +103,9 @@ export default function Checkout() {
   const totalPrice = cart.filter(item => item.selected).reduce((total, item) => total + (item.Product?.Price * item.Quantity || 0), 0);
   // Phí ship tuỳ ý (giả lập 30.000)
   const shippingFee = 30000;
+  
+  const discount = appliedVoucher ? (appliedVoucher.DiscountAmount ?? appliedVoucher.discountAmount ?? 0) : 0;
+  const computedFinalTotal = Math.max(0, totalPrice + shippingFee - discount);
 
   const [form, setForm] = useState({
     receiverName: '',
@@ -130,6 +162,34 @@ export default function Checkout() {
       return () => clearTimeout(timeout);
     }
   }, [cart.length, orderSuccess, navigate]);
+  const handleApplyVoucher = async (e) => {
+    e.preventDefault();
+    if (!voucherCodeInput.trim()) {
+      setVoucherError('Vui lòng nhập mã giảm giá.');
+      setVoucherSuccess('');
+      return;
+    }
+    try {
+      const code = voucherCodeInput.trim().toUpperCase();
+      const res = await API.validateVoucher(code, totalPrice);
+      const validateInfo = res.data;
+      if (validateInfo.isValid) {
+        setAppliedVoucher(validateInfo);
+        setVoucherSuccess(validateInfo.message || `Áp dụng mã giảm giá thành công! Giảm ${validateInfo.discountAmount.toLocaleString('vi-VN')}đ`);
+        setVoucherError('');
+      } else {
+        setAppliedVoucher(null);
+        setVoucherError(validateInfo.message || 'Mã giảm giá không hợp lệ.');
+        setVoucherSuccess('');
+      }
+    } catch (error) {
+      setAppliedVoucher(null);
+      const msg = error.response?.data?.Message || error.response?.data?.message || 'Có lỗi xảy ra khi xác thực voucher.';
+      setVoucherError(msg);
+      setVoucherSuccess('');
+    }
+  };
+
   const handleOrder = async (e) => {
     e.preventDefault();
 
@@ -150,19 +210,29 @@ export default function Checkout() {
       ShippingWard: form.shippingWard,
       ShippingDetailAddress: form.shippingDetailAddress,
       ShippingNote: form.shippingNote,
-      PaymentMethod: paymentMethod === 'cod' ? 'COD' : 'VNPAY'
+      PaymentMethod: paymentMethod === 'cod' ? 'COD' : 'VNPAY',
+      VoucherCode: appliedVoucher ? (appliedVoucher.Code ?? appliedVoucher.code) : null
     };
 
     try {
       const res = await createOrder(payload);
       console.log('Order created:', res.data);
 
-      setFinalTotal(totalPrice + shippingFee);
+      setFinalTotal(computedFinalTotal);
       setCreatedOrder(res.data);
-      setOrderSuccess(true);
 
-      alert('Đơn hàng của bạn đã được tạo thành công!');
+      if (paymentMethod === 'vnpay') {
+        setShowVNPayModal(true);
+      } else {
+        setOrderSuccess(true);
+        alert('Đơn hàng của bạn đã được tạo thành công!');
+      }
     } catch (error) {
+      const message = error.response?.data?.Message || error.response?.data?.message;
+      if (message) {
+        alert(message);
+        return;
+      }
       console.error("Lỗi khi tạo đơn hàng:", error);
       alert('Đã có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại sau.');
     }
@@ -402,9 +472,32 @@ export default function Checkout() {
               </div>
 
               {/* Loyalty Code / Discount */}
-              <div className="flex gap-2 mb-6 border-t border-b border-gray-200 py-6">
-                <input type="text" placeholder="Mã giảm giá" className="flex-1 border border-gray-200 rounded-xl px-4 font-nunito outline-none focus:border-primary" />
-                <button className="bg-primary hover:bg-accent-1 text-white font-nunito font-bold px-6 py-3 rounded-xl hover:-translate-y-1 transition-all duration-300 hover:scale-105">ÁP DỤNG</button>
+              <div className="border-t border-b border-gray-200 py-6 mb-6">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={voucherCodeInput}
+                    onChange={(e) => setVoucherCodeInput(e.target.value)}
+                    placeholder="Mã giảm giá (ví dụ: COFFEE50)"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 font-nunito outline-none focus:border-primary uppercase"
+                  />
+                  <button
+                    onClick={handleApplyVoucher}
+                    className="bg-primary hover:bg-accent-1 text-white font-nunito font-bold px-6 py-3 rounded-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
+                  >
+                    ÁP DỤNG
+                  </button>
+                </div>
+                {voucherError && (
+                  <p className="text-red-500 font-nunito text-xs mt-2 text-left font-semibold">
+                    ⚠ {voucherError}
+                  </p>
+                )}
+                {voucherSuccess && (
+                  <p className="text-green-600 font-nunito text-xs mt-2 text-left font-semibold">
+                    ✔ {voucherSuccess}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-4 mb-8 font-nunito text-primary/80">
@@ -416,16 +509,23 @@ export default function Checkout() {
                   <span>Phí giao hàng</span>
                   <span className="font-bold">{shippingFee.toLocaleString('vi-VN')}đ</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600 font-semibold">
+                    <span>Giảm giá ({appliedVoucher?.code ?? appliedVoucher?.Code})</span>
+                    <span>-{discount.toLocaleString('vi-VN')}đ</span>
+                  </div>
+                )}
                 <div className="flex justify-between pt-4 border-t border-gray-200 items-center">
                   <span className="font-montserrat font-bold text-xl text-primary">TỔNG CỘNG</span>
-                  <span className="font-montserrat font-black text-3xl text-red-custom">{(totalPrice + shippingFee).toLocaleString('vi-VN')}đ</span>
+                  <span className="font-montserrat font-black text-3xl text-red-custom">{computedFinalTotal.toLocaleString('vi-VN')}đ</span>
                 </div>
               </div>
 
               <button
                 type="submit"
                 form="checkout-form"
-                className="w-full bg-primary text-white font-nunito font-bold py-4 rounded-full text-lg hover:bg-accent-1 shadow-lg hover:-translate-y-1 transition-all duration-300 hover:scale-110"
+                disabled={!isFormValid}
+                className="w-full bg-primary text-white font-nunito font-bold py-4 rounded-full text-lg hover:bg-accent-1 shadow-lg hover:-translate-y-1 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 ĐẶT HÀNG NGAY
               </button>
@@ -437,6 +537,129 @@ export default function Checkout() {
 
         </div>
       </div>
+
+      {/* MODAL GIẢ LẬP VNPAY */}
+      {showVNPayModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-[32px] shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 flex flex-col transform transition-all scale-100">
+            {/* Header VNPay Mockup */}
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 text-white text-center relative">
+              <h2 className="font-montserrat font-black text-2xl tracking-wider">VNPAY GATEWAY</h2>
+              <p className="text-white/80 font-nunito text-sm mt-1">Cổng thanh toán giả lập hệ thống Revo Coffee</p>
+              <div className="absolute top-4 right-4">
+                <button 
+                  onClick={() => setShowVNPayModal(false)}
+                  className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8 space-y-6 text-center">
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col items-center">
+                <span className="text-blue-800 font-nunito text-xs font-bold uppercase tracking-wider mb-1">
+                  Số tiền thanh toán
+                </span>
+                <span className="font-montserrat font-black text-3xl text-blue-900">
+                  {computedFinalTotal.toLocaleString('vi-VN')}đ
+                </span>
+                <span className="text-primary/60 font-nunito text-xs mt-2">
+                  Đơn hàng: #{createdOrder?.id || createdOrder?.Id}
+                </span>
+              </div>
+
+              {/* QR Code section */}
+              <div className="flex flex-col items-center justify-center">
+                <div className="bg-white p-4 rounded-3xl shadow-md border border-gray-100 relative">
+                  <div className="w-48 h-48 bg-gray-50 flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-200">
+                    {/* Simulated elegant QR code using SVG */}
+                    <svg viewBox="0 0 100 100" className="w-40 h-40 text-blue-900">
+                      <rect width="100" height="100" fill="none" />
+                      {/* Quiet zones & anchor points */}
+                      <rect x="5" y="5" width="20" height="20" fill="currentColor" />
+                      <rect x="8" y="8" width="14" height="14" fill="white" />
+                      <rect x="11" y="11" width="8" height="8" fill="currentColor" />
+                      
+                      <rect x="75" y="5" width="20" height="20" fill="currentColor" />
+                      <rect x="78" y="8" width="14" height="14" fill="white" />
+                      <rect x="81" y="11" width="8" height="8" fill="currentColor" />
+
+                      <rect x="5" y="75" width="20" height="20" fill="currentColor" />
+                      <rect x="8" y="78" width="14" height="14" fill="white" />
+                      <rect x="11" y="81" width="8" height="8" fill="currentColor" />
+
+                      {/* Random QR code pixels block */}
+                      <path d="M 30,5 H 40 V 15 H 30 Z M 45,5 H 55 V 10 H 45 Z M 60,5 H 70 V 20 H 60 Z" fill="currentColor" />
+                      <path d="M 30,20 H 35 V 35 H 30 Z M 40,25 H 50 V 30 H 40 Z M 55,25 H 70 V 35 H 55 Z" fill="currentColor" />
+                      <path d="M 5,30 H 15 V 45 H 5 Z M 20,35 H 25 V 50 H 20 Z M 35,40 H 45 V 60 H 35 Z" fill="currentColor" />
+                      <path d="M 50,45 H 65 V 50 H 50 Z M 70,45 H 95 V 55 H 70 Z M 80,60 H 90 V 70 H 80 Z" fill="currentColor" />
+                      <path d="M 5,55 H 10 V 70 H 5 Z M 15,60 H 30 V 65 H 15 Z M 25,70 H 30 V 75 H 25 Z" fill="currentColor" />
+                      <path d="M 50,65 H 55 V 80 H 50 Z M 60,70 H 70 V 90 H 60 Z M 75,75 H 95 V 80 H 75 Z" fill="currentColor" />
+                      <path d="M 35,80 H 45 V 95 H 35 Z M 15,85 H 25 V 90 H 15 Z M 80,85 H 90 V 95 H 80 Z" fill="currentColor" />
+                    </svg>
+                  </div>
+                  <div className="absolute inset-0 bg-blue-900/5 rounded-3xl pointer-events-none"></div>
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-xs font-nunito font-semibold text-gray-500">
+                  <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+                  Quét mã QR để thanh toán nhanh qua ứng dụng Ngân hàng
+                </div>
+              </div>
+
+              {/* Instructions and Bank Details */}
+              <div className="bg-pinky-gray/30 rounded-2xl p-4 text-left text-sm font-nunito space-y-2">
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-primary/60">Tên tài khoản:</span>
+                  <span className="font-bold text-primary">CÔNG TY CỔ PHẦN CÀ PHÊ REVO</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-primary/60">Ngân hàng:</span>
+                  <span className="font-bold text-primary">NCB Bank (Giả lập)</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-primary/60">Số tài khoản:</span>
+                  <span className="font-bold text-primary">9704198526137596</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-primary/60">Nội dung chuyển khoản:</span>
+                  <span className="font-bold text-red-500">REVO_ORDER_{createdOrder?.id || createdOrder?.Id}</span>
+                </div>
+              </div>
+
+              {/* Expiry Timer */}
+              <div className="text-sm font-nunito text-gray-500">
+                Giao dịch sẽ hết hạn sau: <span className="font-bold text-red-500">{formatTime(countdown)}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="bg-gray-50 p-6 flex flex-col gap-3 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  setShowVNPayModal(false);
+                  setOrderSuccess(true);
+                  alert('Thanh toán thành công! Đơn hàng của bạn đã chuyển sang trạng thái xử lý.');
+                }}
+                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-nunito font-bold py-3.5 rounded-full text-base transition-colors shadow-lg active:scale-95"
+              >
+                XÁC NHẬN ĐÃ THANH TOÁN (Giả lập)
+              </button>
+              <button
+                onClick={() => {
+                  setShowVNPayModal(false);
+                  alert('Giao dịch đã được hủy. Đơn hàng của bạn ở trạng thái chờ thanh toán.');
+                  setOrderSuccess(true); // Vẫn chuyển qua trang thành công để theo dõi
+                }}
+                className="w-full bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 font-nunito font-bold py-3.5 rounded-full text-base transition-colors active:scale-95"
+              >
+                HỦY GIAO DỊCH
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ using CNPM_TTN.Dtos;
 using CNPM_TTN.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace CNPM_TTN.Controllers
 {
@@ -18,6 +19,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll([FromQuery] ProductFilterDto filterDto)
         {
             if (filterDto.Page < 1 || filterDto.PageSize < 1)
@@ -37,6 +39,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var product = await _productService.GetProductByIdAsync(id);
@@ -45,7 +48,10 @@ namespace CNPM_TTN.Controllers
                 return NotFound(ApiResponse<string>.FailureResponse("Không tìm thấy sản phẩm"));
             }
 
-            return Ok(ApiResponse<ProductDetailDto>.SuccessResponse(product));
+            return new JsonResult(product, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null
+            });
         }
 
         [HttpPost]

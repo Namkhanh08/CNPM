@@ -13,6 +13,7 @@ export default function Orders() {
   const fetchOrders = useStore((state) => state.fetchOrders);
   const [activeTab, setActiveTab] = useState('all');
   const cancelOrder = useStore((state) => state.cancelOrder);
+  const completeOrder = useStore((state) => state.completeOrder);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -73,6 +74,17 @@ export default function Orders() {
     }
   };
 
+  const handleComplete = async (orderId) => {
+    if (window.confirm("Xác nhận bạn đã nhận được hàng? Đơn hàng sẽ được hoàn thành.")) {
+      try {
+        await completeOrder(orderId);
+        alert("✅ Cảm ơn bạn! Đơn hàng đã được xác nhận hoàn thành.");
+      } catch (error) {
+        alert(error.response?.data?.Message || error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!");
+      }
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen py-2 pb-20">
       <div className="container mx-auto px-4 md:px-8 max-w-5xl">
@@ -123,11 +135,11 @@ export default function Orders() {
                       order.OrderDetails.map((item, index) => (
                         <div key={index} className="flex gap-4">
                           <div className="w-20 h-20 bg-pinky-gray rounded-xl p-2 shrink-0 border border-gray-100">
-                            <img src={item.Product.ImageUrl || "https://via.placeholder.com/150"} alt={item.Product.Name} className="w-full h-full object-contain" />
+                            <img src={item.ProductImageUrl || item.Product?.ImageUrl || "https://via.placeholder.com/150"} alt={item.ProductName || item.Product?.Name || "Sản phẩm"} className="w-full h-full object-contain" />
                           </div>
                           <div className="flex-1 flex flex-col sm:flex-row sm:justify-between font-nunito text-left">
                             <div>
-                              <h4 className="font-bold text-primary text-base line-clamp-1">{item.Product.Name}</h4>
+                              <h4 className="font-bold text-primary text-base line-clamp-1">{item.ProductName || item.Product?.Name || "Sản phẩm"}</h4>
                               <span className="text-primary/60 text-sm block">Số lượng: {item.Quantity}</span>
                               <span className="text-primary/60 text-sm block">Vị: {item.FlavorNotes}</span>
                               <span className="text-primary/60 text-sm block">Kiểu xay: {translateGrind(item.GrindingOptionId) || item.GrindingOptionId}</span>
@@ -207,6 +219,17 @@ export default function Orders() {
                             </button>
                           </>
 
+                        )}
+
+                        {order.Status === 'Đang giao' && (
+                          <>
+                            <button
+                              onClick={() => handleComplete(order.Id)}
+                              className="py-2 px-6 rounded-lg font-nunito font-bold bg-green-500 text-white hover:bg-green-600 hover:-translate-y-1 transition-all duration-300 hover:scale-110 flex items-center gap-2"
+                            >
+                              ✅ Đã nhận hàng
+                            </button>
+                          </>
                         )}
 
                         {(order.Status === 'Hoàn thành' || order.Status === 'Đã hủy') && (

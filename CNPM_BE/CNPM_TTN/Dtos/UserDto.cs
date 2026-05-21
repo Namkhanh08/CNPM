@@ -63,4 +63,29 @@ namespace CNPM_TTN.Dtos
         [Range(0, 3)]
         public int UserType { get; set; }
     }
+
+    public class UpdateProfileDto
+    {
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        public string? Phone { get; set; }
+        public string? Contact { get; set; }
+        public string? Image { get; set; }
+    }
+
+    public class ChangePasswordDto
+    {
+        [Required]
+        public string CurrentPassword { get; set; } = null!;
+
+        [Required]
+        [MinLength(6)]
+        public string NewPassword { get; set; } = null!;
+    }
 }

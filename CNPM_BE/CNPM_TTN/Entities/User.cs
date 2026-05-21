@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -38,6 +38,12 @@ public partial class User
     public int UserType { get; set; }
 
     public DateTime Created { get; set; }
+
+    public int TotalPoints { get; set; } = 0;
+
+    /// <summary>"Bronze" | "Silver" | "Gold" | "Diamond"</summary>
+    [StringLength(20)]
+    public string MemberTier { get; set; } = "Bronze";
 
     [InverseProperty("User")]
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();

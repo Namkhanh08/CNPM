@@ -97,7 +97,7 @@ export default function Cart() {
                         Khối lượng: <strong className="text-primary">{item.Weight}</strong>
                       </span>
                       <button 
-                        onClick={() => {removeFromCart(item.ProductId, item.GrindingOptionId, item.FlavorNotes, item.Weight); handleRemove(item);}}
+                        onClick={() => {removeFromCart(item.Id); handleRemove(item);}}
                         className="flex items-center gap-1 text-red-400 hover:text-red-600 font-nunito text-sm w-fit"
                       >
                         <Trash2 size={16} /> Bỏ phần này
@@ -116,12 +116,12 @@ export default function Cart() {
                     <span className="md:hidden font-nunito text-sm text-primary/60">Số lượng:</span>
                     <div className="flex items-center border border-gray-200 rounded-full bg-white px-1 py-1">
                       <button 
-                        onClick={() => updateQuantity(item.ProductId, item.GrindingOptionId, item.Quantity - 1, item.FlavorNotes, item.Weight)}
+                        onClick={() => updateQuantity(item.Id, item.Quantity - 1)}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-primary/50 hover:bg-pinky-gray"
                       ><Minus size={14}/></button>
                       <span className="font-bold text-sm w-6 text-center">{item.Quantity}</span>
                       <button 
-                         onClick={() => updateQuantity(item.ProductId, item.GrindingOptionId, item.Quantity + 1, item.FlavorNotes, item.Weight)}
+                         onClick={() => updateQuantity(item.Id, item.Quantity + 1)}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-primary/50 hover:bg-pinky-gray"
                       ><Plus size={14}/></button>
                     </div>

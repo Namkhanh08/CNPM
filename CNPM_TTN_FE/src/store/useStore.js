@@ -31,29 +31,52 @@ const useStore = create(
       loadCart: async () => {
         try {
           const res = await API.getCart();
-          const items = res.data?.items || [];
+          const items = res.data?.items || res.data?.Items || [];
           const mapped = items.map(item => {
+            const normalizedItem = {
+              Id: item.id ?? item.Id,
+              ProductId: item.productId ?? item.ProductId,
+              GrindingOptionId: item.grindingOptionId ?? item.GrindingOptionId,
+              FlavorNotes: item.flavorNotes ?? item.FlavorNotes ?? 'Original',
+              Weight: item.weight ?? item.Weight ?? '250g',
+              Quantity: item.quantity ?? item.Quantity ?? 1,
+              Product: item.product ? {
+                Id: item.product.id ?? item.product.Id,
+                Name: item.product.name ?? item.product.Name,
+                Price: item.product.price ?? item.product.Price ?? 0,
+                ImageUrl: item.product.imageUrl ?? item.product.ImageUrl
+              } : (item.Product ? {
+                Id: item.Product.Id ?? item.Product.id,
+                Name: item.Product.Name ?? item.Product.name,
+                Price: item.Product.Price ?? item.Product.price ?? 0,
+                ImageUrl: item.Product.ImageUrl ?? item.Product.imageUrl
+              } : null)
+            };
+
             const existed = get().cart.find(i =>
-              i.ProductId === item.ProductId &&
-              i.GrindingOptionId === item.GrindingOptionId &&
-              i.FlavorNotes === item.FlavorNotes && 
-              i.Weight === item.Weight
+              i.ProductId === normalizedItem.ProductId &&
+              i.GrindingOptionId === normalizedItem.GrindingOptionId &&
+              i.FlavorNotes === normalizedItem.FlavorNotes && 
+              i.Weight === normalizedItem.Weight
             );
             return {
-              ...item,
+              ...normalizedItem,
               selected: existed ? existed.selected : true
             };
           });
           set({ cart: mapped });
         } catch (err) {
-          console.error("Load cart failed:", err.response?.data?.message || err.message);
+          console.error("Load cart failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+          if (err.response?.status === 401) {
+            set({ cart: [] });
+          }
         }
       },
 
       addToCart: async (product, quantity, grindType, flavorNotes, weight, receiverName, receiverPhone, shippingProvince, shippingDistrict, shippingWard, shippingDetailAddress, shippingNote) => {
         try {
           await API.addToCart({
-            productId: product.id,
+            productId: product.id ?? product.Id,
             quantity: quantity,
             grindingOptionId: grindType,
             flavorNotes: flavorNotes,
@@ -70,42 +93,32 @@ const useStore = create(
           await get().loadCart();
 
         } catch (err) {
-          console.error("Add to cart failed:", err.response?.data?.message || err.message);
+          console.error("Add to cart failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+          throw err;
         }
       },
 
-      removeFromCart: async (productId, grindType, flavorNotes, weight) => {
+      removeFromCart: async (cartItemId) => {
         try {
-          await API.removeCartItem(productId, grindType, flavorNotes, weight);
+          await API.removeCartItem(cartItemId);
           await get().loadCart();
         } catch (err) {
-          console.log("Remove item failed:", err);
+          console.error("Remove item failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+          throw err;
         }
       },
 
-      updateQuantity: async (
-        productId,
-        grindType,
-        newQuantity,
-        flavorNotes,
-        weight
-      ) => {
+      updateQuantity: async (cartItemId, newQuantity) => {
         try {
           await API.updateCartItem({
-            productId: productId,
+            cartItemId: cartItemId,
+            id: cartItemId,
             quantity: newQuantity,
-            grindingOptionId: grindType,
-            flavorNotes: flavorNotes,
-            weight: weight,
           });
+
           set((state) => ({
             cart: state.cart.map(item =>
-              (
-                item.ProductId === productId &&
-                item.GrindingOptionId === grindType &&
-                item.FlavorNotes === flavorNotes && 
-                item.Weight === weight
-              )
+              item.Id === cartItemId
                 ? {
                   ...item,
                   Quantity: Math.max(1, newQuantity)
@@ -117,7 +130,8 @@ const useStore = create(
           await get().loadCart();
 
         } catch (err) {
-          console.log("Update quantity failed:", err);
+          console.error("Update quantity failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+          throw err;
         }
       },
 
@@ -152,7 +166,7 @@ const useStore = create(
           await get().loadCart();
           return res;
         } catch (err) {
-          console.error("Create order failed:", err.response?.data?.message || err.message);
+          console.error("Create order failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
           throw err;
         }
       },
@@ -162,13 +176,23 @@ const useStore = create(
           const res = await API.getMyOrders();
           set({ orders: res.data || [] });
         } catch (err) {
-          console.error("Fetch orders failed:", err.response?.data?.message || err.message);
+          console.error("Fetch orders failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
         }
       },
 
       cancelOrder: async (orderId) => {
         await API.cancelOrder(orderId);
         await get().fetchOrders();
+      },
+
+      completeOrder: async (orderId) => {
+        const res = await API.completeOrder(orderId);
+        set((state) => ({
+          orders: state.orders.map(order =>
+            (order.Id === orderId || order.id === orderId) ? res.data : order
+          )
+        }));
+        return res.data;
       },
 
       fetchOrderById: async (id) => {
@@ -204,9 +228,33 @@ const useStore = create(
 
           console.error(
             "Update order failed:",
-            err.response?.data?.message || err.message
+            err.response?.data?.Message || err.response?.data?.message || err.message
           );
 
+          throw err;
+        }
+      },
+
+      fetchAdminOrders: async () => {
+        try {
+          const res = await API.getAdminOrders();
+          set({ orders: res.data || [] });
+        } catch (err) {
+          console.error("Fetch admin orders failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+        }
+      },
+
+      updateOrderStatus: async (id, status) => {
+        try {
+          const res = await API.updateOrderStatus(id, status);
+          set((state) => ({
+            orders: state.orders.map(order =>
+              (order.Id === id || order.id === id) ? res.data : order
+            )
+          }));
+          return res.data;
+        } catch (err) {
+          console.error("Update order status failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
           throw err;
         }
       },
@@ -220,7 +268,7 @@ const useStore = create(
             products: res.data
           });
         }catch(err){
-          console.error("Fetch products failed:", err.response?.data?.message || err.message);
+          console.error("Fetch products failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
         }
       }
 

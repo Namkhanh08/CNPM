@@ -15,10 +15,13 @@ export default function Shop() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(9);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [page, searchTerm, filterType, minPrice, maxPrice]);
 
   const CategoryMap = {
     '1': 'Arabica',
@@ -30,9 +33,19 @@ export default function Shop() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await API.getProducts();
+      const res = await API.getProducts({
+        page,
+        pageSize,
+        searchTerm: searchTerm.trim() || undefined,
+        categoryId: filterType === 'all' ? undefined : Number(filterType),
+        minPrice,
+        maxPrice,
+      });
       
+      const pageData = res.data?.data || res.data?.Data || {};
       const productList =
+        pageData.items ||
+        pageData.Items ||
         res.data?.data?.items ||
         res.data?.data?.Items ||
         res.data?.Items ||
@@ -53,6 +66,7 @@ export default function Shop() {
         stock: p.Stock ?? p.stock,
       }));
 
+      setTotalCount(pageData.totalCount || pageData.TotalCount || formattedProducts.length);
       setProducts(formattedProducts);
     } catch (err) {
       console.error("Lỗi lấy sản phẩm: ", err);
@@ -69,11 +83,14 @@ export default function Shop() {
     }));
   };
 
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
   const resetFilters = () => {
     setSearchTerm('');
     setFilterType('all');
     setMinPrice(0);
     setMaxPrice(500000);
+    setPage(1);
     setRegions({
       'Đà Lạt': false,
       'Đắk Lắk': false,
@@ -131,11 +148,11 @@ export default function Shop() {
                 type="text" 
                 placeholder="Tìm kiếm sản phẩm..." 
                 value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} 
                 className="w-full bg-transparent border-none text-sm font-nunito text-primary placeholder-gray-400 focus:outline-none"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="text-gray-400 hover:text-primary">
+                <button onClick={() => { setSearchTerm(''); setPage(1); }} className="text-gray-400 hover:text-primary">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                   </svg>
@@ -159,19 +176,19 @@ export default function Shop() {
                 <h3 className="font-montserrat font-bold text-primary mb-3">Giống cà phê</h3>
                 <div className="space-y-2 font-nunito text-primary/80">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === 'all'} onChange={() => setFilterType('all')} className="accent-accent-1" />
+                    <input type="radio" name="type" checked={filterType === 'all'} onChange={() => { setFilterType('all'); setPage(1); }} className="accent-accent-1" />
                     <span>Tất cả</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === '1'} onChange={() => setFilterType('1')} className="accent-accent-1" />
+                    <input type="radio" name="type" checked={filterType === '1'} onChange={() => { setFilterType('1'); setPage(1); }} className="accent-accent-1" />
                     <span>Arabica</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === '3'} onChange={() => setFilterType('3')} className="accent-accent-1" />
+                    <input type="radio" name="type" checked={filterType === '3'} onChange={() => { setFilterType('3'); setPage(1); }} className="accent-accent-1" />
                     <span>Robusta</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === '4'} onChange={() => setFilterType('4')} className="accent-accent-1" />
+                    <input type="radio" name="type" checked={filterType === '4'} onChange={() => { setFilterType('4'); setPage(1); }} className="accent-accent-1" />
                     <span>Fine Robusta</span>
                   </label>
                 </div>
@@ -187,7 +204,7 @@ export default function Shop() {
                     <input 
                       type="number" 
                       value={minPrice} 
-                      onChange={(e) => setMinPrice(Math.max(0, Number(e.target.value)))} 
+                      onChange={(e) => { setMinPrice(Math.max(0, Number(e.target.value))); setPage(1); }} 
                       className="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-nunito text-primary focus:outline-none focus:border-accent-1 focus:ring-1 focus:ring-accent-1"
                     />
                   </div>
@@ -197,7 +214,7 @@ export default function Shop() {
                     <input 
                       type="number" 
                       value={maxPrice} 
-                      onChange={(e) => setMaxPrice(Math.max(minPrice, Number(e.target.value)))} 
+                      onChange={(e) => { setMaxPrice(Math.max(minPrice, Number(e.target.value))); setPage(1); }} 
                       className="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-nunito text-primary focus:outline-none focus:border-accent-1 focus:ring-1 focus:ring-accent-1"
                     />
                   </div>
@@ -213,6 +230,7 @@ export default function Shop() {
                     const val = Number(e.target.value);
                     if (val >= minPrice) {
                       setMaxPrice(val);
+                      setPage(1);
                     }
                   }} 
                   className="w-full accent-accent-1 cursor-pointer mt-2"
@@ -255,7 +273,7 @@ export default function Shop() {
           <div className="w-full md:w-3/4">
             <div className="flex justify-between items-center mb-8">
               <h1 className="font-montserrat font-black text-3xl text-primary">CỬA HÀNG</h1>
-              <span className="font-nunito text-primary/70">Hiển thị {filteredProducts.length} sản phẩm</span>
+              <span className="font-nunito text-primary/70">Hiển thị {filteredProducts.length}/{totalCount} sản phẩm</span>
             </div>
 
             {error && (
@@ -298,7 +316,29 @@ export default function Shop() {
                 </button>
               </div>
             )}
-            
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white font-bold text-primary disabled:opacity-50"
+                >
+                  Truoc
+                </button>
+                <span className="px-4 py-2 font-bold text-primary">
+                  Trang {page}/{totalPages}
+                </span>
+                <button
+                  disabled={page === totalPages}
+                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white font-bold text-primary disabled:opacity-50"
+                >
+                  Sau
+                </button>
+              </div>
+            )}
+             
           </div>
 
         </div>

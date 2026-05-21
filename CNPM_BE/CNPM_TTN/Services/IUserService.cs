@@ -9,5 +9,7 @@ namespace CNPM_TTN.Services
         Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserDto dto);
         Task<ApiResponse<string>> UpdateUserAsync(string id, UpdateUserDto dto);
         Task<ApiResponse<string>> DeleteUserAsync(string id);
+        Task<ApiResponse<string>> UpdateProfileAsync(string id, UpdateProfileDto dto);
+        Task<ApiResponse<string>> ChangePasswordAsync(string id, ChangePasswordDto dto);
     }
 }

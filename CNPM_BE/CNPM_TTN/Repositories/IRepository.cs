@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Linq.Expressions;
 using CNPM_TTN.Entities;
 namespace CNPM_TTN.Repositories
@@ -24,6 +24,6 @@ namespace CNPM_TTN.Repositories
             Expression<Func<T, bool>>? filter = null,
             Expression<Func<T, object>>? orderBy = null,
             bool descending = false);
-
+        IQueryable<T> Query();
     }
 }

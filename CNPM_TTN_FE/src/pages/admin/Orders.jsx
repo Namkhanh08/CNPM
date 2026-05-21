@@ -1,32 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useStore from '../../store/useStore';
 import { Search, Filter, Truck, CheckCircle, XCircle } from 'lucide-react';
 
+const mapDbStatusToKey = (dbStatus) => {
+  if (!dbStatus) return 'unpaid';
+  const statusLower = dbStatus.toLowerCase();
+  if (statusLower === 'chờ thanh toán') return 'unpaid';
+  if (statusLower === 'chờ xử lý' || statusLower === 'đang chuẩn bị') return 'processing';
+  if (statusLower === 'đang giao' || statusLower === 'đang giao hàng') return 'shipping';
+  if (statusLower === 'hoàn thành' || statusLower === 'hoàn thiện') return 'completed';
+  if (statusLower === 'đã hủy') return 'cancelled';
+  
+  if (statusLower === 'unpaid') return 'unpaid';
+  if (statusLower === 'processing') return 'processing';
+  if (statusLower === 'shipping') return 'shipping';
+  if (statusLower === 'completed') return 'completed';
+  if (statusLower === 'cancelled') return 'cancelled';
+  
+  return statusLower;
+};
+
+const mapKeyToDbStatus = (key) => {
+  switch (key) {
+    case 'unpaid': return 'Chờ thanh toán';
+    case 'processing': return 'Chờ xử lý';
+    case 'shipping': return 'Đang giao';
+    case 'completed': return 'Hoàn thành';
+    case 'cancelled': return 'Đã hủy';
+    default: return key;
+  }
+};
+
 export default function AdminOrders() {
-  const orders = useStore(state => state.orders);
+  const orders = useStore(state => state.orders || []);
+  const fetchAdminOrders = useStore(state => state.fetchAdminOrders);
   const updateOrderStatus = useStore(state => state.updateOrderStatus);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  useEffect(() => {
+    if (fetchAdminOrders) {
+      fetchAdminOrders();
+    }
+  }, [fetchAdminOrders]);
+
   const filteredOrders = orders.filter(order => {
+    const id = order.Id ?? order.id ?? '';
+    const name = order.ReceiverName ?? order.shippingInfo?.name ?? '';
+    const status = mapDbStatusToKey(order.Status ?? order.status);
+
     const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (order.shippingInfo?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      String(id).toLowerCase().includes(searchTerm.toLowerCase()) || 
+      name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || status === statusFilter;
+    
     return matchesSearch && matchesStatus;
   });
 
-  const handleUpdateStatus = (id, newStatus) => {
-    if(window.confirm(`Xác nhận chuyển đơn ${id} sang trạng thái mới?`)) {
-      updateOrderStatus(id, newStatus);
+  const handleUpdateStatus = async (id, newStatus) => {
+    if(window.confirm(`Xác nhận chuyển đơn #${id} sang trạng thái mới?`)) {
+      try {
+        await updateOrderStatus(id, mapKeyToDbStatus(newStatus));
+      } catch (err) {
+        alert(err.response?.data?.message || err.message || "Cập nhật thất bại!");
+      }
     }
   };
 
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
     { value: 'unpaid', label: 'Chờ thanh toán (COD/VNPAY Pending)' },
-    { value: 'processing', label: 'Đang chuẩn bị (Đã TN/COD)' },
+    { value: 'processing', label: 'Đang chuẩn bị (Chờ xử lý)' },
     { value: 'shipping', label: 'Đang giao hàng' },
     { value: 'completed', label: 'Đã hoàn thành' },
     { value: 'cancelled', label: 'Đã hủy' },
@@ -75,58 +121,69 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredOrders.map(order => (
-                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-primary">{order.id}</td>
-                  <td className="px-6 py-4 text-gray-500">{new Date(order.date).toLocaleString('vi-VN')}</td>
-                  <td className="px-6 py-4">
-                    <div className="font-bold">{order.shippingInfo?.name}</div>
-                    <div className="text-xs text-gray-500">{order.shippingInfo?.phone}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                     <div className="max-w-[200px] truncate" title={order.items.map(i => `${i.name} (x${i.quantity})`).join(', ')}>
-                       {order.items.map(i => `${i.name} (x${i.quantity})`).join(', ')}
-                     </div>
-                  </td>
-                  <td className="px-6 py-4 font-bold text-accent-1 text-right">
-                    {order.total.toLocaleString('vi-VN')}₫
-                    <div className="text-xs text-gray-400 font-normal">{order.paymentMethod === 'vnpay' ? 'VNPAY' : 'COD'}</div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                         order.status === 'unpaid' ? 'bg-orange-100 text-orange-600' :
-                         order.status === 'processing' ? 'bg-blue-100 text-blue-600' :
-                         order.status === 'shipping' ? 'bg-indigo-100 text-indigo-600' :
-                         order.status === 'completed' ? 'bg-green-100 text-green-600' :
-                         'bg-red-100 text-red-600'
-                       }`}>
-                         {order.status === 'unpaid' ? 'Chờ thanh toán' :
-                          order.status === 'processing' ? 'Đang xử lý' :
-                          order.status === 'shipping' ? 'Đang giao' :
-                          order.status === 'completed' ? 'Hoàn thiện' : 'Đã hủy'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                     <div className="flex items-center justify-center gap-2">
-                       {order.status === 'processing' && (
-                         <button onClick={() => handleUpdateStatus(order.id, 'shipping')} className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors" title="Giao cho vận chuyển">
-                           <Truck size={18} />
-                         </button>
-                       )}
-                       {order.status === 'shipping' && (
-                         <button onClick={() => handleUpdateStatus(order.id, 'completed')} className="p-1.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-lg transition-colors" title="Báo cáo hoàn thành">
-                           <CheckCircle size={18} />
-                         </button>
-                       )}
-                       {order.status !== 'completed' && order.status !== 'cancelled' && (
-                         <button onClick={() => handleUpdateStatus(order.id, 'cancelled')} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-colors" title="Hủy đơn">
-                           <XCircle size={18} />
-                         </button>
-                       )}
-                     </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredOrders.map(order => {
+                const id = order.Id ?? order.id;
+                const orderDate = order.OrderDate ?? order.orderDate ?? order.date;
+                const receiverName = order.ReceiverName ?? order.shippingInfo?.name ?? 'Guest';
+                const receiverPhone = order.ReceiverPhone ?? order.shippingInfo?.phone ?? '';
+                const details = order.OrderDetails ?? order.orderDetails ?? order.items ?? [];
+                const totalAmount = order.TotalAmount ?? order.totalAmount ?? order.total ?? 0;
+                const paymentMethod = order.PaymentMethod ?? order.paymentMethod ?? 'COD';
+                const status = mapDbStatusToKey(order.Status ?? order.status);
+
+                return (
+                  <tr key={id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-primary">#{id}</td>
+                    <td className="px-6 py-4 text-gray-500">{orderDate ? new Date(orderDate).toLocaleString('vi-VN') : 'N/A'}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-bold">{receiverName}</div>
+                      <div className="text-xs text-gray-500">{receiverPhone}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                       <div className="max-w-[200px] truncate" title={details.map(i => `${i.ProductName ?? i.productName ?? i.name ?? '' } (x${i.Quantity ?? i.quantity})`).join(', ')}>
+                         {details.map(i => `${i.ProductName ?? i.productName ?? i.name ?? '' } (x${i.Quantity ?? i.quantity})`).join(', ')}
+                       </div>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-accent-1 text-right">
+                      {totalAmount.toLocaleString('vi-VN')}₫
+                      <div className="text-xs text-gray-400 font-normal">{paymentMethod}</div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                           status === 'unpaid' ? 'bg-orange-100 text-orange-600' :
+                           status === 'processing' ? 'bg-blue-100 text-blue-600' :
+                           status === 'shipping' ? 'bg-indigo-100 text-indigo-600' :
+                           status === 'completed' ? 'bg-green-100 text-green-600' :
+                           'bg-red-100 text-red-600'
+                         }`}>
+                           {status === 'unpaid' ? 'Chờ thanh toán' :
+                            status === 'processing' ? 'Đang xử lý' :
+                            status === 'shipping' ? 'Đang giao' :
+                            status === 'completed' ? 'Hoàn thiện' : 'Đã hủy'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                       <div className="flex items-center justify-center gap-2">
+                         {status === 'processing' && (
+                           <button onClick={() => handleUpdateStatus(id, 'shipping')} className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors" title="Giao cho vận chuyển">
+                             <Truck size={18} />
+                           </button>
+                         )}
+                         {status === 'shipping' && (
+                           <button onClick={() => handleUpdateStatus(id, 'completed')} className="p-1.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-lg transition-colors" title="Báo cáo hoàn thành">
+                             <CheckCircle size={18} />
+                           </button>
+                         )}
+                         {status !== 'completed' && status !== 'cancelled' && (
+                           <button onClick={() => handleUpdateStatus(id, 'cancelled')} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-colors" title="Hủy đơn">
+                             <XCircle size={18} />
+                           </button>
+                         )}
+                       </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan="7" className="px-6 py-12 text-center text-gray-500 font-bold">

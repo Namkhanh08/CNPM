@@ -95,6 +95,48 @@ namespace CNPM_TTN.Services
             return ApiResponse<string>.SuccessResponse(null, "Xoa nguoi dung thanh cong");
         }
 
+        public async Task<ApiResponse<string>> UpdateProfileAsync(string id, UpdateProfileDto dto)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                return ApiResponse<string>.FailureResponse("Khong tim thay nguoi dung");
+            }
+
+            user.Name = dto.Name.Trim();
+            user.Email = dto.Email.Trim();
+            user.Phone = dto.Phone;
+            user.Contact = dto.Contact;
+            if (!string.IsNullOrEmpty(dto.Image))
+            {
+                user.Image = dto.Image;
+            }
+
+            await _userRepository.UpdateAsync(user);
+            return ApiResponse<string>.SuccessResponse(null, "Cap nhat ho so ca nhan thanh cong");
+        }
+
+        public async Task<ApiResponse<string>> ChangePasswordAsync(string id, ChangePasswordDto dto)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                return ApiResponse<string>.FailureResponse("Khong tim thay nguoi dung");
+            }
+
+            // Verify current password
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.Password))
+            {
+                return ApiResponse<string>.FailureResponse("Mat khau hien tai khong chinh xac");
+            }
+
+            // Hash and update new password
+            user.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            await _userRepository.UpdateAsync(user);
+
+            return ApiResponse<string>.SuccessResponse(null, "Thay doi mat khau thanh cong");
+        }
+
         private static UserDto MapToDto(User user)
         {
             return new UserDto

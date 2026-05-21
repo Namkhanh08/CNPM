@@ -22,6 +22,7 @@ import AdminOrders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
 import AdminBatches from './pages/admin/Batches';
 import AdminInventory from './pages/admin/Inventory';
+import AdminUsers from './pages/admin/Users';
 
 import './App.css';
 
@@ -52,6 +53,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="batches" element={<AdminBatches />} />
             <Route path="inventory" element={<AdminInventory />} />
           </Route>

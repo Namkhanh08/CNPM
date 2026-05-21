@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -47,6 +47,12 @@ public partial class Order
 
     [StringLength(255)]
     public string? PaymentMethod { get; set; }
+
+    [StringLength(50)]
+    public string? VoucherCode { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal DiscountAmount { get; set; } = 0;
 
     [InverseProperty("Order")]
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

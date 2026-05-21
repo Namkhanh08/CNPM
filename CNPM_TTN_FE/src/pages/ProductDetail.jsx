@@ -110,15 +110,15 @@ export default function ProductDetail() {
           ← Quay lại cửa hàng
         </button>
 
-        <div className="bg-white rounded-[40px] p-8 lg:p-12 shadow-2xl flex flex-col lg:flex-row gap-12">
+        <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-2xl flex flex-col lg:flex-row gap-10">
           {/* Product Image Gallery */}
-          <div className="w-full lg:w-1/2 flex items-center justify-center bg-pinky-gray rounded-3xl p-8 relative">
+          <div className="w-full lg:w-[44%] flex items-center justify-center bg-pinky-gray rounded-3xl p-5 lg:p-6 relative aspect-square max-h-[420px]">
             <div className="absolute inset-0 bg-accent-1/5 opacity-50 rounded-3xl"></div>
-            <img src={product.image} alt={product.name} className="max-h-[500px] object-contain drop-shadow-2xl relative z-10 hover:scale-110 transition-all duration-300" />
+            <img src={product.image} alt={product.name} className="w-full h-full max-h-[340px] object-contain drop-shadow-2xl relative z-10 hover:scale-105 transition-all duration-300" />
           </div>
 
           {/* Product Details Form */}
-          <div className="w-full lg:w-1/2 flex flex-col">
+          <div className="w-full lg:flex-1 flex flex-col">
             <h1 className="font-montserrat font-black text-4xl lg:text-5xl text-primary mb-2 line-clamp-1 text-center">{product.name}</h1>
             <p className="font-nunito text-primary/70 mb-6 text-lg text-center">{product.desc}</p>
             <div className="font-montserrat font-black text-3xl text-accent-1 mb-8 text-center">{product.price.toLocaleString('vi-VN')}đ</div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Archive, Database, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Archive, Database, LogOut, Users } from 'lucide-react';
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -10,6 +10,7 @@ export default function AdminLayout() {
     { name: 'Tổng quan', path: '/admin', icon: <LayoutDashboard size={20} /> },
     { name: 'Đơn hàng', path: '/admin/orders', icon: <ShoppingCart size={20} /> },
     { name: 'Sản phẩm', path: '/admin/products', icon: <Package size={20} /> },
+    { name: 'Nguoi dung', path: '/admin/users', icon: <Users size={20} /> },
     { name: 'Lô rang', path: '/admin/batches', icon: <Database size={20} /> },
     { name: 'Tồn kho', path: '/admin/inventory', icon: <Archive size={20} /> },
   ];

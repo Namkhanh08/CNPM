@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +36,12 @@ public partial class ShopCoffeeContext : DbContext
     public virtual DbSet<RoastingBatch> RoastingBatches { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<Voucher> Vouchers { get; set; }
+
+    public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
+
+    public virtual DbSet<Subscription> Subscriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -126,6 +132,32 @@ public partial class ShopCoffeeContext : DbContext
                 .HasConstraintName("FK_RoastingBatches_Products");
 
             entity.HasOne(d => d.User).WithMany(p => p.RoastingBatches).HasConstraintName("FK_RoastingBatches_Users");
+        });
+
+        modelBuilder.Entity<Voucher>(entity =>
+        {
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<LoyaltyPoint>(entity =>
+        {
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_LoyaltyPoints_Users");
+        });
+
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Subscriptions_Users");
+
+            entity.HasOne(d => d.Product).WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Subscriptions_Products");
         });
 
         OnModelCreatingPartial(modelBuilder);

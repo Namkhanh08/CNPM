@@ -35,20 +35,26 @@ export default function LoginModal({ isOpen, onClose }) {
                 Email: loginName,
                 Password: password
             });
-            const result = res.data;  
+            const result = res.data;
+            const success = result.Success ?? result.success;
+            const message = result.Message ?? result.message;
+            const token = result.Data ?? result.data;
+            const userId = result.UserId ?? result.userId;
+            const userName = result.UserName ?? result.userName;
+            const userType = result.UserType ?? result.userType;
 
-            if (result.success) {            
+            if (success) {            
                 // 1. Lưu thông tin vào Storage
-                localStorage.setItem("token", result.data);
-                localStorage.setItem("userId", result.userId);
-                localStorage.setItem("userName", result.userName);
-                localStorage.setItem("userType", result.userType); 
+                localStorage.setItem("token", token);
+                localStorage.setItem("userId", userId);
+                localStorage.setItem("userName", userName);
+                localStorage.setItem("userType", userType); 
 
                 // 2. Cập nhật State toàn cục
                 setUser({
-                    id: result.userId,
-                    userName: result.userName,
-                    userType: result.userType,
+                    id: userId,
+                    userName: userName,
+                    userType: userType,
                 });   
 
                 // 3. Load dữ liệu người dùng
@@ -58,7 +64,7 @@ export default function LoginModal({ isOpen, onClose }) {
                 onClose(); // Đóng Modal
 
                 // 4. Điều hướng dựa trên UserType (0: User, 1: Admin, 2: Staff, 3: Stock)
-                const role = parseInt(result.userType);
+                const role = parseInt(userType);
                 if (role === 1) {
                     navigate("/admin"); 
                 } else if (role === 2) {
@@ -69,9 +75,13 @@ export default function LoginModal({ isOpen, onClose }) {
                     navigate("/"); 
                 }
             } else {
-                alert(result.message);
+                alert(message || "Dang nhap that bai");
             }
         } catch (err) {
+            if (err.response?.data?.Message) {
+                alert(err.response.data.Message);
+                return;
+            }
             alert(err.response?.data?.message || "Đăng nhập thất bại");
         } finally {
             setLoading(false);
@@ -90,12 +100,14 @@ export default function LoginModal({ isOpen, onClose }) {
                 Password: regData.password,
                 UserType: 0 // Mặc định là khách hàng
             });
+            const success = res.data.Success ?? res.data.success;
+            const message = res.data.Message ?? res.data.message;
             
-            if (res.data.success) {
+            if (success) {
                 alert("Đăng ký thành công! Hãy đăng nhập.");
                 setIsActive(false); // Chuyển sang form Login
             } else {
-                alert(res.data.message);
+                alert(message || "Dang ky loi");
             }
         } catch (err) {
             alert(err.response?.data?.message || "Đăng ký lỗi");
