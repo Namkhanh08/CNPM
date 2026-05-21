@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CNPM_TTN.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Roles = "1,3")]
+    [Authorize]
     [ApiController]
     public class InventoryController : ControllerBase
     {
@@ -19,6 +19,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet("products")]
+        [Authorize(Roles = "1,2,3")]
         public async Task<IActionResult> GetProducts()
         {
             var products = await _inventoryService.GetProductsAsync();
@@ -26,6 +27,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpPost("update-stock")]
+        [Authorize(Roles = "1,3")]
         public async Task<IActionResult> UpdateStock([FromBody] UpdateStockDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -39,6 +41,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet("logs")]
+        [Authorize(Roles = "1,3")]
         public async Task<IActionResult> GetLogs()
         {
             var logs = await _inventoryService.GetInventoryLogsAsync();
@@ -46,6 +49,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpPost("create-batch-detail")]
+        [Authorize(Roles = "1,2")]
         public async Task<IActionResult> CreateBatchDetail([FromBody] CreateRoastingBatchDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -59,6 +63,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet("batches")]
+        [Authorize(Roles = "1,2")]
         public async Task<IActionResult> GetBatches()
         {
             var batches = await _inventoryService.GetRoastingBatchesAsync();
@@ -66,6 +71,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpGet("total-stock")]
+        [Authorize(Roles = "1,3")]
         public async Task<IActionResult> GetTotalStock()
         {
             var totalStock = await _inventoryService.GetTotalStockAsync();

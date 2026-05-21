@@ -33,7 +33,7 @@ namespace CNPM_TTN.Controllers
 
         // Admin lấy danh sách vouchers
         [HttpGet]
-        [Authorize(Roles = "1,3")]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> GetAll()
         {
             var result = await _voucherService.GetAllAsync();
@@ -42,7 +42,7 @@ namespace CNPM_TTN.Controllers
 
         // Admin tạo voucher mới
         [HttpPost]
-        [Authorize(Roles = "1,3")]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> Create([FromBody] CreateVoucherDto dto)
         {
             if (!ModelState.IsValid)
@@ -56,7 +56,7 @@ namespace CNPM_TTN.Controllers
 
         // Admin cập nhật voucher
         [HttpPut("{id}")]
-        [Authorize(Roles = "1,3")]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> Update(int id, [FromBody] CreateVoucherDto dto)
         {
             if (!ModelState.IsValid)
@@ -70,7 +70,7 @@ namespace CNPM_TTN.Controllers
 
         // Admin xóa voucher
         [HttpDelete("{id}")]
-        [Authorize(Roles = "1,3")]
+        [Authorize(Roles = "1")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _voucherService.DeleteAsync(id);

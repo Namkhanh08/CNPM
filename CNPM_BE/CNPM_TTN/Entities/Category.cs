@@ -19,4 +19,7 @@ public partial class Category
 
     [InverseProperty("Category")]
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+
+    [InverseProperty("Category")]
+    public virtual ICollection<RawMaterial> RawMaterials { get; set; } = new List<RawMaterial>();
 }

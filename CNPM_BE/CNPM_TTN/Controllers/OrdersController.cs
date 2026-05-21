@@ -164,7 +164,7 @@ namespace CNPM_TTN.Controllers
         // ================= ADMIN/STAFF ENDPOINTS =================
 
         [HttpGet("api/admin/orders")]
-        [Authorize(Roles = "1")] // Chỉ Admin/Staff (Role = 1) được xem
+        [Authorize(Roles = "1,2")]
         public async Task<IActionResult> GetAdminOrders()
         {
             var orders = await _orderService.GetAllOrdersAsync();
@@ -173,7 +173,7 @@ namespace CNPM_TTN.Controllers
         }
 
         [HttpPut("api/admin/orders/{id}/status")]
-        [Authorize(Roles = "1")] // Chỉ Admin/Staff (Role = 1) được sửa
+        [Authorize(Roles = "1,2")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] OrderStatusUpdateDto dto)
         {
             try

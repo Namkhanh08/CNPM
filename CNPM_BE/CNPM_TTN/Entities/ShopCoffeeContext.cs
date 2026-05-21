@@ -33,6 +33,12 @@ public partial class ShopCoffeeContext : DbContext
 
     public virtual DbSet<ProductDetail> ProductDetails { get; set; }
 
+    public virtual DbSet<RawMaterial> RawMaterials { get; set; }
+
+    public virtual DbSet<RawMaterialLog> RawMaterialLogs { get; set; }
+
+    public virtual DbSet<InventoryReceipt> InventoryReceipts { get; set; }
+
     public virtual DbSet<RoastingBatch> RoastingBatches { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -121,6 +127,44 @@ public partial class ShopCoffeeContext : DbContext
                 .HasConstraintName("FK_ProductDetails_Products");
         });
 
+        modelBuilder.Entity<RawMaterial>(entity =>
+        {
+            entity.Property(e => e.Unit).HasDefaultValue("kg");
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.RawMaterials)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RawMaterials_Categories");
+        });
+
+        modelBuilder.Entity<InventoryReceipt>(entity =>
+        {
+            entity.HasOne(d => d.RawMaterial).WithMany(p => p.InventoryReceipts)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_InventoryReceipts_RawMaterials");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.InventoryReceipts)
+                .HasForeignKey(d => d.CreatedBy)
+                .HasConstraintName("FK_InventoryReceipts_Users");
+        });
+
+        modelBuilder.Entity<RawMaterialLog>(entity =>
+        {
+            entity.Property(e => e.ModifiedDate).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.RawMaterial).WithMany(p => p.RawMaterialLogs)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RawMaterialLogs_RawMaterials");
+
+            entity.HasOne(d => d.InventoryReceipt).WithMany(p => p.RawMaterialLogs)
+                .HasForeignKey(d => d.ReceiptId)
+                .HasConstraintName("FK_RawMaterialLogs_Receipts");
+
+            entity.HasOne(d => d.ModifiedByNavigation).WithMany(p => p.RawMaterialLogs)
+                .HasForeignKey(d => d.ModifiedBy)
+                .HasConstraintName("FK_RawMaterialLogs_Users");
+        });
+
         modelBuilder.Entity<RoastingBatch>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Roasting__3214EC071AC1EAA3");
@@ -130,6 +174,9 @@ public partial class ShopCoffeeContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.RoastingBatches)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RoastingBatches_Products");
+
+            entity.HasOne(d => d.InventoryReceipt).WithMany(p => p.RoastingBatches)
+                .HasConstraintName("FK_RoastingBatches_InventoryReceipts");
 
             entity.HasOne(d => d.User).WithMany(p => p.RoastingBatches).HasConstraintName("FK_RoastingBatches_Users");
         });

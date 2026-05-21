@@ -1,179 +1,151 @@
-import React, { useEffect, useState } from 'react';
-import { Archive, Plus, X } from 'lucide-react';
-import API from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { Archive, Plus, X, Loader2, History, User } from 'lucide-react';
+import API from '../../services/api'; 
 
 export default function Inventory() {
-  const [products, setProducts] = useState([]);
+  const [inventory, setInventory] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [restockForm, setRestockForm] = useState(null);
   const [restockAmount, setRestockAmount] = useState('');
-  const [reason, setReason] = useState('');
 
-  const fetchInventory = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const [productRes, logRes] = await Promise.all([
+      const [prodRes, logRes] = await Promise.all([
         API.getInventory(),
-        API.getInventoryLogs(),
+        API.getLogs()
       ]);
-
-      const productList =
-        productRes.data?.data ||
-        productRes.data?.Data ||
-        productRes.data ||
-        [];
-
-      const logList =
-        logRes.data?.data ||
-        logRes.data?.Data ||
-        logRes.data ||
-        [];
-
-      setProducts(Array.isArray(productList) ? productList : []);
+      const productList = prodRes.data?.data || prodRes.data?.Data || prodRes.data || [];
+      const logList = logRes.data?.data || logRes.data?.Data || logRes.data || [];
+      setInventory(Array.isArray(productList) ? productList : []);
       setLogs(Array.isArray(logList) ? logList : []);
-      setError(null);
     } catch (err) {
-      console.error('Lay ton kho that bai:', err);
-      setError('Khong the tai du lieu ton kho.');
-      setProducts([]);
-      setLogs([]);
+      console.error("Lỗi khi đồng bộ dữ liệu:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInventory();
+    fetchData();
   }, []);
 
-  const handleRestock = async (event, productId) => {
-    event.preventDefault();
-    const quantity = Number(restockAmount);
-
-    if (!quantity) return;
-
-    try {
-      await API.updateStock({
-        productId,
-        quantity,
-        reason: reason.trim() || 'Cap nhat ton kho',
-      });
-
-      setRestockForm(null);
-      setRestockAmount('');
-      setReason('');
-      await fetchInventory();
-    } catch (err) {
-      alert(err.response?.data?.message || err.response?.data?.Message || 'Cap nhat kho that bai');
+  const handleRestock = async (e, id) => {
+    e.preventDefault();
+    if(restockAmount && Number(restockAmount) > 0) {
+      try {
+        await API.updateStock(id, parseInt(restockAmount), "Nhập kho định kỳ");
+        setRestockForm(null);
+        setRestockAmount('');
+        fetchData();
+      } catch (err) {
+        alert("Lỗi nhập kho: " + (err.response?.data || "Vui lòng kiểm tra quyền hạn."));
+      }
     }
   };
 
-  const totalStock = products.reduce((sum, item) => sum + (item.stock ?? item.Stock ?? 0), 0);
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Loader2 className="animate-spin text-primary mb-2" size={40} />
+        <p className="text-gray-500 font-nunito">Đang tải dữ liệu hệ thống...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="font-montserrat font-bold text-2xl">Quan ly ton kho</h1>
-          <p className="font-nunito text-primary/60 text-sm mt-1">Theo doi va cap nhat so luong san pham trong kho.</p>
-        </div>
-        <div className="bg-white border border-gray-100 rounded-2xl px-5 py-3 shadow-sm">
-          <p className="text-xs text-primary/60 font-bold">Tong ton</p>
-          <p className="text-xl font-montserrat font-black text-primary">{totalStock.toLocaleString('vi-VN')}</p>
+    <div className="animate-fade-in p-4 md:p-6 space-y-8">
+      <div>
+        <h1 className="font-montserrat font-bold text-2xl">Quản Lý Tồn Kho</h1>
+        <p className="font-nunito text-primary/60 text-sm mt-1">Theo dõi và cập nhật số lượng tồn kho sản phẩm.</p>
+      </div>
+
+      {/* Bảng sản phẩm - Đã bỏ lọc */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 className="font-montserrat font-bold text-lg mb-6 flex items-center gap-2">
+          <Archive size={20} className="text-primary" /> Tất cả sản phẩm
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 font-nunito">
+          {inventory.map(item => (
+            <div key={item.id ?? item.Id} className="flex justify-between items-center pb-4 border-b border-gray-100 last:border-0">
+              <div>
+                <div className="font-bold text-primary">{item.name ?? item.Name}</div>
+                <div className="text-xs text-gray-500">Mã: {item.id ?? item.Id}</div>
+              </div>
+              <div className="text-right flex flex-col items-end gap-2">
+                <div className="font-bold text-xl text-primary">
+                  {item.stock ?? item.Stock ?? 0} <span className="text-sm font-normal text-gray-400">{item.unit ?? item.Unit ?? 'kg'}</span>
+                </div>
+                {restockForm === (item.id ?? item.Id) ? (
+                  <form onSubmit={(e) => handleRestock(e, item.id ?? item.Id)} className="flex items-center gap-2">
+                    <input 
+                      type="number" autoFocus value={restockAmount}
+                      onChange={(e) => setRestockAmount(e.target.value)}
+                      className="w-20 px-2 py-1 text-sm border border-primary rounded-md outline-none" 
+                      placeholder="+ SL" 
+                    />
+                    <button type="submit" className="bg-primary text-white p-1 rounded hover:bg-accent-1"><Plus size={16}/></button>
+                    <button type="button" onClick={() => setRestockForm(null)} className="text-gray-400 p-1 hover:text-red-500"><X size={16}/></button>
+                  </form>
+                ) : (
+                  <button 
+                    onClick={() => setRestockForm(item.id ?? item.Id)}
+                    className="text-xs text-accent-1 font-bold flex items-center hover:bg-accent-1/10 px-2 py-1 rounded"
+                  >
+                    <Plus size={12} className="mr-1"/> Nhập thêm
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-center font-bold">
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="font-montserrat font-bold text-lg mb-6 flex items-center gap-2">
-            <Archive size={20} className="text-green-600" /> San pham trong kho
+      {/* Nhật ký thay đổi kho */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+          <h2 className="font-montserrat font-bold text-lg flex items-center gap-2">
+            <History size={20} className="text-accent-1" /> Nhật ký thay đổi kho
           </h2>
-
-          <div className="space-y-4 font-nunito">
-            {loading ? (
-              <div className="text-center py-10 text-primary/60">Dang tai du lieu...</div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-10 text-primary/60">Chua co san pham trong kho.</div>
-            ) : products.map((item) => {
-              const id = item.id ?? item.Id;
-              const name = item.name ?? item.Name;
-              const stock = item.stock ?? item.Stock ?? 0;
-
-              return (
-                <div key={id} className="flex justify-between items-center pb-4 border-b border-gray-50 last:border-0">
-                  <div>
-                    <div className="font-bold text-primary">{name}</div>
-                    <div className="text-xs text-gray-500">Ma SP: {id}</div>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <div className={`font-bold text-xl ${stock <= 10 ? 'text-orange-500' : 'text-primary'}`}>
-                      {stock.toLocaleString('vi-VN')}
-                    </div>
-
-                    {restockForm === id ? (
-                      <form onSubmit={(event) => handleRestock(event, id)} className="flex flex-wrap justify-end items-center gap-2">
-                        <input
-                          type="number"
-                          autoFocus
-                          value={restockAmount}
-                          onChange={(event) => setRestockAmount(event.target.value)}
-                          className="w-24 px-2 py-1 text-sm border border-primary rounded-md outline-none"
-                          placeholder="+/- SL"
-                        />
-                        <input
-                          value={reason}
-                          onChange={(event) => setReason(event.target.value)}
-                          className="w-40 px-2 py-1 text-sm border border-gray-200 rounded-md outline-none"
-                          placeholder="Ly do"
-                        />
-                        <button type="submit" className="bg-primary text-white p-1 rounded hover:bg-accent-1"><Plus size={16} /></button>
-                        <button type="button" onClick={() => setRestockForm(null)} className="text-gray-400 p-1 hover:text-red-500"><X size={16} /></button>
-                      </form>
-                    ) : (
-                      <button
-                        onClick={() => setRestockForm(id)}
-                        className="text-xs text-accent-1 font-bold flex items-center hover:bg-accent-1/10 px-2 py-1 rounded transition-colors"
-                      >
-                        <Plus size={12} className="mr-1" /> Cap nhat kho
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="font-montserrat font-bold text-lg mb-6">Nhat ky gan day</h2>
-          <div className="space-y-4">
-            {logs.length === 0 ? (
-              <div className="text-center py-8 text-primary/60">Chua co nhat ky kho.</div>
-            ) : logs.slice(0, 8).map((log) => {
-              const id = log.id ?? log.Id;
-              const productName = log.productName ?? log.ProductName;
-              const action = log.action ?? log.Action;
-              const change = log.quantityChange ?? log.QuantityChange ?? 0;
-
-              return (
-                <div key={id} className="border-b border-gray-50 pb-3 last:border-0">
-                  <div className="font-bold text-sm text-primary line-clamp-1">{productName}</div>
-                  <div className="text-xs text-primary/60">{action}</div>
-                  <div className={`text-sm font-bold ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {change >= 0 ? '+' : ''}{change}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left font-nunito text-sm">
+            <thead className="bg-gray-50 text-gray-600 font-bold">
+              <tr>
+                <th className="px-6 py-4">Thời gian</th>
+                <th className="px-6 py-4">Sản phẩm</th>
+                <th className="px-6 py-4">Hành động</th>
+                <th className="px-6 py-4 text-center">Thay đổi</th>
+                <th className="px-6 py-4">Người thực hiện</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {logs.length > 0 ? logs.map((log) => (
+                <tr key={log.id ?? log.Id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 text-gray-500">
+                    {new Date(log.modifiedDate ?? log.ModifiedDate).toLocaleString('vi-VN')}
+                  </td>
+                  <td className="px-6 py-4 font-bold text-primary">{log.productName ?? log.ProductName}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${
+                      (log.action ?? log.Action) === 'NHAP_KHO' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {(log.action ?? log.Action) === 'NHAP_KHO' ? 'Nhập kho' : 'Rang Cà Phê'}
+                    </span>
+                  </td>
+                  <td className={`px-6 py-4 text-center font-bold ${(log.quantityChange ?? log.QuantityChange ?? 0) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {(log.quantityChange ?? log.QuantityChange ?? 0) > 0 ? `+${log.quantityChange ?? log.QuantityChange}` : log.quantityChange ?? log.QuantityChange}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 flex items-center gap-1">
+                    <User size={14} className="opacity-50" /> {log.modifiedBy ?? log.ModifiedBy ?? 'N/A'}
+                  </td>
+                </tr>
+              )) : (
+                <tr><td colSpan="5" className="text-center py-10 text-gray-400 italic">Chưa có lịch sử thay đổi nào</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

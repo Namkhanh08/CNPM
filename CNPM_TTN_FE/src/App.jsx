@@ -50,12 +50,18 @@ function App() {
         {/* Lớp Admin Routing */}
         <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="batches" element={<AdminBatches />} />
-            <Route path="inventory" element={<AdminInventory />} />
+            <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="users" element={<AdminUsers />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={[1, 2]} />}>
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="batches" element={<AdminBatches />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={[1, 3]} />}>
+              <Route path="inventory" element={<AdminInventory />} />
+            </Route>
           </Route>
         </Route>
         

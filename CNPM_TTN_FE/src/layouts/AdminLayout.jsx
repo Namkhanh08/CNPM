@@ -8,6 +8,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const logout = useStore((state) => state.logout);
+  const userType = Number(localStorage.getItem("userType") ?? 0);
 
   const handleLogout = () => {
     logout();
@@ -19,13 +20,13 @@ export default function AdminLayout() {
   };
 
   const navItems = [
-    { name: 'Tổng quan', path: '/admin', icon: <LayoutDashboard size={20} /> },
-    { name: 'Đơn hàng', path: '/admin/orders', icon: <ShoppingCart size={20} /> },
-    { name: 'Sản phẩm', path: '/admin/products', icon: <Package size={20} /> },
-    { name: 'Nguoi dung', path: '/admin/users', icon: <Users size={20} /> },
-    { name: 'Lô rang', path: '/admin/batches', icon: <Database size={20} /> },
-    { name: 'Tồn kho', path: '/admin/inventory', icon: <Archive size={20} /> },
-  ];
+    { name: 'Tổng quan', path: '/admin', icon: <LayoutDashboard size={20} />, roles: [1] },
+    { name: 'Đơn hàng', path: '/admin/orders', icon: <ShoppingCart size={20} />, roles: [1, 2] },
+    { name: 'Sản phẩm', path: '/admin/products', icon: <Package size={20} />, roles: [1] },
+    { name: 'Người dùng', path: '/admin/users', icon: <Users size={20} />, roles: [1] },
+    { name: 'Lô rang', path: '/admin/batches', icon: <Database size={20} />, roles: [1, 2] },
+    { name: 'Tồn kho', path: '/admin/inventory', icon: <Archive size={20} />, roles: [1, 3] },
+  ].filter((item) => item.roles.includes(userType));
 
   return (
     <div className="flex bg-gray-50 min-h-screen font-nunito text-primary">

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CNPM_TTN.Controllers
 {
     [Route("api/admin/dashboard")]
-    [Authorize(Roles = "1,2,3")]
+    [Authorize(Roles = "1")]
     [ApiController]
     public class DashboardController : ControllerBase
     {

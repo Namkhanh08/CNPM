@@ -51,9 +51,15 @@ public partial class User
     [InverseProperty("User")]
     public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
 
+    [InverseProperty("CreatedByNavigation")]
+    public virtual ICollection<InventoryReceipt> InventoryReceipts { get; set; } = new List<InventoryReceipt>();
+
     [InverseProperty("User")]
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     [InverseProperty("User")]
     public virtual ICollection<RoastingBatch> RoastingBatches { get; set; } = new List<RoastingBatch>();
+
+    [InverseProperty("ModifiedByNavigation")]
+    public virtual ICollection<RawMaterialLog> RawMaterialLogs { get; set; } = new List<RawMaterialLog>();
 }

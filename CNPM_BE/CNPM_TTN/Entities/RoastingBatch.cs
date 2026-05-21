@@ -30,6 +30,14 @@ public partial class RoastingBatch
     [StringLength(450)]
     public string? UserId { get; set; }
 
+    public int? InventoryReceiptId { get; set; }
+
+    public double? OutputWeight { get; set; }
+
+    [ForeignKey("InventoryReceiptId")]
+    [InverseProperty("RoastingBatches")]
+    public virtual InventoryReceipt? InventoryReceipt { get; set; }
+
     [ForeignKey("ProductId")]
     [InverseProperty("RoastingBatches")]
     public virtual Product Product { get; set; } = null!;
