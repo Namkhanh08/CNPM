@@ -10,6 +10,8 @@ export default function Shop() {
   const [maxPrice, setMaxPrice] = useState(500000);
   const [availableRegions, setAvailableRegions] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
@@ -174,25 +176,50 @@ export default function Shop() {
               
               {/* Giống cà phê */}
               <div className="mb-6">
-                <h3 className="font-montserrat font-bold text-primary mb-3">Giống cà phê</h3>
-                <div className="space-y-2 font-nunito text-primary/80">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === 'all'} onChange={() => { setFilterType('all'); setPage(1); }} className="accent-accent-1" />
-                    <span>Tất cả</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === '1'} onChange={() => { setFilterType('1'); setPage(1); }} className="accent-accent-1" />
-                    <span>Arabica</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === '3'} onChange={() => { setFilterType('3'); setPage(1); }} className="accent-accent-1" />
-                    <span>Robusta</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="type" checked={filterType === '4'} onChange={() => { setFilterType('4'); setPage(1); }} className="accent-accent-1" />
-                    <span>Fine Robusta</span>
-                  </label>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsTypeOpen(value => !value)}
+                  className="w-full flex items-center justify-between gap-3 text-left"
+                  aria-expanded={isTypeOpen}
+                >
+                  <span>
+                    <span className="font-montserrat font-bold text-primary block">Giống cà phê</span>
+                    <span className="font-nunito text-xs text-primary/50 mt-1 block">
+                      {filterType === 'all' ? 'Tất cả giống cà phê' : CategoryMap[filterType]}
+                    </span>
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className={`w-5 h-5 text-primary/50 transition-transform ${isTypeOpen ? 'rotate-180' : ''}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                {isTypeOpen && (
+                  <div className="space-y-2 font-nunito text-primary/80 mt-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="type" checked={filterType === 'all'} onChange={() => { setFilterType('all'); setPage(1); }} className="accent-accent-1" />
+                      <span>Tất cả</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="type" checked={filterType === '1'} onChange={() => { setFilterType('1'); setPage(1); }} className="accent-accent-1" />
+                      <span>Arabica</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="type" checked={filterType === '3'} onChange={() => { setFilterType('3'); setPage(1); }} className="accent-accent-1" />
+                      <span>Robusta</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="type" checked={filterType === '4'} onChange={() => { setFilterType('4'); setPage(1); }} className="accent-accent-1" />
+                      <span>Fine Robusta</span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Lọc theo giá sản phẩm với thanh điều chỉnh (Slider) */}
@@ -244,31 +271,56 @@ export default function Shop() {
               </div>
 
               <div className="mb-6 border-t border-gray-50 pt-4">
-                <h3 className="font-montserrat font-bold text-primary mb-3">Vùng trồng</h3>
-                <div className="space-y-2 font-nunito text-primary/80">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="region" 
-                      checked={selectedRegion === 'all'} 
-                      onChange={() => handleRegionChange('all')}
-                      className="accent-accent-1" 
-                    /> 
-                    <span>Tất cả</span>
-                  </label>
-                  {availableRegions.map(region => (
-                    <label key={region} className="flex items-center gap-2 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setIsRegionOpen(value => !value)}
+                  className="w-full flex items-center justify-between gap-3 text-left"
+                  aria-expanded={isRegionOpen}
+                >
+                  <span>
+                    <span className="font-montserrat font-bold text-primary block">Vùng trồng</span>
+                    <span className="font-nunito text-xs text-primary/50 mt-1 block">
+                      {selectedRegion === 'all' ? 'Tất cả vùng trồng' : selectedRegion}
+                    </span>
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className={`w-5 h-5 text-primary/50 transition-transform ${isRegionOpen ? 'rotate-180' : ''}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                {isRegionOpen && (
+                  <div className="space-y-2 font-nunito text-primary/80 mt-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input 
                         type="radio" 
-                        name="region"
-                        checked={selectedRegion === region} 
-                        onChange={() => handleRegionChange(region)}
+                        name="region" 
+                        checked={selectedRegion === 'all'} 
+                        onChange={() => handleRegionChange('all')}
                         className="accent-accent-1" 
                       /> 
-                      <span>{region}</span>
+                      <span>Tất cả</span>
                     </label>
-                  ))}
-                </div>
+                    {availableRegions.map(region => (
+                      <label key={region} className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="region"
+                          checked={selectedRegion === region} 
+                          onChange={() => handleRegionChange(region)}
+                          className="accent-accent-1" 
+                        /> 
+                        <span>{region}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button 
