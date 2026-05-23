@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Tất cả đều đi qua Gateway
 const api = axios.create({
-    baseURL: "http://localhost:5096",
+    baseURL: "https://localhost:7117/api",
     headers: {
         "Content-Type": "application/json"
     },

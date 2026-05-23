@@ -8,6 +8,10 @@ import image2 from '../assets/img/section2/image2.png';
 import image3 from '../assets/img/section2/image3.png';
 import image4 from '../assets/img/section2/image4.png';
 import image5 from '../assets/img/section2/image5.png';
+import { LuPercent } from "react-icons/lu";
+import { BsFillTicketPerforatedFill } from "react-icons/bs";
+import { MdOutlineLocalShipping } from "react-icons/md";
+import { IoBagCheck } from "react-icons/io5";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -21,6 +25,23 @@ export default function ProductDetail() {
   const [grindType, setGrindType] = useState(null);
   const [flavorNotes, setFlavorNotes] = useState('Original');
   const [weights, setWeight] = useState("250g");
+  // const [publicVouchers, setPublicVouchers] = useState([]);
+
+  // useEffect(() => {
+
+  //   const fetchPublicVouchers = async () => {
+  //     try {
+  //       const res = await API.getPublicVouchers();
+  //       setPublicVouchers(res.data);
+
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchPublicVouchers();
+
+  // }, []);
 
 
   const ImageMap = {
@@ -63,19 +84,19 @@ export default function ProductDetail() {
 
         const p = res.data;
         const formatted = {
-          id: p.Id,
-          name: p.product?.Name,
-          desc: p.product?.Description,
-          price: p.product?.Price,
-          image: p.product?.ImageUrl,
-          region: p.Region,
-          process: p.Process,
-          roast: p.Roast,
-          flavorNotes: p.FlavorNotes,
-          type: p.product?.CategoryId,
-          grindingOptions: p.GrindingOption || [],
-          weight: p.Weight,
-          height: p.Height
+          id: p.id,
+          name: p.product?.name,
+          desc: p.product?.description,
+          price: p.product?.price,
+          image: p.product?.imageUrl,
+          region: p.region,
+          process: p.process,
+          roast: p.roast,
+          flavorNotes: p.flavorNotes,
+          type: p.product?.categoryId,
+          grindingOptions: p.grindingOptions || [],
+          weight: p.weight,
+          height: p.height
         };
         setProduct(formatted);
       } catch (err) {
@@ -98,7 +119,7 @@ export default function ProductDetail() {
       return;
     }
     try {
-      await addToCart(product, quantity, grindType.Id, flavorNotes, weights);
+      await addToCart(product, quantity, grindType.id, flavorNotes, weights);
       alert("Sản phẩm đã được thêm vào giỏ hàng!");
     } catch (err) {
       console.error("Lỗi thêm vào giỏ hàng: ", err);
@@ -135,7 +156,8 @@ export default function ProductDetail() {
           <div className="w-full lg:w-1/2 flex flex-col">
             <h1 className="font-montserrat font-black text-4xl lg:text-5xl text-primary mb-2 line-clamp-1 text-center">{product.name}</h1>
             <p className="font-nunito text-primary/70 mb-6 text-lg text-center">{product.desc}</p>
-            <div className="font-montserrat font-black text-3xl text-accent-1 mb-8 text-center">{product.price.toLocaleString('vi-VN')}đ</div>
+            <div className="font-montserrat font-black text-3xl text-accent-1 mb-8 text-center">{product.price}đ</div>
+
 
             {/* Spec Table */}
             <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8 font-nunito text-sm border-t border-b border-accent-1 py-6 text-center">
@@ -189,22 +211,63 @@ export default function ProductDetail() {
 
             {/* GrindType Selecttion */}
             <div className='mb-8 border-t border-accent-1 pt-6'>
-              <h3 className='font-montserrat font-bold text-primary mb-4 uppercase'>Chọn kiểu xay</h3>
+              <h3 className='font-montserrat font-bold text-primary mb-4 uppercase text-center'>Chọn kiểu xay</h3>
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
                 {grindOptions.map((grind) => (
                   <button
-                    key={grind.Id}
+                    key={grind.id}
                     onClick={() => setGrindType(grind)}
-                    className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${grindType?.Id === grind.Id
+                    className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${grindType?.id === grind.id
                       ? 'border-primary bg-primary text-white shadow-md'
                       : 'border-gray-200 text-primary/70 hover:border-primary/50'
                       }`}
                   >
-                    {grind.Name}
+                    {grind.name}
                   </button>
                 ))}
               </div>
             </div>
+            
+            {/* Vouchers
+            <div className="mb-8 border-t border-accent-1 pt-4">
+
+              <h3 className="font-montserrat font-bold text-primary mb-4 text-center uppercase flex justify-center items-center gap-2">
+                <LuPercent size={20}/> Ưu đãi hôm nay
+              </h3>
+
+              <div className="flex gap-3 overflow-x-auto pb-2">
+
+                {publicVouchers.map((voucher) => (
+
+                  <div
+                    key={voucher.id}
+                    className="min-w-[180px]  text-primatry bg-accent-1/20 rounded-2xl p-2 shadow-lg shrink-0 text-center"
+                  >
+                    <div className="text-sm opacity-90 mt-1 flex gap-2 items-center justify-center">
+                      {voucher.discountType === 'percent' && (
+                        <>
+                          <BsFillTicketPerforatedFill size={20}/> Giảm {voucher.discountPreview}% tối đa!{" "}
+                        </>
+                      )}
+
+                      {voucher.discountType === 'fixed' && (
+                        <>
+                          <BsFillTicketPerforatedFill size={20}/>{voucher.title}
+                        </>
+                      )}
+
+                      {voucher.discountType === 'shipping' && (
+                        <>
+                          <MdOutlineLocalShipping size={20}/> Miễn phí vận chuyển !!!
+                        </>
+                      )}
+                    </div>
+
+                  </div>
+                ))}
+
+              </div>
+            </div> */}
 
             {/* Quantity and Actions */}
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
@@ -231,7 +294,12 @@ export default function ProductDetail() {
             </div>
 
             {/* Link to Subscription */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center flex items-center justify-center">
+              <button onClick={() => navigate('/subscription')} className="text-primary/80 font-nunito font-bold hover:underline flex items-center gap-2">
+                <IoBagCheck size={20}/> Thanh toán khi giao hàng - Hoàn tiền tức thì - Trả hàng thuận tiện
+              </button>
+            </div>
+            <div className="mt-3 text-center">
               <button onClick={() => navigate('/subscription')} className="text-accent-1 font-nunito font-bold hover:underline">
                 Hoặc đăng ký gói giao định kỳ (Tiết kiệm 15%)
               </button>

@@ -1,13 +1,12 @@
-//ĐÂY LÀ CODE CŨ XỬ LÝ API
-
-
-
-
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import API from '../services/api';
 console.log("USESTORE FILE RUNNING");
+console.log("API imported:", API);
+console.log("getDashboard:", API.getDashboard);
+console.log("getVouchers:", API.getAvailableVouchers);
+console.log("API KEYS:", Object.keys(API));
+console.log("QUIZ API EXISTS:", typeof API.getQuizMatchedProducts);
 
 const useStore = create(
   persist(
@@ -16,7 +15,23 @@ const useStore = create(
       user: null,
       orders: [],
       products: [],
+      dashboard: null,
+      totalItems: 0,
+      currentPage: 1,
 
+
+      vouchers: [],
+      voucherStats: {
+        activeCount: 0,
+        usedTodayCount: 0,
+        freeshipCount: 0
+      },
+      availableVouchers: [],
+      publicVouchers: [],
+      shipperOrders: [],
+
+
+      //USERS
       setUser: (user) => set({ user }),
 
       logout: () => {
@@ -28,6 +43,8 @@ const useStore = create(
         });
       },
 
+
+      //CARTS
       loadCart: async () => {
         try {
           const res = await API.getCart();
@@ -36,7 +53,7 @@ const useStore = create(
             const existed = get().cart.find(i =>
               i.ProductId === item.ProductId &&
               i.GrindingOptionId === item.GrindingOptionId &&
-              i.FlavorNotes === item.FlavorNotes && 
+              i.FlavorNotes === item.FlavorNotes &&
               i.Weight === item.Weight
             );
             return {
@@ -103,7 +120,7 @@ const useStore = create(
               (
                 item.ProductId === productId &&
                 item.GrindingOptionId === grindType &&
-                item.FlavorNotes === flavorNotes && 
+                item.FlavorNotes === flavorNotes &&
                 item.Weight === weight
               )
                 ? {
@@ -124,111 +141,40 @@ const useStore = create(
       clearCart: () => set({ cart: [] }),
 
       getTotalQuantity: () =>
-        get().cart.reduce((total, item) => total + item.Quantity, 0),
+        get().cart.reduce((total, item) => total + item.quantity, 0),
 
       getTotalQuantityOrder: () =>
-        get().orders.reduce((total, order) => {
-          const orderQty = order.OrderDetails.reduce(
-            (sum, detail) => sum + detail.Quantity,
+        (get().orders || []).reduce((total, order) => {
+
+          const details = order?.OrderDetails || [];
+
+          const orderQty = details.reduce(
+            (sum, detail) => sum + (detail?.Quantity || 0),
             0
           );
 
           return total + orderQty;
+
         }, 0),
 
       toggleSelected: (productId, grindType, flavorNotes, weight) =>
         set((state) => ({
           cart: state.cart.map((item) =>
-            item.ProductId == productId && item.FlavorNotes == flavorNotes && item.GrindingOptionId == grindType && item.Weight == weight
+            item.productId == productId && item.flavorNotes == flavorNotes && item.grindingOptionId == grindType && item.weight == weight
               ? { ...item, selected: !item.selected }
               : item)
         })),
 
-      createOrder: async (payload) => {
-        try {
-          const res = await API.createOrder(payload);
-
-          await get().fetchOrders();
-          await get().loadCart();
-          return res;
-        } catch (err) {
-          console.error("Create order failed:", err.response?.data?.message || err.message);
-          throw err;
-        }
-      },
-
-      fetchOrders: async () => {
-        try {
-          const res = await API.getMyOrders();
-          set({ orders: res.data || [] });
-        } catch (err) {
-          console.error("Fetch orders failed:", err.response?.data?.message || err.message);
-        }
-      },
-
-      cancelOrder: async (orderId) => {
-        await API.cancelOrder(orderId);
-        await get().fetchOrders();
-      },
-
-      fetchOrderById: async (id) => {
-        try {
-          const res = await API.getOrderById(id);
-          set((state) => ({
-            orders: state.orders.find(o => o.Id === res.data.Id)
-              ? state.orders.map(o => o.Id === res.data.Id ? res.data : o)
-              : [...state.orders, res.data]
-          }));
-          return res.data;
-        } catch (err) {
-          console.error("Fetch order detail failed:", err);
-        }
-      },
-
-      updateOrder: async (id, payload) => {
-        try {
-
-          const res = await API.updateOrder(id, payload);
-
-          set((state) => ({
-            orders: state.orders.map(order =>
-              order.Id === id
-                ? res.data
-                : order
-            )
-          }));
-
-          return res.data;
-
-        } catch (err) {
-
-          console.error(
-            "Update order failed:",
-            err.response?.data?.message || err.message
-          );
-
-          throw err;
-        }
-      },
-
-      fetchProducts: async () => {
-        try{
-          const res = await API.getProducts();
-          console.log("PRODUCT API:", res.data);
-
-          set({
-            products: res.data
-          });
-        }catch(err){
-          console.error("Fetch products failed:", err.response?.data?.message || err.message);
-        }
-      }
-
-
-
     }),
     {
       name: 'revo-coffee-storage',
+      version: 5,
+      partialize: (state) => ({
+        cart: state.cart,
+        user: state.user,
+        orders: state.orders,
+        dashboard: state.dashboard
+      })
     }
   )
 );
