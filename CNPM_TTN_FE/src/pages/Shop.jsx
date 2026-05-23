@@ -359,7 +359,11 @@ export default function Shop() {
                     <p className="text-sm font-nunito text-primary/60 mb-4 line-clamp-2">{product.description}</p>
                     <div className="flex items-center justify-between mt-4 border-t border-gray-50 pt-4">
                       <span className="font-montserrat font-bold text-lg text-primary">{product.price.toLocaleString('vi-VN')}đ</span>
-                      <Link to={`/product/${product.id}`} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-nunito font-bold hover:bg-accent-1 transition-colors">
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="bg-primary text-white px-4 py-2 rounded-full text-sm font-nunito font-bold hover:bg-accent-1 transition-colors min-w-[130px] text-center"
+                        style={{ color: '#ffffff' }}
+                      >
                         XEM CHI TIẾT
                       </Link>
                     </div>

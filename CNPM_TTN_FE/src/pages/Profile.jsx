@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import useStore from "../store/useStore";
 import API from "../services/api";
-import { Edit3, Key, Lock, Mail, MapPin, Phone, Save, User, Award, Calendar } from "lucide-react";
+import { Edit3, Key, Lock, Mail, MapPin, Phone, Save, User, Award, Calendar, ClipboardCopy } from "lucide-react";
 
 const roleLabels = {
     0: "Khách hàng",
@@ -81,6 +81,7 @@ export default function Profile() {
     const handleRedeemPoints = async (e) => {
         e.preventDefault();
         setRedeemMessage({ text: "", type: "" });
+        setRedeemedVoucherCode("");
         if (redeemPointsAmount < 100 || redeemPointsAmount % 100 !== 0) {
             setRedeemMessage({ text: "Số điểm đổi phải là bội số của 100 (tối thiểu 100 điểm).", type: "error" });
             return;
@@ -98,7 +99,6 @@ export default function Profile() {
                 // Data trong ApiResponse: res.data.Data là VoucherDto
                 const voucherCode = res.data?.Data?.Code ?? res.data?.data?.code ?? res.data?.VoucherCode ?? res.data?.voucherCode;
                 setRedeemedVoucherCode(voucherCode ?? "");
-                setRedeemMessage({ text: `Đổi điểm thành công! Mã voucher của bạn: ${voucherCode ?? '(kiểm tra email)'}`, type: "success" });
                 fetchLoyaltyInfo(); // Refresh points
             } else {
                 setRedeemMessage({ text: message || "Đổi điểm thất bại.", type: "error" });
@@ -551,36 +551,31 @@ export default function Profile() {
                                                 Bạn có thể quy đổi điểm thành các voucher giảm giá. Mỗi 100 điểm đổi được voucher 10,000đ.
                                             </p>
 
-                                            {redeemMessage.text && (
-                                                <div className={`p-4 mb-4 rounded-xl text-sm font-bold ${
-                                                    redeemMessage.type === "success"
-                                                        ? "bg-green-50 text-green-700 border border-green-200"
-                                                        : "bg-red-50 text-red-700 border border-red-200"
-                                                }`}>
-                                                    <p>{redeemMessage.text}</p>
-                                                    {redeemMessage.type === "success" && redeemedVoucherCode && (
-                                                        <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                                                            <div className="flex items-center gap-2 bg-white border border-green-300 rounded-lg px-3 py-2 flex-1">
-                                                                <span className="font-mono font-black text-green-800 tracking-widest text-base flex-1">{redeemedVoucherCode}</span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        navigator.clipboard.writeText(redeemedVoucherCode);
-                                                                        alert(`Đã copy mã: ${redeemedVoucherCode}`);
-                                                                    }}
-                                                                    className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-1 rounded-md transition-colors"
-                                                                >
-                                                                    📋 Copy
-                                                                </button>
-                                                            </div>
-                                                            <a
-                                                                href="/checkout"
-                                                                className="text-center bg-[#7F5539] hover:bg-[#5C3D2E] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-                                                            >
-                                                                → Dùng ngay
-                                                            </a>
-                                                        </div>
-                                                    )}
+                                            {/* Hiển thị lỗi nếu có */}
+                                            {redeemMessage.text && redeemMessage.type === "error" && (
+                                                <div className="p-4 mb-4 rounded-2xl bg-red-50 text-red-700 border border-red-200 text-sm font-bold">
+                                                    {redeemMessage.text}
+                                                </div>
+                                            )}
+
+                                            {/* Hiển thị duy nhất mã voucher và ký hiệu sao chép khi đổi thành công */}
+                                            {redeemedVoucherCode && (
+                                                <div className="mb-4 flex items-center justify-between rounded-xl bg-green-50 border border-green-150 p-4 gap-3">
+                                                    <span className="font-mono font-black text-green-800 tracking-widest text-lg break-all">
+                                                        {redeemedVoucherCode}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(redeemedVoucherCode);
+                                                            alert(`Đã copy mã: ${redeemedVoucherCode}`);
+                                                        }}
+                                                        className="text-green-700 hover:text-green-950 transition-colors p-1"
+                                                        title="Sao chép mã voucher"
+                                                        aria-label="Sao chép mã voucher"
+                                                    >
+                                                        <ClipboardCopy size={22} />
+                                                    </button>
                                                 </div>
                                             )}
 

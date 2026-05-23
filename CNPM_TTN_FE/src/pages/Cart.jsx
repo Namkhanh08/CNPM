@@ -43,8 +43,11 @@ export default function Cart() {
         <p className="font-nunito text-accent-1 text-base mb-8 max-w-md text-center">
           Hãy khám phá thêm các sản phẩm cà phê tuyệt hảo hoặc thử các gói subscription độc đáo của chúng tôi nhé.
         </p>
-        <Link to="/shop" className="bg-primary text-white font-nunito font-bold py-4 rounded-full px-12 hover:bg-accent-1 hover:-translate-y-1 transition-all duration-300 hover:scale-110">
-          ĐI ĐẾN CỬA HÀNG
+        <Link
+          to="/shop"
+          className="inline-flex items-center justify-center bg-[#415167] text-white font-nunito font-bold py-4 rounded-full px-10 hover:bg-[#c7a17a] hover:text-white hover:-translate-y-1 transition-all duration-300 hover:scale-110"
+        >
+          <span className="text-white">ĐI ĐẾN CỬA HÀNG</span>
         </Link>
       </div>
     );
