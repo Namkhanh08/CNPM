@@ -1,0 +1,85 @@
+﻿using System;
+using System.Collections.Generic;
+using CNPM_TTN.Repositories;
+using CNPM_TTN.Entities;
+
+
+namespace CNPM_TTN.Services
+{
+    public class CartService
+    {
+        private readonly CartRepository _cartRepo;
+
+        public CartService(CartRepository cartRepo)
+        {
+            _cartRepo = cartRepo;
+        }
+
+        public Cart? GetCart(string userId)
+        {
+            var cart = _cartRepo.FindByUserId(userId);
+            if(cart == null)
+            {
+                return null;
+            }
+            var items = _cartRepo.GetCartItemsByUser(userId);
+            cart.Items = items;
+            return cart;
+        }
+
+        public void AddToCart (string userId, int productId, int quantity, int grindingOptionId, string? flavorNotes, string? weight)
+        {
+            if(quantity <= 0)
+            {
+                throw new Exception("Số lượng phải lớn hơn 0!!!");
+            }
+
+            var cart = _cartRepo.FindByUserId(userId);
+
+            if (cart == null)
+            {
+                _cartRepo.CreateCart(userId);
+                cart = _cartRepo.FindByUserId(userId);
+            }
+
+            var cartItem = _cartRepo.FindByCartAndProduct(cart!.Id, productId, quantity, flavorNotes, weight);
+            if(cartItem != null)
+            {
+                int newQuantity = cartItem.Quantity + quantity;
+                _cartRepo.UpdateQuantity(userId, cartItem.ProductId, newQuantity, grindingOptionId, flavorNotes, weight);
+
+            }
+            else
+            {
+                var newItem = new CartItem
+                {
+                    CartId = cart.Id,
+                    ProductId = productId,
+                    Quantity = quantity,
+                    GrindingOptionId = grindingOptionId,
+                    FlavorNotes = flavorNotes,
+                    Weight = weight
+                };
+                _cartRepo.AddItem(newItem);
+            }
+        }
+
+        public void UpdateCartItem(string userId, int productId, int quantity, int grindingOptionId, string? flavorNotes, string? weight)
+        {
+            if(quantity <= 0)
+            {
+                _cartRepo.DeleteItem(productId, grindingOptionId, flavorNotes, weight);
+
+            }
+            else
+            {
+                _cartRepo.UpdateQuantity(userId, productId, quantity, grindingOptionId, flavorNotes, weight);
+            }
+        }
+
+        public void RemoveItem(int productId, int grindingOptionId, string? flavorNotes, string? weight)
+        {
+            _cartRepo.DeleteItem(productId, grindingOptionId, flavorNotes, weight);
+        }
+    }
+}
