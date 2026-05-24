@@ -10,5 +10,7 @@ namespace CNPM_TTN.Services
         Task<ProductDto> CreateProductAsync(CreateProductDto dto);
         Task<bool> UpdateProductAsync(int id, UpdateProductDto dto);
         Task<bool> DeleteProductAsync(int id);
+        Task<TraceabilityResultDto?> GetProductTraceabilityAsync(int productId);
+        Task<TraceabilityResultDto?> GetBatchTraceabilityAsync(string batchCode);
     }
 }

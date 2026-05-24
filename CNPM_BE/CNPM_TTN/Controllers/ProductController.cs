@@ -96,5 +96,31 @@ namespace CNPM_TTN.Controllers
 
             return Ok(ApiResponse<string>.SuccessResponse(null, "Xóa sản phẩm thành công"));
         }
+
+        [HttpGet("{id}/traceability")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTraceability(int id)
+        {
+            var result = await _productService.GetProductTraceabilityAsync(id);
+            if (result == null)
+            {
+                return NotFound(ApiResponse<string>.FailureResponse("Không tìm thấy thông tin truy xuất nguồn gốc của sản phẩm này"));
+            }
+
+            return Ok(ApiResponse<TraceabilityResultDto>.SuccessResponse(result));
+        }
+
+        [HttpGet("/api/traceability/batch/{batchCode}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetBatchTraceability(string batchCode)
+        {
+            var result = await _productService.GetBatchTraceabilityAsync(batchCode);
+            if (result == null)
+            {
+                return NotFound(ApiResponse<string>.FailureResponse("Không tìm thấy thông tin truy xuất nguồn gốc của lô rang này"));
+            }
+
+            return Ok(ApiResponse<TraceabilityResultDto>.SuccessResponse(result));
+        }
     }
 }

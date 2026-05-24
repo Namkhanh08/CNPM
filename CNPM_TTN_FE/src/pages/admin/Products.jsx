@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, Eye, X, Camera } from 'lucide-react';
 import API from '../../services/api';
+import { getImageUrl, handleImageError } from '../../utils/imageUrl';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -18,8 +19,21 @@ export default function AdminProducts() {
     productDetail: {
       region: "", process: "", roast: "", flavorNotes: "",
       acidityLevel: 0, bitternessLevel: 0, bodyLevel: 0,
-      bestTime: "", matchTags: ""
+      bestTime: "", matchTags: "", traceabilityData: ""
     }
+  });
+
+  const normalizeDetail = (source = {}) => ({
+    region: source.region ?? source.Region ?? "",
+    process: source.process ?? source.Process ?? "",
+    roast: source.roast ?? source.Roast ?? "",
+    flavorNotes: source.flavorNotes ?? source.FlavorNotes ?? "",
+    acidityLevel: source.acidityLevel ?? source.AcidityLevel ?? 0,
+    bitternessLevel: source.bitternessLevel ?? source.BitternessLevel ?? 0,
+    bodyLevel: source.bodyLevel ?? source.BodyLevel ?? 0,
+    bestTime: source.bestTime ?? source.BestTime ?? "",
+    matchTags: source.matchTags ?? source.MatchTags ?? "",
+    traceabilityData: source.traceabilityData ?? source.TraceabilityData ?? ""
   });
 
   const fetchData = async () => {
@@ -44,24 +58,34 @@ export default function AdminProducts() {
   useEffect(() => { fetchData(); }, []);
 
 
-  const handleOpenModal = (mode, product = null) => {
+  const handleOpenModal = async (mode, product = null) => {
     setModalMode(mode);
     if (product) {
- 
-      setFormData({
-        ...product,
-        id: product.id ?? product.Id,
-        name: product.name ?? product.Name ?? "",
-        price: product.price ?? product.Price ?? 0,
-        stock: product.stock ?? product.Stock ?? 0,
-        categoryId: product.categoryId ?? product.CategoryId ?? "",
-        description: product.description ?? product.Description ?? "",
-        imageUrl: product.imageUrl ?? product.ImageUrl ?? "",
-        productDetail: product.details || product.Details || product.productDetail || { 
-          region: "", process: "", roast: "", flavorNotes: "",
-          acidityLevel: 0, bitternessLevel: 0, bodyLevel: 0,
-          bestTime: "", matchTags: ""
+      const id = product.id ?? product.Id;
+      let sourceProduct = product;
+
+      if (mode === 'view' || mode === 'edit') {
+        try {
+          const res = await API.getProductById(id);
+          sourceProduct = res.data?.data || res.data?.Data || res.data || product;
+        } catch (err) {
+          console.error("Không thể tải chi tiết sản phẩm:", err);
         }
+      }
+
+      const baseProduct = sourceProduct.Product ?? sourceProduct.product ?? sourceProduct;
+      const sourceDetail = sourceProduct.details || sourceProduct.Details || sourceProduct.productDetail || sourceProduct.ProductDetail || sourceProduct;
+
+      setFormData({
+        ...sourceProduct,
+        id,
+        name: baseProduct.name ?? baseProduct.Name ?? "",
+        price: baseProduct.price ?? baseProduct.Price ?? 0,
+        stock: baseProduct.stock ?? baseProduct.Stock ?? 0,
+        categoryId: baseProduct.categoryId ?? baseProduct.CategoryId ?? "",
+        description: baseProduct.description ?? baseProduct.Description ?? "",
+        imageUrl: baseProduct.imageUrl ?? baseProduct.ImageUrl ?? "",
+        productDetail: normalizeDetail(sourceDetail)
       });
     } else {
 
@@ -71,7 +95,7 @@ export default function AdminProducts() {
         productDetail: {
           region: "", process: "", roast: "", flavorNotes: "",
           acidityLevel: 0, bitternessLevel: 0, bodyLevel: 0,
-          bestTime: "", matchTags: ""
+          bestTime: "", matchTags: "", traceabilityData: ""
         }
       });
     }
@@ -169,7 +193,12 @@ export default function AdminProducts() {
               ) : filteredProducts.map(prod => (
                 <tr key={prod.id ?? prod.Id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
-                    <img src={`http://localhost:5126${prod.imageUrl ?? prod.ImageUrl ?? ""}`} className="w-12 h-12 object-cover rounded-lg border" alt="" />
+                    <img
+                      src={getImageUrl(prod.imageUrl ?? prod.ImageUrl)}
+                      onError={handleImageError}
+                      className="w-12 h-12 object-cover rounded-lg border"
+                      alt=""
+                    />
                   </td>
                   <td className="px-6 py-4 font-bold text-primary">{prod.name ?? prod.Name}</td>
                   <td className="px-6 py-4">{prod.type ?? prod.Type ?? prod.category?.name ?? prod.Category?.Name ?? "N/A"}</td>
@@ -212,7 +241,12 @@ export default function AdminProducts() {
                   <label className="text-sm font-bold text-gray-600">Ảnh sản phẩm</label>
                   <div className="relative group aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center overflow-hidden bg-gray-50">
                     {formData.imageUrl ? (
-                      <img src={`http://localhost:5126${formData.imageUrl}`} className="w-full h-full object-contain" alt="Preview" />
+                      <img
+                        src={getImageUrl(formData.imageUrl)}
+                        onError={handleImageError}
+                        className="w-full h-full object-contain"
+                        alt="Preview"
+                      />
                     ) : <Camera className="text-gray-300" size={40} />}
                     {modalMode !== 'view' && (
                       <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer text-white text-xs font-bold">
@@ -287,6 +321,18 @@ export default function AdminProducts() {
                         value={formData.productDetail[level]} onChange={e => setFormData({...formData, productDetail: {...formData.productDetail, [level]: parseInt(e.target.value)}})} />
                     </div>
                   ))}
+
+                  <div className="md:col-span-3">
+                    <label className="text-xs font-bold text-gray-500">TraceabilityData (JSON vùng trồng)</label>
+                    <textarea
+                      disabled={modalMode === 'view'}
+                      className="w-full p-2 border rounded-lg mt-1 font-mono text-xs"
+                      rows="6"
+                      placeholder='{"FarmingZone":{"Name":"Cầu Đất, Lâm Đồng","Altitude":"1600m"},"Farmer":{"Name":"HTX Cầu Đất"},"Certifications":[]}'
+                      value={formData.productDetail.traceabilityData}
+                      onChange={e => setFormData({...formData, productDetail: {...formData.productDetail, traceabilityData: e.target.value}})}
+                    />
+                  </div>
                 </div>
               </div>
 

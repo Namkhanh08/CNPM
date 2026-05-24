@@ -9,6 +9,8 @@ const productsApi = {
     createProduct: (data) => axiosClient.post("/api/admin/products", data),
     updateProduct: (id, data) => axiosClient.put(`/api/admin/products/${id}`, data),
     deleteProduct: (id) => axiosClient.delete(`/api/admin/products/${id}`),
+    getProductTraceability: (productId) => axiosClient.get(`/api/admin/products/${productId}/traceability`),
+    getBatchTraceability: (batchCode) => axiosClient.get(`/api/traceability/batch/${batchCode}`),
     uploadProductImage: (file) => {
         const formData = new FormData();
         formData.append("file", file);

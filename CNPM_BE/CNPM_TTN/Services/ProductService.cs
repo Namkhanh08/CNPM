@@ -7,6 +7,8 @@ using CNPM_TTN.Repositories;
 using CNPM_TTN.Dtos;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+
 namespace CNPM_TTN.Services
 {
     public class ProductService : IProductService
@@ -122,6 +124,12 @@ namespace CNPM_TTN.Services
                 Process = detail?.Process,
                 Roast = detail?.Roast,
                 FlavorNotes = detail?.FlavorNotes,
+                AcidityLevel = detail?.AcidityLevel,
+                BitternessLevel = detail?.BitternessLevel,
+                BodyLevel = detail?.BodyLevel,
+                BestTime = detail?.BestTime,
+                MatchTags = detail?.MatchTags,
+                TraceabilityData = detail?.TraceabilityData,
                 GrindingOption = product.GrindingOptions.Select(g => new GrindingOptionDto { Id = g.Id, Name = g.Name }).ToList()
             };
         }
@@ -138,6 +146,11 @@ namespace CNPM_TTN.Services
                 CategoryId = dto.CategoryId
             };
 
+            if (dto.ProductDetail != null)
+            {
+                product.ProductDetails.Add(CreateProductDetail(dto.ProductDetail));
+            }
+
             await _productRepository.AddAsync(product);
 
             return new ProductDto { Id = product.Id, Name = product.Name, Price = product.Price, Stock = product.Stock, ImageUrl = product.ImageUrl, Description = product.Description, CategoryId = product.CategoryId };
@@ -145,7 +158,9 @@ namespace CNPM_TTN.Services
 
         public async Task<bool> UpdateProductAsync(int id, UpdateProductDto dto)
         {
-            var product = await _productRepository.GetByIdAsync(id);
+            var product = await _productRepository.Query()
+                .Include(p => p.ProductDetails)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (product == null) return false;
 
             product.Name = dto.Name;
@@ -155,8 +170,42 @@ namespace CNPM_TTN.Services
             product.Description = dto.Description;
             product.CategoryId = dto.CategoryId;
 
+            if (dto.ProductDetail != null)
+            {
+                var detail = product.ProductDetails.FirstOrDefault();
+                if (detail == null)
+                {
+                    product.ProductDetails.Add(CreateProductDetail(dto.ProductDetail));
+                }
+                else
+                {
+                    ApplyProductDetail(detail, dto.ProductDetail);
+                }
+            }
+
             await _productRepository.UpdateAsync(product);
             return true;
+        }
+
+        private static ProductDetail CreateProductDetail(ProductDetailInputDto dto)
+        {
+            var detail = new ProductDetail();
+            ApplyProductDetail(detail, dto);
+            return detail;
+        }
+
+        private static void ApplyProductDetail(ProductDetail detail, ProductDetailInputDto dto)
+        {
+            detail.Region = dto.Region;
+            detail.Process = dto.Process;
+            detail.Roast = dto.Roast;
+            detail.FlavorNotes = dto.FlavorNotes;
+            detail.AcidityLevel = dto.AcidityLevel;
+            detail.BitternessLevel = dto.BitternessLevel;
+            detail.BodyLevel = dto.BodyLevel;
+            detail.BestTime = dto.BestTime;
+            detail.MatchTags = dto.MatchTags;
+            detail.TraceabilityData = dto.TraceabilityData;
         }
 
         public async Task<bool> DeleteProductAsync(int id)
@@ -168,6 +217,157 @@ namespace CNPM_TTN.Services
             return true;
         }
 
+        public async Task<TraceabilityResultDto?> GetProductTraceabilityAsync(int productId)
+        {
+            var product = await _productRepository.Query()
+                .Include(p => p.ProductDetails)
+                .Include(p => p.RoastingBatches)
+                    .ThenInclude(rb => rb.InventoryReceipt)
+                .FirstOrDefaultAsync(p => p.Id == productId);
 
+            if (product == null) return null;
+
+            var productDetail = product.ProductDetails.FirstOrDefault();
+            
+            // Lấy mẻ rang mới nhất đã hoàn thành / đóng gói
+            var latestBatch = product.RoastingBatches
+                .Where(rb => rb.Status == "Đã đóng gói" || rb.Status == "Hoàn thành")
+                .OrderByDescending(rb => rb.RoastDate)
+                .FirstOrDefault();
+
+            var result = new TraceabilityResultDto
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                ProductImage = product.ImageUrl,
+                Process = productDetail?.Process,
+                Region = productDetail?.Region
+            };
+
+            string? jsonTraceData = null;
+
+            if (latestBatch != null)
+            {
+                result.BatchCode = latestBatch.BatchCode;
+                result.RoastDate = latestBatch.RoastDate;
+                result.RoastLevel = latestBatch.RoastLevel;
+                
+                if (latestBatch.InventoryReceipt != null)
+                {
+                    result.HarvestBatchCode = $"HB-{latestBatch.InventoryReceipt.ImportDate:yyyy-MM}-{latestBatch.InventoryReceipt.Id}";
+                    result.ImportDate = latestBatch.InventoryReceipt.ImportDate;
+                    result.SupplierName = latestBatch.InventoryReceipt.Supplier;
+                }
+
+                if (!string.IsNullOrEmpty(latestBatch.TraceabilityData))
+                {
+                    jsonTraceData = latestBatch.TraceabilityData;
+                    result.DataSource = "RoastBatch";
+                }
+            }
+
+            if (string.IsNullOrEmpty(jsonTraceData) && productDetail != null && !string.IsNullOrEmpty(productDetail.TraceabilityData))
+            {
+                jsonTraceData = productDetail.TraceabilityData;
+                result.DataSource = "ProductDefault";
+            }
+
+            if (!string.IsNullOrEmpty(jsonTraceData))
+            {
+                try
+                {
+                    var traceData = JsonSerializer.Deserialize<TraceabilityDataDto>(jsonTraceData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (traceData != null)
+                    {
+                        result.FarmingZone = traceData.FarmingZone;
+                        result.Farmer = traceData.Farmer;
+                        result.Certifications = traceData.Certifications;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Ignore parse error
+                }
+            }
+
+            if (latestBatch == null)
+            {
+                result.WarningMessage = "Sản phẩm này hiện chưa cập nhật đầy đủ thông tin truy xuất nguồn gốc chi tiết. Vui lòng quay lại sau hoặc liên hệ bộ phận hỗ trợ khách hàng để biết thêm chi tiết.";
+            }
+
+            return result;
+        }
+
+        public async Task<TraceabilityResultDto?> GetBatchTraceabilityAsync(string batchCode)
+        {
+            var product = await _productRepository.Query()
+                .Include(p => p.ProductDetails)
+                .Include(p => p.RoastingBatches)
+                    .ThenInclude(rb => rb.InventoryReceipt)
+                .FirstOrDefaultAsync(p => p.RoastingBatches.Any(rb => rb.BatchCode == batchCode));
+
+            if (product == null) return null;
+
+            var productDetail = product.ProductDetails.FirstOrDefault();
+            var batch = product.RoastingBatches.FirstOrDefault(rb => rb.BatchCode == batchCode);
+
+            if (batch == null) return null;
+
+            var result = new TraceabilityResultDto
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                ProductImage = product.ImageUrl,
+                Process = productDetail?.Process,
+                Region = productDetail?.Region,
+                BatchCode = batch.BatchCode,
+                RoastDate = batch.RoastDate,
+                RoastLevel = batch.RoastLevel,
+                DataSource = "RoastBatch"
+            };
+
+            if (batch.InventoryReceipt != null)
+            {
+                result.HarvestBatchCode = $"HB-{batch.InventoryReceipt.ImportDate:yyyy-MM}-{batch.InventoryReceipt.Id}";
+                result.ImportDate = batch.InventoryReceipt.ImportDate;
+                result.SupplierName = batch.InventoryReceipt.Supplier;
+            }
+
+            string? jsonTraceData = batch.TraceabilityData;
+            
+            if (string.IsNullOrEmpty(jsonTraceData) && productDetail != null && !string.IsNullOrEmpty(productDetail.TraceabilityData))
+            {
+                jsonTraceData = productDetail.TraceabilityData;
+                result.DataSource = "ProductDefault";
+            }
+
+            if (!string.IsNullOrEmpty(jsonTraceData))
+            {
+                try
+                {
+                    var traceData = JsonSerializer.Deserialize<TraceabilityDataDto>(jsonTraceData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (traceData != null)
+                    {
+                        result.FarmingZone = traceData.FarmingZone;
+                        result.Farmer = traceData.Farmer;
+                        result.Certifications = traceData.Certifications;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Ignore parse error
+                }
+            }
+
+            return result;
+        }
     }
 }

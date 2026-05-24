@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -35,6 +35,8 @@ public partial class ProductDetail
 
     [StringLength(500)]
     public string? MatchTags { get; set; }
+
+    public string? TraceabilityData { get; set; }
 
     [ForeignKey("ProductId")]
     [InverseProperty("ProductDetails")]

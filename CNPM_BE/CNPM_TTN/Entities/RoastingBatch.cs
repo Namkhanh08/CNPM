@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -33,6 +33,8 @@ public partial class RoastingBatch
     public int? InventoryReceiptId { get; set; }
 
     public double? OutputWeight { get; set; }
+
+    public string? TraceabilityData { get; set; }
 
     [ForeignKey("InventoryReceiptId")]
     [InverseProperty("RoastingBatches")]

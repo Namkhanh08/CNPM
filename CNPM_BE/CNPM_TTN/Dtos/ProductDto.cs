@@ -23,6 +23,12 @@ namespace CNPM_TTN.Dtos
         public string? Process { get; set; }
         public string? Roast { get; set; }
         public string? FlavorNotes { get; set; }
+        public byte? AcidityLevel { get; set; }
+        public byte? BitternessLevel { get; set; }
+        public byte? BodyLevel { get; set; }
+        public string? BestTime { get; set; }
+        public string? MatchTags { get; set; }
+        public string? TraceabilityData { get; set; }
         public List<GrindingOptionDto> GrindingOption { get; set; } = new();
     }
 
@@ -30,6 +36,37 @@ namespace CNPM_TTN.Dtos
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;
+    }
+
+    public class ProductDetailInputDto
+    {
+        [StringLength(255)]
+        public string? Region { get; set; }
+
+        [StringLength(255)]
+        public string? Process { get; set; }
+
+        [StringLength(100)]
+        public string? Roast { get; set; }
+
+        public string? FlavorNotes { get; set; }
+
+        [Range(0, 5)]
+        public byte? AcidityLevel { get; set; }
+
+        [Range(0, 5)]
+        public byte? BitternessLevel { get; set; }
+
+        [Range(0, 5)]
+        public byte? BodyLevel { get; set; }
+
+        [StringLength(50)]
+        public string? BestTime { get; set; }
+
+        [StringLength(500)]
+        public string? MatchTags { get; set; }
+
+        public string? TraceabilityData { get; set; }
     }
 
     public class CreateProductDto
@@ -52,6 +89,8 @@ namespace CNPM_TTN.Dtos
 
         [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
+
+        public ProductDetailInputDto? ProductDetail { get; set; }
     }
 
     public class UpdateProductDto
@@ -74,6 +113,8 @@ namespace CNPM_TTN.Dtos
 
         [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
+
+        public ProductDetailInputDto? ProductDetail { get; set; }
     }
 
     public class ProductFilterDto

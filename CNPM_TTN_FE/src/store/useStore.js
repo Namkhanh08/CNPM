@@ -75,8 +75,13 @@ const useStore = create(
 
       addToCart: async (product, quantity, grindType, flavorNotes, weight, receiverName, receiverPhone, shippingProvince, shippingDistrict, shippingWard, shippingDetailAddress, shippingNote) => {
         try {
+          const productId = product?.id ?? product?.Id ?? product?.productId ?? product?.ProductId;
+          if (!productId) {
+            throw new Error("Không xác định được sản phẩm để thêm vào giỏ hàng.");
+          }
+
           await API.addToCart({
-            productId: product.id ?? product.Id,
+            productId,
             quantity: quantity,
             grindingOptionId: grindType,
             flavorNotes: flavorNotes,
@@ -263,9 +268,17 @@ const useStore = create(
         try{
           const res = await API.getProducts();
           console.log("PRODUCT API:", res.data);
+          const pageData = res.data?.data || res.data?.Data || {};
+          const productList =
+            pageData.items ||
+            pageData.Items ||
+            res.data?.items ||
+            res.data?.Items ||
+            res.data ||
+            [];
 
           set({
-            products: res.data
+            products: Array.isArray(productList) ? productList : []
           });
         }catch(err){
           console.error("Fetch products failed:", err.response?.data?.Message || err.response?.data?.message || err.message);

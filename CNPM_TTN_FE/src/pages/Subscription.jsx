@@ -7,6 +7,12 @@ import { Coffee, CalendarSync, CreditCard, ChevronRight, X, Info } from 'lucide-
 import API from '../services/api';
 import axios from 'axios';
 
+const getValue = (obj, pascalKey, camelKey) => obj?.[pascalKey] ?? obj?.[camelKey];
+const getProductId = (product) => getValue(product, 'Id', 'id');
+const getProductName = (product) => getValue(product, 'Name', 'name');
+const getProductPrice = (product) => Number(getValue(product, 'Price', 'price') ?? 0);
+const getProductImage = (product) => getValue(product, 'ImageUrl', 'imageUrl');
+const getProductCategoryId = (product) => getValue(product, 'CategoryId', 'categoryId');
 
 export default function Subscription() {
   const navigate = useNavigate();
@@ -122,8 +128,8 @@ export default function Subscription() {
     }
 
     const payload = {
-      ProductId: selectedProduct?.Id,
-      GrindingOptionId: grindType?.Id || 1,
+      ProductId: getProductId(selectedProduct),
+      GrindingOptionId: getValue(grindType, 'Id', 'id') || 1,
       FlavorNotes: flavorNotes || "Original",
       Weight: weights || "250g",
       Quantity: quantity,
@@ -198,7 +204,7 @@ export default function Subscription() {
 
     try {
 
-      const res = await API.getProductById(product.Id);
+      const res = await API.getProductById(getProductId(product));
 
       const detail = res.data;
 
@@ -219,7 +225,7 @@ export default function Subscription() {
       // Default selected values
       setFlavorNotes(flavors[0] || "");
       setWeight(weightList[0] || "");
-      setGrindType(detail.GrindingOption?.[0] || null);
+      setGrindType(detail.GrindingOption?.[0] || detail.grindingOption?.[0] || null);
 
     } catch (err) {
 
@@ -358,19 +364,19 @@ export default function Subscription() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
                 {products.map(p => (
                   <div
-                    key={p.Id}
+                    key={getProductId(p)}
                     onClick={() => handleSelectProduct(p)}
-                    className={`border-2 rounded-3xl p-6 cursor-pointer hover:shadow-lg transition-all flex flex-col items-center group relative overflow-hidden hover:-translate-y-1 transition-all duration-300 hover:scale-110 ${selectedProduct?.Id === p.Id ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-primary/30'}`}
+                    className={`border-2 rounded-3xl p-6 cursor-pointer hover:shadow-lg transition-all flex flex-col items-center group relative overflow-hidden hover:-translate-y-1 transition-all duration-300 hover:scale-110 ${getProductId(selectedProduct) === getProductId(p) ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-primary/30'}`}
                   >
-                    {selectedProduct?.Id === p.Id && <div className="absolute top-4 right-4 bg-primary text-white rounded-full p-1"><Check size={16} /></div>}
+                    {getProductId(selectedProduct) === getProductId(p) && <div className="absolute top-4 right-4 bg-primary text-white rounded-full p-1"><Check size={16} /></div>}
                     <div className="h-32 mb-4">
-                      <img src={p.ImageUrl} alt={p.Name} className={`h-full object-contain filter drop-shadow-md transition-transform duration-500 ${selectedProduct?.Id === p.Id ? 'scale-110' : 'group-hover:scale-105'}`} />
+                      <img src={getProductImage(p)} alt={getProductName(p)} className={`h-full object-contain filter drop-shadow-md transition-transform duration-500 ${getProductId(selectedProduct) === getProductId(p) ? 'scale-110' : 'group-hover:scale-105'}`} />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center ">
 
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/product/${p.Id}`);
+                            navigate(`/product/${getProductId(p)}`);
                           }}
                           className="bg-white text-primary px-6 py-3 rounded-full font-bold hover:bg-primary hover:text-white transition-all"
                         >
@@ -379,8 +385,8 @@ export default function Subscription() {
 
                       </div>
                     </div>
-                    <h3 className="font-montserrat font-bold text-lg text-accent-1 text-center line-clamp-2">{CategoryMap[p.CategoryId] || p.CategoryId}</h3>
-                    <h3 className="font-montserrat font-bold text-lg text-primary text-center line-clamp-2">{p.Name}</h3>
+                    <h3 className="font-montserrat font-bold text-lg text-accent-1 text-center line-clamp-2">{CategoryMap[getProductCategoryId(p)] || getProductCategoryId(p)}</h3>
+                    <h3 className="font-montserrat font-bold text-lg text-primary text-center line-clamp-2">{getProductName(p)}</h3>
                   </div>
                 ))}
               </div>
@@ -445,14 +451,14 @@ export default function Subscription() {
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
                   {grindOptions.map((grind) => (
                     <button
-                      key={grind.Id}
+                      key={getValue(grind, 'Id', 'id')}
                       onClick={() => setGrindType(grind)}
-                      className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${grindType?.Id === grind.Id
+                      className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${getValue(grindType, 'Id', 'id') === getValue(grind, 'Id', 'id')
                         ? 'border-primary bg-primary text-white shadow-md'
                         : 'border-gray-200 text-primary/70 hover:border-primary/50'
                         }`}
                     >
-                      {grind.Name}
+                      {getValue(grind, 'Name', 'name')}
                     </button>
                   ))}
                 </div>
@@ -713,7 +719,7 @@ export default function Subscription() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Sản phẩm:</span>
-                    <span className="font-bold text-[#5C3D2E]">{selectedProduct?.Name}</span>
+                    <span className="font-bold text-[#5C3D2E]">{getProductName(selectedProduct)}</span>
                   </div>
 
                   <div className="flex justify-between text-sm">
@@ -723,7 +729,7 @@ export default function Subscription() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Thể thức:</span>
-                    <span className="font-bold text-[#5C3D2E]">{weights} - {grindType?.Name || "Nguyên hạt"}</span>
+                    <span className="font-bold text-[#5C3D2E]">{weights} - {getValue(grindType, 'Name', 'name') || "Nguyên hạt"}</span>
                   </div>
 
                   <div className="flex justify-between text-sm">
@@ -761,13 +767,13 @@ export default function Subscription() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Đơn giá mỗi kỳ:</span>
-                    <span className="font-bold text-[#5C3D2E]">{(selectedProduct?.Price || 0).toLocaleString('vi-VN')}đ</span>
+                    <span className="font-bold text-[#5C3D2E]">{getProductPrice(selectedProduct).toLocaleString('vi-VN')}đ</span>
                   </div>
 
                   <div className="flex justify-between items-center border-t border-[#F2ECE4] pt-2 text-[#5C3D2E]">
                     <span className="font-bold text-sm">Tổng cộng mỗi kỳ:</span>
                     <span className="font-black text-xl text-[#7F5539]">
-                      {((selectedProduct?.Price || 0) * quantity).toLocaleString('vi-VN')}đ
+                      {(getProductPrice(selectedProduct) * quantity).toLocaleString('vi-VN')}đ
                     </span>
                   </div>
                 </div>
@@ -834,10 +840,10 @@ export default function Subscription() {
                   Số tiền thanh toán mỗi kỳ
                 </span>
                 <span className="font-montserrat font-black text-3xl text-blue-900">
-                  {((selectedProduct?.Price || 0) * quantity).toLocaleString('vi-VN')}đ
+                  {(getProductPrice(selectedProduct) * quantity).toLocaleString('vi-VN')}đ
                 </span>
                 <span className="text-primary/60 font-nunito text-xs mt-2 font-semibold">
-                  Đăng ký: {selectedProduct?.Name} ({quantity} túi)
+                  Đăng ký: {getProductName(selectedProduct)} ({quantity} túi)
                 </span>
               </div>
 
