@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import useStore from "../store/useStore";
-import API from "../services/api";
+import { useNavigate } from "react-router-dom";
+import useStore from "../../store/useStore";
+import API from "../../services/api";
 import { Edit3, Key, Lock, Mail, MapPin, Phone, Save, User, Award, Calendar, ClipboardCopy } from "lucide-react";
 
 const roleLabels = {
@@ -11,6 +12,7 @@ const roleLabels = {
 };
 
 export default function Profile() {
+    const navigate = useNavigate();
     const user = useStore((state) => state.user);
     const setUser = useStore((state) => state.setUser);
 
@@ -40,7 +42,6 @@ export default function Profile() {
     // Subscriptions states
     const [subs, setSubs] = useState([]);
     const [subsLoading, setSubsLoading] = useState(false);
-    const [subMessage, setSubMessage] = useState({ text: "", type: "" });
 
     const fetchLoyaltyInfo = async () => {
         setLoyaltyLoading(true);
@@ -59,7 +60,6 @@ export default function Profile() {
 
     const fetchSubscriptions = async () => {
         setSubsLoading(true);
-        setSubMessage({ text: "", type: "" });
         try {
             const res = await API.getMySubscriptions();
             setSubs(res.data);

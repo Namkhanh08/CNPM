@@ -97,7 +97,7 @@ namespace CNPM_TTN.Controllers
             return Ok(ApiResponse<string>.SuccessResponse(null, "Xóa sản phẩm thành công"));
         }
 
-        [HttpGet("{id}/traceability")]
+        [HttpGet("/api/products/{id}/traceability")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTraceability(int id)
         {

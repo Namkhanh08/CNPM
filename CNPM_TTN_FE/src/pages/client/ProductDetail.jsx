@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, PackageCheck, Truck } from 'lucide-react';
-import useStore from '../store/useStore';
-import API from '../services/api.js';
-import { getImageUrl, handleImageError } from '../utils/imageUrl';
-import TraceabilityTimeline from '../components/TraceabilityTimeline';
+import useStore from '../../store/useStore';
+import API from '../../services/api.js';
+import { getImageUrl, handleImageError } from '../../utils/imageUrl';
+import { TraceabilityTimeline } from '../../components';
 
 const CATEGORY_MAP = {
   '1': 'Arabica',

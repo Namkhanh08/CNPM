@@ -121,6 +121,7 @@ public class SubscriptionService : ISubscriptionService
 
         foreach (var sub in dueSubs)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 // Tạo đơn hàng tự động
@@ -152,6 +153,7 @@ public class SubscriptionService : ISubscriptionService
                     GrindingOptionId = sub.GrindingOptionId,
                     FlavorNotes = sub.FlavorNotes
                 });
+                await _context.SaveChangesAsync();
 
                 // Tính ngày giao tiếp theo
                 sub.NextDeliveryDate = sub.Frequency switch
@@ -162,11 +164,13 @@ public class SubscriptionService : ISubscriptionService
                 };
 
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 _logger.LogInformation("Created order #{OrderId} for subscription #{SubId}", order.Id, sub.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to process subscription #{SubId}", sub.Id);
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Failed to process subscription #{SubId}. Rolled back transaction.", sub.Id);
             }
         }
     }

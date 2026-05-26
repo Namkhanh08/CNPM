@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import giftset1Img from '../assets/img/section3/giftset1Img.png';
-import giftset2Img from '../assets/img/section3/giftset2Img.png';
-import giftset3Img from '../assets/img/section3/giftset3Img.png';
-import coffeeBeansIcon from '../assets/img/section3/coffeeBeansIcon.svg';
-import mountainIcon from '../assets/img/section3/mountainIcon.svg';
-import useStore from '../store/useStore';
-import API from '../services/api';
+import giftset1Img from '../../assets/img/section3/giftset1Img.png';
+import giftset2Img from '../../assets/img/section3/giftset2Img.png';
+import giftset3Img from '../../assets/img/section3/giftset3Img.png';
+import coffeeBeansIcon from '../../assets/img/section3/coffeeBeansIcon.svg';
+import mountainIcon from '../../assets/img/section3/mountainIcon.svg';
+import useStore from '../../store/useStore';
+import API from '../../services/api';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';

@@ -4,7 +4,7 @@ import {
     ChevronLeft, MapPin, Phone, User, FileText,
     Check, Truck, PackageCheck, HelpCircle
 } from 'lucide-react';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 import { IoCheckmarkCircle } from "react-icons/io5";
 import { GrRadialSelected } from "react-icons/gr";
 
@@ -14,7 +14,6 @@ export default function OrderDetails() {
     const { fetchOrderById } = useStore();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
-    const user = useStore((state) => state.user);
     const cancelOrder = useStore((state) => state.cancelOrder);
     const translateGrind = (type) => {
         switch (type) {
@@ -78,6 +77,10 @@ export default function OrderDetails() {
     };
     const handleEdit = (orderId) => {
         navigate(`/orders/edit/${orderId}`);
+    };
+    const handlePayment = (orderId) => {
+        alert("Chức năng thanh toán lại đang được mô phỏng. Vui lòng kiểm tra trạng thái đơn hàng sau khi thanh toán.");
+        console.log("Payment requested for order:", orderId);
     };
     const showPaymentButton =
         order.PaymentMethod === "VNPAY" &&

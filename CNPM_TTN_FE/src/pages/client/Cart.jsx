@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 import { Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
-import { getImageUrl, handleImageError } from '../utils/imageUrl';
+import { getImageUrl, handleImageError } from '../../utils/imageUrl';
 
 const getCartItem = (item) => {
   const product = item.Product ?? item.product ?? {};

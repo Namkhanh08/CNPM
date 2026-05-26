@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 import { FileText, Truck, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TiDelete } from "react-icons/ti";

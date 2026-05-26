@@ -1,8 +1,8 @@
 import React from 'react';
-import icon1 from '../assets/img/section1/icon1.svg';
-import icon2 from '../assets/img/section1/icon2.svg';
-import icon3 from '../assets/img/section1/icon3.svg';
-import icon4 from '../assets/img/section1/icon4.svg';
+import icon1 from '../../assets/img/section1/icon1.svg';
+import icon2 from '../../assets/img/section1/icon2.svg';
+import icon3 from '../../assets/img/section1/icon3.svg';
+import icon4 from '../../assets/img/section1/icon4.svg';
 
 const features = [
   { 

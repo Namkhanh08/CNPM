@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useStore from '../store/useStore';
-import image1 from '../assets/img/section2/image1.png';
-import image3 from '../assets/img/section2/image3.png';
+import useStore from '../../store/useStore';
 import { Coffee, CalendarSync, CreditCard, ChevronRight, X, Info } from 'lucide-react';
-import API from '../services/api';
+import API from '../../services/api';
 import axios from 'axios';
 
 const getValue = (obj, pascalKey, camelKey) => obj?.[pascalKey] ?? obj?.[camelKey];

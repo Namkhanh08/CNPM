@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 import { Info } from 'lucide-react';
 import axios from 'axios';
 
 export default function EditOrder() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const user = useStore((state) => state.user);
     const orders = useStore((state) => state.orders);
     const updateOrder = useStore((state) => state.updateOrder);
     console.log(useStore.getState().updateOrder);

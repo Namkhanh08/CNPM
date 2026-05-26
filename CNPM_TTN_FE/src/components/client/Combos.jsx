@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import combo1 from '../assets/img/section4/combo1.png';
-import combo2 from '../assets/img/section4/combo2.png';
-import combo3 from '../assets/img/section4/combo3.png';
-import useStore from '../store/useStore';
-import API from '../services/api';
+import combo1 from '../../assets/img/section4/combo1.png';
+import combo2 from '../../assets/img/section4/combo2.png';
+import combo3 from '../../assets/img/section4/combo3.png';
+import useStore from '../../store/useStore';
+import API from '../../services/api';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';

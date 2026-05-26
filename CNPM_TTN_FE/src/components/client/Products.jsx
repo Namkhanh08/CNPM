@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GrLinkNext } from 'react-icons/gr';
-import API from '../services/api.js';
-import { getImageUrl, handleImageError } from '../utils/imageUrl';
+import API from '../../services/api.js';
+import { getImageUrl, handleImageError } from '../../utils/imageUrl';
 
 const getProductList = (responseData) => {
   const pageData = responseData?.data || responseData?.Data || {};

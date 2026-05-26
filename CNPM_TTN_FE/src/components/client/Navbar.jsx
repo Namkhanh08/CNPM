@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import useStore from "../store/useStore";
+import useStore from "../../store/useStore";
 import LoginModal from "./LoginModal";
 
-import cartIcon from "../assets/img/header/cart-icon.svg";
+import cartIcon from "../../assets/img/header/cart-icon.svg";
 
 import { FaShoppingBag, FaUserCircle, FaSignOutAlt, FaClipboardList, FaUser } from "react-icons/fa";
 

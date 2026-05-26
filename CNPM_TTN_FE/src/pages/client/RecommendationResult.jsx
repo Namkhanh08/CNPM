@@ -1,14 +1,12 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ArrowLeft } from 'lucide-react';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 
 // Logic gợi ý cà phê dựa trên câu trả lời quiz
 const getRecommendation = (answers) => {
     const roast = answers[1];   // light / medium / dark
     const flavor = answers[2];  // floral / chocolate / bold
     const method = answers[3];  // phin / espresso / pour
-    const time = answers[4];    // morning / afternoon / evening
-
     // Bảng gợi ý đơn giản theo tổ hợp
     if (roast === 'dark' || flavor === 'bold' || method === 'phin') {
         return {

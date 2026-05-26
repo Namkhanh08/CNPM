@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 import { Check, Info, CreditCard, X, QrCode } from 'lucide-react';
-import addressData from 'vietnam-address-database';
 import axios from 'axios';
-import Giftsets from '../components/Giftsets';
-import Combos from '../components/Combos';
-import API from '../services/api';
+import { Giftsets, Combos } from '../../components';
+import API from '../../services/api';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const cart = useStore((state) => state.cart);
-  const clearCart = useStore((state) => state.clearCart);
   const createOrder = useStore((state) => state.createOrder);
 
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -31,7 +28,6 @@ export default function Checkout() {
   const [countdown, setCountdown] = useState(900);
   useEffect(() => {
     if (!showVNPayModal) return;
-    setCountdown(900);
     const interval = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
@@ -222,6 +218,7 @@ export default function Checkout() {
       setCreatedOrder(res.data);
 
       if (paymentMethod === 'vnpay') {
+        setCountdown(900);
         setShowVNPayModal(true);
       } else {
         setOrderSuccess(true);

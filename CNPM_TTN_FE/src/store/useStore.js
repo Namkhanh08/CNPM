@@ -290,6 +290,10 @@ const useStore = create(
     }),
     {
       name: 'revo-coffee-storage',
+      partialize: (state) => ({
+        user: state.user,
+        cart: state.cart,
+      }),
     }
   )
 );

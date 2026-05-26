@@ -1,5 +1,5 @@
 import React from 'react';
-import coffe from '../assets/img/header/cc2.png';
+import coffe from '../../assets/img/header/cc2.png';
 
 const backgroundStyle = {
     backgroundImage: `url(${coffe})`,

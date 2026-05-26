@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Slider from "react-slick";
 
-import useStore from '../store/useStore';
+import coffe from '../../assets/img/header/cc2.png';
+import coffe2 from '../../assets/img/header/cc3.png';
+import coffe3 from '../../assets/img/header/cc7.png';
 
-import cartIcon from '../assets/img/header/cart-icon.svg';
-import coffe from '../assets/img/header/cc2.png';
-import coffe2 from '../assets/img/header/cc3.png';
-import coffe3 from '../assets/img/header/cc7.png';
-
-import LoginModal from "../components/LoginModal";
-
-import { FaShoppingBag } from "react-icons/fa";
-import { FaUserCircle } from "react-icons/fa";
 import { FaFacebookF } from "react-icons/fa";
 import { FaInstagram } from "react-icons/fa";
 import { FaTwitter } from "react-icons/fa";
@@ -21,15 +14,6 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 export default function Header() {
-
-  const totalItems = useStore((state) => state.getTotalQuantity());
-
-  const [openLogin, setOpenLogin] = useState(false);
-
-  const user = useStore((state) => state.user);
-
-  const logout = useStore((state) => state.logout);
-
   // HERO DATA
   const heroData = [
     {

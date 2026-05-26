@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import useStore from "../store/useStore";
+import useStore from "../../store/useStore";
 import "./Login.css";
-import API from "../services/api";
+import API from "../../services/api";
 
 export default function LoginModal({ isOpen, onClose }) {
     const navigate = useNavigate();
