@@ -47,6 +47,11 @@ builder.Services.AddAuthentication(options => {
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<CartRepository>();
 builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<VoucherRepository>();
+builder.Services.AddScoped<VoucherService>();
+builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
