@@ -11,14 +11,18 @@ import Orders from './pages/Orders';
 import Profile from './pages/Profile';
 import OrderDetail from './pages/OrderDetail';
 import EditOrder from './pages/EditOrder';
+import PaymentPage from './pages/PaymentPage';
+import Contact from './pages/Contact';
 
 // Admin imports
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
-import AdminOrders from './pages/admin/Orders';
+import AdminOrders from './pages/admin/Order';
 import AdminProducts from './pages/admin/Products';
 import AdminBatches from './pages/admin/Batches';
 import AdminInventory from './pages/admin/Inventory';
+import AdminShipping from './pages/admin/ShipperOrders';
+import AdminVouchers from './pages/admin/Vouchers';
 
 import './App.css';
 
@@ -37,6 +41,9 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="orders/:id" element={<OrderDetail />} />
           <Route path="/orders/edit/:id" element={<EditOrder />} />
+          <Route path="checkout/payment/:orderId" element={<PaymentPage />} />
+          <Route path="contact" element={<Contact />} />
+         
           
         </Route>
         
@@ -47,6 +54,8 @@ function App() {
           <Route path="products" element={<AdminProducts />} />
           <Route path="batches" element={<AdminBatches />} />
           <Route path="inventory" element={<AdminInventory />} />
+          <Route path="shipping" element={<AdminShipping />} />
+          <Route path="vouchers" element={<AdminVouchers />} />
         </Route>
       </Routes>
     </Router>

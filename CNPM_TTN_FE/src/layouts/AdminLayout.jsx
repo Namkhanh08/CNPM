@@ -1,17 +1,68 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Archive, Database, Settings, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Archive,
+  Database,
+  Settings,
+  LogOut,
+  TicketPercent
+} from 'lucide-react';
+import { FaMotorcycle } from "react-icons/fa6";
 
 export default function AdminLayout() {
   const location = useLocation();
   const currentPath = location.pathname;
 
   const navItems = [
-    { name: 'Tổng quan', path: '/admin', icon: <LayoutDashboard size={20} /> },
-    { name: 'Đơn hàng', path: '/admin/orders', icon: <ShoppingCart size={20} /> },
-    { name: 'Sản phẩm', path: '/admin/products', icon: <Package size={20} /> },
-    { name: 'Lô rang', path: '/admin/batches', icon: <Database size={20} /> },
-    { name: 'Tồn kho', path: '/admin/inventory', icon: <Archive size={20} /> },
+    {
+      name: 'Tổng quan',
+      path: '/admin',
+      icon: <LayoutDashboard size={20} />
+    },
+
+    {
+      name: 'Đơn hàng',
+      path: '/admin/orders',
+      icon: <ShoppingCart size={20} />
+    },
+    
+    {
+      name: 'Đăng ký định kỳ',
+      path: '/admin/subscription',
+      icon: <ShoppingCart size={20} />
+    },
+
+    {
+      name: 'Voucher',
+      path: '/admin/vouchers',
+      icon: <TicketPercent size={20} />
+    },
+
+    {
+      name: 'Sản phẩm',
+      path: '/admin/products',
+      icon: <Package size={20} />
+    },
+
+    {
+      name: 'Lô rang',
+      path: '/admin/batches',
+      icon: <Database size={20} />
+    },
+
+    {
+      name: 'Tồn kho',
+      path: '/admin/inventory',
+      icon: <Archive size={20} />
+    },
+    {
+      name: 'Giao hàng',
+      path: '/admin/shipping',
+      icon: <FaMotorcycle size={20} />
+    },
   ];
 
   return (
@@ -23,7 +74,7 @@ export default function AdminLayout() {
             REVO <span className="text-accent-1">ADMIN</span>
           </Link>
         </div>
-        
+
         <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
             const isActive = currentPath === item.path;
@@ -31,18 +82,17 @@ export default function AdminLayout() {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors ${
-                  isActive 
-                    ? 'bg-primary text-white shadow-md' 
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors ${isActive
+                    ? 'bg-primary text-white shadow-md'
                     : 'text-primary/70 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 {item.icon} {item.name}
               </Link>
             );
           })}
         </nav>
-        
+
         <div className="p-4 border-t border-gray-100">
           <Link to="/" className="flex items-center justify-center gap-2 w-full py-3 text-red-500 font-bold hover:bg-red-50 rounded-xl transition-colors">
             <LogOut size={20} /> Thoát hệ thống
@@ -75,7 +125,7 @@ export default function AdminLayout() {
           </div>
         </main>
       </div>
-      
+
     </div>
   );
 }
