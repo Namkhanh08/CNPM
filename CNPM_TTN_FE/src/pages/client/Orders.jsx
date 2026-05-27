@@ -18,7 +18,7 @@ export default function Orders() {
   
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
   // 1. Cập nhật ID các tab để khớp với chuỗi Status từ DB
   const tabs = [

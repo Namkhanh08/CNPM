@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import API from '../../services/api.js';
@@ -12,6 +12,12 @@ const CATEGORY_MAP = {
 };
 
 const DEFAULT_MAX_PRICE = 500000;
+
+const SORT_PARAMS = {
+  'price-asc': { sortBy: 'price', descending: false },
+  'price-desc': { sortBy: 'price', descending: true },
+  name: { sortBy: 'name', descending: false },
+};
 
 function FilterSection({ title, summary, isOpen, onToggle, children }) {
   return (
@@ -73,6 +79,7 @@ export default function Shop() {
       try {
         setLoading(true);
         setError(null);
+        const sortParams = SORT_PARAMS[sortBy] || {};
 
         const res = await API.getProducts({
           page,
@@ -82,6 +89,7 @@ export default function Shop() {
           region: selectedRegion === 'all' ? undefined : selectedRegion,
           minPrice,
           maxPrice,
+          ...sortParams,
         });
 
         const pageData = res.data?.data || res.data?.Data || {};
@@ -120,7 +128,7 @@ export default function Shop() {
     };
 
     fetchProducts();
-  }, [page, pageSize, searchTerm, filterType, minPrice, maxPrice, selectedRegion]);
+  }, [page, pageSize, searchTerm, filterType, minPrice, maxPrice, selectedRegion, sortBy]);
 
   const hasActiveFilters =
     searchTerm ||
@@ -152,26 +160,7 @@ export default function Shop() {
     setPage(1);
   };
 
-  const filteredProducts = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase();
-    const result = products.filter((product) => {
-      const name = product.name?.toLowerCase() || '';
-      const description = product.description?.toLowerCase() || '';
-      const matchesSearch = !keyword || name.includes(keyword) || description.includes(keyword);
-      const matchesCategory = filterType === 'all' || product.type === filterType;
-      const matchesPrice = product.price >= minPrice && product.price <= maxPrice;
-      const matchesRegion = selectedRegion === 'all' || product.region === selectedRegion;
-
-      return matchesSearch && matchesCategory && matchesPrice && matchesRegion;
-    });
-
-    return [...result].sort((a, b) => {
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'name') return a.name.localeCompare(b.name, 'vi');
-      return 0;
-    });
-  }, [products, searchTerm, filterType, minPrice, maxPrice, selectedRegion, sortBy]);
+  const filteredProducts = products;
 
   if (loading) {
     return (
@@ -348,7 +337,10 @@ export default function Shop() {
                 <span className="font-montserrat font-bold text-primary block mb-2">Sap xep</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full border border-gray-200 rounded-full px-4 py-3 outline-none focus:border-accent-1 font-nunito text-primary"
                 >
                   <option value="default">Mac dinh</option>

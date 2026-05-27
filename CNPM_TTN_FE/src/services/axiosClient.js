@@ -24,7 +24,8 @@ axiosClient.interceptors.response.use(
     (error) => {
         if (error.response && error.response.status === 401) {
             localStorage.removeItem("token");
-            window.location.reload();
+            localStorage.removeItem("userType");
+            localStorage.removeItem("revo-coffee-storage");
         }
         return Promise.reject(error);
     }

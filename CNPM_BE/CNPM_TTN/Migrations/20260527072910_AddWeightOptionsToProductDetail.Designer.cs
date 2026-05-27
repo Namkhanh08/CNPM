@@ -4,6 +4,7 @@ using CNPM_TTN.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CNPM_TTN.Migrations
 {
     [DbContext(typeof(ShopCoffeeContext))]
-    partial class ShopCoffeeContextModelSnapshot : ModelSnapshot
+    [Migration("20260527072910_AddWeightOptionsToProductDetail")]
+    partial class AddWeightOptionsToProductDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -28,6 +28,8 @@ namespace CNPM_TTN.Dtos
         public byte? BodyLevel { get; set; }
         public string? BestTime { get; set; }
         public string? MatchTags { get; set; }
+        public string? WeightOptions { get; set; }
+        public string? Altitude { get; set; }
         public string? TraceabilityData { get; set; }
         public List<GrindingOptionDto> GrindingOption { get; set; } = new();
     }
@@ -65,6 +67,10 @@ namespace CNPM_TTN.Dtos
 
         [StringLength(500)]
         public string? MatchTags { get; set; }
+
+        /// <summary>Danh sách khối lượng, phân cách bằng dấu phẩy. Ví dụ: "250g,500g,1kg"</summary>
+        [StringLength(200)]
+        public string? WeightOptions { get; set; }
 
         public string? TraceabilityData { get; set; }
     }

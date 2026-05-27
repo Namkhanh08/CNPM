@@ -59,13 +59,13 @@ export default function ProductDetail() {
           flavorNotes: p.FlavorNotes ?? p.flavorNotes ?? 'Original',
           type: String(baseProduct.CategoryId ?? baseProduct.categoryId ?? ''),
           grindingOptions: p.GrindingOption ?? p.grindingOptions ?? p.GrindingOptions ?? [],
-          weight: p.Weight ?? p.weight ?? '250g',
-          height: p.Height ?? p.height ?? '1200m',
+          weightOptions: p.WeightOptions ?? p.weightOptions ?? '',
+          altitude: p.Altitude ?? p.altitude ?? 'Dang cap nhat',
         };
 
         setProduct(formatted);
         setFlavorNotes(splitOptions(formatted.flavorNotes, ['Original'])[0]);
-        setWeight(splitOptions(formatted.weight, ['250g'])[0]);
+        setWeight(splitOptions(formatted.weightOptions, ['250g'])[0]);
         setGrindType(formatted.grindingOptions[0] || null);
       } catch (err) {
         console.error('Loi lay san pham:', err);
@@ -79,7 +79,7 @@ export default function ProductDetail() {
   }, [id]);
 
   const flavorOptions = splitOptions(product?.flavorNotes, ['Original']);
-  const weightOptions = splitOptions(product?.weight, ['250g']);
+  const weightOptions = splitOptions(product?.weightOptions, ['250g']);
   const grindOptions = product?.grindingOptions || [];
 
   const handleOpenTrace = async () => {
@@ -166,8 +166,8 @@ export default function ProductDetail() {
               <div><span className="text-primary/60 block mb-1">Vung trong</span><span className="font-bold text-primary">{product.region}</span></div>
               <div><span className="text-primary/60 block mb-1">Phuong phap so che</span><span className="font-bold text-primary">{product.process}</span></div>
               <div><span className="text-primary/60 block mb-1">Muc do rang</span><span className="font-bold text-primary">{product.roast}</span></div>
-              <div><span className="text-primary/60 block mb-1">Do cao</span><span className="font-bold text-primary">{product.height}</span></div>
-              <div><span className="text-primary/60 block mb-1">Trong luong</span><span className="font-bold text-primary">{product.weight}</span></div>
+              <div><span className="text-primary/60 block mb-1">Do cao</span><span className="font-bold text-primary">{product.altitude}</span></div>
+              <div><span className="text-primary/60 block mb-1">Trong luong</span><span className="font-bold text-primary">{weightOptions.join(', ')}</span></div>
               <div className="col-span-2"><span className="text-primary/60 block mb-1">Huong vi</span><span className="font-bold text-primary">{product.flavorNotes}</span></div>
             </div>
 
@@ -205,7 +205,7 @@ export default function ProductDetail() {
                     className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${flavorNotes === flavor
                       ? 'border-primary bg-primary text-white shadow-md'
                       : 'border-gray-200 text-primary/70 hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     {flavor}
                   </button>
@@ -224,7 +224,7 @@ export default function ProductDetail() {
                     className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${weights === weight
                       ? 'border-primary bg-primary text-white shadow-md'
                       : 'border-gray-200 text-primary/70 hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     {weight}
                   </button>
@@ -243,7 +243,7 @@ export default function ProductDetail() {
                     className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${getGrindId(grindType) === getGrindId(grind)
                       ? 'border-primary bg-primary text-white shadow-md'
                       : 'border-gray-200 text-primary/70 hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     {getGrindName(grind)}
                   </button>

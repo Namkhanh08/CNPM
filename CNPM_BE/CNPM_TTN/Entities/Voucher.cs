@@ -1,40 +1,45 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace CNPM_TTN.Entities;
 
-public class Voucher
+public partial class Voucher
 {
-    [Key]
     public int Id { get; set; }
 
-    [Required]
-    [StringLength(50)]
     public string Code { get; set; } = null!;
 
-    [Required]
-    [StringLength(200)]
     public string Name { get; set; } = null!;
 
-    /// <summary>"percent" hoặc "amount"</summary>
-    [Required]
-    [StringLength(20)]
-    public string DiscountType { get; set; } = "percent";
+    public string DiscountType { get; set; } = null!;
 
-    [Column(TypeName = "decimal(18,2)")]
     public decimal DiscountValue { get; set; }
 
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal MinOrderValue { get; set; } = 0;
+    public decimal MinOrderValue { get; set; }
 
-    public int MaxUsage { get; set; } = 0; // 0 = không giới hạn
+    public int MaxUsage { get; set; }
 
-    public int UsedCount { get; set; } = 0;
+    public int UsedCount { get; set; }
 
     public DateTime StartDate { get; set; }
 
     public DateTime EndDate { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
+
+    public string? Title { get; set; }
+
+    public string? Description { get; set; }
+
+    public decimal? MaxDiscount { get; set; }
+
+    public int? UsageLimit { get; set; }
+
+    public string? PaymentMethod { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
+
+    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }

@@ -39,7 +39,7 @@ export default function OrderDetails() {
             }
         };
         getDetail();
-    }, [id]);
+    }, [fetchOrderById, id]);
 
     if (loading) return <div className="p-20 text-center font-bold">Đang tải dữ liệu thực tế...</div>;
     if (!order) return <div className="p-20 text-center">Không tìm thấy đơn hàng #{id}</div>;

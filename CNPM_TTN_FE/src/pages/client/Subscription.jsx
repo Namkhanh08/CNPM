@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import { Coffee, CalendarSync, CreditCard, ChevronRight, X, Info } from 'lucide-react';
@@ -48,7 +48,7 @@ export default function Subscription() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   useEffect(() => {
     if (user) {
@@ -196,7 +196,7 @@ export default function Subscription() {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  const handleSelectProduct = async (product) => {
+  const handleSelectProduct = useCallback(async (product) => {
 
     setSelectedProduct(product);
 
@@ -231,7 +231,7 @@ export default function Subscription() {
 
     }
 
-  };
+  }, []);
   useEffect(() => {
 
     if (products.length > 0 && !selectedProduct) {
@@ -240,7 +240,7 @@ export default function Subscription() {
 
     }
 
-  }, [products]);
+  }, [handleSelectProduct, products, selectedProduct]);
   const CategoryMap = {
     '1': 'Arabica',
     '2': 'Blend',

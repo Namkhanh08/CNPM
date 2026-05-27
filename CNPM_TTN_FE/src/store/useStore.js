@@ -68,7 +68,7 @@ const useStore = create(
         } catch (err) {
           console.error("Load cart failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
           if (err.response?.status === 401) {
-            set({ cart: [] });
+            set({ user: null, cart: [], orders: [] });
           }
         }
       },
@@ -182,6 +182,9 @@ const useStore = create(
           set({ orders: res.data || [] });
         } catch (err) {
           console.error("Fetch orders failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+          if (err.response?.status === 401) {
+            set({ user: null, cart: [], orders: [] });
+          }
         }
       },
 

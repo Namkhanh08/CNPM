@@ -1,18 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Entities;
 
-[Index("UserName", Name = "IX_Users_UserName", IsUnique = true)]
 public partial class User
 {
-    [Key]
     public string Id { get; set; } = null!;
 
- 
     public string Name { get; set; } = null!;
 
     public string UserName { get; set; } = null!;
@@ -21,17 +15,15 @@ public partial class User
 
     public byte[] Salt { get; set; } = null!;
 
-    public string? Contact { get; set; }
+    public string Contact { get; set; } = null!;
 
-   
     public string Email { get; set; } = null!;
 
-   
-    public string? Phone { get; set; }
+    public string Phone { get; set; } = null!;
 
-    public string? Position { get; set; }
+    public string Position { get; set; } = null!;
 
-    public string? Image { get; set; }
+    public string Image { get; set; } = null!;
 
     public bool IsActive { get; set; }
 
@@ -39,27 +31,25 @@ public partial class User
 
     public DateTime Created { get; set; }
 
-    public int TotalPoints { get; set; } = 0;
+    public int TotalPoints { get; set; }
 
-    /// <summary>"Bronze" | "Silver" | "Gold" | "Diamond"</summary>
-    [StringLength(20)]
-    public string MemberTier { get; set; } = "Bronze";
+    public string MemberTier { get; set; } = null!;
 
-    [InverseProperty("User")]
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
-    [InverseProperty("User")]
     public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
 
-    [InverseProperty("CreatedByNavigation")]
     public virtual ICollection<InventoryReceipt> InventoryReceipts { get; set; } = new List<InventoryReceipt>();
 
-    [InverseProperty("User")]
+    public virtual ICollection<LoyaltyPoint> LoyaltyPoints { get; set; } = new List<LoyaltyPoint>();
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
-    [InverseProperty("User")]
+    public virtual ICollection<RawMaterialLog> RawMaterialLogs { get; set; } = new List<RawMaterialLog>();
+
     public virtual ICollection<RoastingBatch> RoastingBatches { get; set; } = new List<RoastingBatch>();
 
-    [InverseProperty("ModifiedByNavigation")]
-    public virtual ICollection<RawMaterialLog> RawMaterialLogs { get; set; } = new List<RawMaterialLog>();
+    public virtual ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+
+    public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
 }

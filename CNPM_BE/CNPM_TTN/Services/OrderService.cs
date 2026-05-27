@@ -6,6 +6,7 @@ using CNPM_TTN.Dtos;
 using CNPM_TTN.Entities;
 using CNPM_TTN.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CNPM_TTN.Services
 {
@@ -19,6 +20,7 @@ namespace CNPM_TTN.Services
         private readonly IRepository<InventoryLog> _inventoryLogRepository;
         private readonly IVoucherService _voucherService;
         private readonly ILoyaltyService _loyaltyService;
+        private readonly ShopCoffeeContext _context;
 
         public OrderService(
             IRepository<Order> orderRepository,
@@ -28,7 +30,8 @@ namespace CNPM_TTN.Services
             IRepository<Product> productRepository,
             IRepository<InventoryLog> inventoryLogRepository,
             IVoucherService voucherService,
-            ILoyaltyService loyaltyService)
+            ILoyaltyService loyaltyService,
+            ShopCoffeeContext context)
         {
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
@@ -38,11 +41,12 @@ namespace CNPM_TTN.Services
             _inventoryLogRepository = inventoryLogRepository;
             _voucherService = voucherService;
             _loyaltyService = loyaltyService;
+            _context = context;
         }
 
         public async Task<Order> CreateOrderFromCartAsync(string userId, OrderRequestDto dto)
         {
-            // 1. Lấy giỏ hàng
+            // 1. Lấy giỏ hàng TRƯỚC khi mở transaction
             var cart = await _cartRepository.Query()
                 .Include(c => c.CartItems)
                 .ThenInclude(ci => ci.Product)
@@ -53,121 +57,143 @@ namespace CNPM_TTN.Services
                 throw new InvalidOperationException("Giỏ hàng của bạn đang trống.");
             }
 
-            // 2. Tạo đơn hàng mới
-            var order = new Order
+            // Kiểm tra tồn kho TRƯỚC transaction để tránh rollback không cần thiết
+            foreach (var item in cart.CartItems)
             {
-                UserId = userId,
-                OrderDate = DateTime.Now,
-                Status = "Chờ xử lý",
-                ReceiverName = dto.ReceiverName,
-                ReceiverPhone = dto.ReceiverPhone,
-                ReceiverEmail = dto.ReceiverEmail,
-                ShippingProvince = dto.ShippingProvince,
-                ShippingDistrict = dto.ShippingDistrict,
-                ShippingWard = dto.ShippingWard,
-                ShippingDetailAddress = dto.ShippingDetailAddress,
-                ShippingNote = dto.ShippingNote,
-                PaymentMethod = dto.PaymentMethod ?? "COD",
-                TotalAmount = 0
-            };
+                var product = await _productRepository.GetByIdAsync(item.ProductId)
+                    ?? throw new KeyNotFoundException($"Sản phẩm có Id {item.ProductId} không tồn tại.");
 
-            // Lưu đơn hàng trước để lấy OrderId
-            await _orderRepository.AddAsync(order);
-
-            decimal totalAmount = 0;
-
-            // 3. Xử lý từng sản phẩm trong giỏ hàng
-            foreach (var item in cart.CartItems.ToList())
-            {
-                var product = await _productRepository.GetByIdAsync(item.ProductId);
-                if (product == null) throw new KeyNotFoundException($"Sản phẩm có Id {item.ProductId} không tồn tại.");
-
-                // Kiểm tra số lượng tồn kho
                 if (product.Stock < item.Quantity)
-                {
-                    // Clean up order đã lỡ tạo để tránh dữ liệu rác
-                    await _orderRepository.DeleteAsync(order);
-                    throw new InvalidOperationException($"Sản phẩm '{product.Name}' không đủ hàng tồn kho (Tồn: {product.Stock}, Yêu cầu: {item.Quantity}).");
-                }
-
-                // Tính tiền
-                var itemTotal = product.Price * item.Quantity;
-                totalAmount += itemTotal;
-
-                // Tạo chi tiết đơn hàng
-                var orderDetail = new OrderDetail
-                {
-                    OrderId = order.Id,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    UnitPrice = product.Price,
-                    FlavorNotes = item.FlavorNotes,
-                    GrindingOptionId = item.GrindingOptionId
-                };
-                await _orderDetailRepository.AddAsync(orderDetail);
-
-                // Cập nhật tồn kho sản phẩm
-                int oldStock = product.Stock;
-                product.Stock -= item.Quantity;
-                await _productRepository.UpdateAsync(product);
-
-                // Ghi log kho (Inventory Log)
-                var log = new InventoryLog
-                {
-                    ProductId = product.Id,
-                    Action = $"Xuất kho bán hàng (Đơn hàng #{order.Id})",
-                    OldQuantity = oldStock,
-                    NewQuantity = product.Stock,
-                    ModifiedBy = "System",
-                    ModifiedDate = DateTime.Now,
-                    UserId = userId
-                };
-                await _inventoryLogRepository.AddAsync(log);
+                    throw new InvalidOperationException(
+                        $"Sản phẩm '{product.Name}' không đủ hàng tồn kho (Tồn: {product.Stock}, Yêu cầu: {item.Quantity}).");
             }
 
-            // 4. Áp dụng voucher nếu có
+            // Validate voucher TRƯỚC transaction
             decimal discountAmount = 0;
             string? voucherCode = null;
             if (!string.IsNullOrWhiteSpace(dto.VoucherCode))
             {
-                var voucherResult = await _voucherService.ValidateAsync(dto.VoucherCode.Trim().ToUpper(), totalAmount);
+                var voucherResult = await _voucherService.ValidateAsync(dto.VoucherCode.Trim().ToUpper(), 0);
                 if (voucherResult.Success && voucherResult.Data != null && voucherResult.Data.IsValid)
                 {
-                    discountAmount = voucherResult.Data.DiscountAmount;
                     voucherCode = dto.VoucherCode.Trim().ToUpper();
-                    await _voucherService.IncrementUsageAsync(voucherCode);
                 }
                 else if (!string.IsNullOrWhiteSpace(voucherResult.Data?.Message))
                 {
-                    // Hủy đơn hàng lỡ tạo
-                    await _orderRepository.DeleteAsync(order);
                     throw new InvalidOperationException(voucherResult.Data.Message);
                 }
             }
 
-            // 5. Cập nhật tổng tiền đơn hàng và giảm giá
-            order.VoucherCode = voucherCode;
-            order.DiscountAmount = discountAmount;
-            order.TotalAmount = Math.Max(0, totalAmount - discountAmount);
-            await _orderRepository.UpdateAsync(order);
-
-            // 6. Xóa sạch giỏ hàng của user
-            foreach (var item in cart.CartItems.ToList())
-            {
-                await _cartItemRepository.DeleteAsync(item);
-            }
-
-            // 7. Tích điểm Loyalty
+            // --- BẮT ĐẦU TRANSACTION ---
+            await using IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                await _loyaltyService.EarnPointsAsync(userId, order.Id, order.TotalAmount);
-            }
-            catch (Exception)
-            {
-                // Không để lỗi tích điểm làm hỏng giao dịch đặt hàng chính
-            }
+                // 2. Tạo đơn hàng mới
+                var order = new Order
+                {
+                    UserId = userId,
+                    OrderDate = DateTime.Now,
+                    Status = "Chờ xử lý",
+                    ReceiverName = dto.ReceiverName,
+                    ReceiverPhone = dto.ReceiverPhone,
+                    ReceiverEmail = dto.ReceiverEmail,
+                    ShippingProvince = dto.ShippingProvince,
+                    ShippingDistrict = dto.ShippingDistrict,
+                    ShippingWard = dto.ShippingWard,
+                    ShippingDetailAddress = dto.ShippingDetailAddress,
+                    ShippingNote = dto.ShippingNote,
+                    PaymentMethod = dto.PaymentMethod ?? "COD",
+                    TotalAmount = 0
+                };
 
-            return order;
+                await _orderRepository.AddAsync(order);
+
+                decimal totalAmount = 0;
+
+                // 3. Xử lý từng sản phẩm trong giỏ hàng
+                foreach (var item in cart.CartItems.ToList())
+                {
+                    var product = (await _productRepository.GetByIdAsync(item.ProductId))!;
+
+                    // Tính tiền
+                    var itemTotal = product.Price * item.Quantity;
+                    totalAmount += itemTotal;
+
+                    // Tạo chi tiết đơn hàng
+                    var orderDetail = new OrderDetail
+                    {
+                        OrderId = order.Id,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = product.Price,
+                        FlavorNotes = item.FlavorNotes,
+                        GrindingOptionId = item.GrindingOptionId
+                    };
+                    await _orderDetailRepository.AddAsync(orderDetail);
+
+                    // Cập nhật tồn kho sản phẩm
+                    int oldStock = product.Stock;
+                    product.Stock -= item.Quantity;
+                    await _productRepository.UpdateAsync(product);
+
+                    // Ghi log kho (Inventory Log)
+                    var log = new InventoryLog
+                    {
+                        ProductId = product.Id,
+                        Action = $"Xuất kho bán hàng (Đơn hàng #{order.Id})",
+                        OldQuantity = oldStock,
+                        NewQuantity = product.Stock,
+                        ModifiedBy = "System",
+                        ModifiedDate = DateTime.Now,
+                        UserId = userId
+                    };
+                    await _inventoryLogRepository.AddAsync(log);
+                }
+
+                // 4. Áp dụng voucher và tính tổng tiền
+                if (voucherCode != null)
+                {
+                    var voucherResult = await _voucherService.ValidateAsync(voucherCode, totalAmount);
+                    if (voucherResult.Success && voucherResult.Data != null && voucherResult.Data.IsValid)
+                    {
+                        discountAmount = voucherResult.Data.DiscountAmount;
+                        await _voucherService.IncrementUsageAsync(voucherCode);
+                    }
+                }
+
+                // 5. Cập nhật tổng tiền đơn hàng
+                order.VoucherCode = voucherCode;
+                order.DiscountAmount = discountAmount;
+                order.TotalAmount = Math.Max(0, totalAmount - discountAmount);
+                await _orderRepository.UpdateAsync(order);
+
+                // 6. Xóa sạch giỏ hàng của user
+                foreach (var item in cart.CartItems.ToList())
+                {
+                    await _cartItemRepository.DeleteAsync(item);
+                }
+
+                // --- COMMIT TRANSACTION (tất cả thành công) ---
+                await transaction.CommitAsync();
+
+                // 7. Tích điểm Loyalty (ngoài transaction — lỗi không ảnh hưởng đơn hàng)
+                try
+                {
+                    await _loyaltyService.EarnPointsAsync(userId, order.Id, order.TotalAmount);
+                }
+                catch (Exception)
+                {
+                    // Không để lỗi tích điểm làm hỏng giao dịch đặt hàng chính
+                }
+
+                return order;
+            }
+            catch
+            {
+                // --- ROLLBACK nếu có bất kỳ lỗi nào ---
+                await transaction.RollbackAsync();
+                throw; // Re-throw để Controller xử lý và trả lỗi về FE
+            }
         }
 
         public async Task<IEnumerable<Order>> GetOrdersByUserIdAsync(string userId)
