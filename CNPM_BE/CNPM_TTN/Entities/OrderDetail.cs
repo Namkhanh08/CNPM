@@ -6,11 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Entities;
 
-[Index("OrderId", Name = "IX_OrderDetails_OrderId")]
-[Index("ProductId", Name = "IX_OrderDetails_ProductId")]
+
 public partial class OrderDetail
 {
-    [Key]
+    
     public int Id { get; set; }
 
     public int OrderId { get; set; }
@@ -19,13 +18,12 @@ public partial class OrderDetail
 
     public int Quantity { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
     public decimal UnitPrice { get; set; }
 
-    [StringLength(250)]
     public string? FlavorNotes { get; set; }
 
     public int? GrindingOptionId { get; set; }
+    public string? Weight { get; set; }
 
     [ForeignKey("OrderId")]
     [InverseProperty("OrderDetails")]

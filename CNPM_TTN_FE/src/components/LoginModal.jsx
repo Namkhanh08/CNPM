@@ -33,13 +33,13 @@ export default function LoginModal({ isOpen, onClose }) {
             const result = res.data;  
 
             if (result.success) {            
-                // 1. Lưu thông tin vào Storage
+              
                 localStorage.setItem("token", result.data);
                 localStorage.setItem("userId", result.userId);
                 localStorage.setItem("userName", result.userName);
                 localStorage.setItem("userType", result.userType); 
                 localStorage.setItem("displayName", result.name);
-                // 2. Cập nhật State toàn cục
+              
                 setUser({
                     id: result.userId,
                     userName: result.userName,
@@ -47,7 +47,7 @@ export default function LoginModal({ isOpen, onClose }) {
                     name: result.name,
                 });   
 
-                // 3. Load dữ liệu người dùng
+                
                 await loadCart();
                 await loadOrder();
                 
@@ -84,12 +84,12 @@ export default function LoginModal({ isOpen, onClose }) {
                 UserName: regData.username,
                 Email: regData.email,
                 Password: regData.password,
-                UserType: 0 // Mặc định là khách hàng
+                UserType: 0
             });
             
             if (res.data.success) {
                 alert("Đăng ký thành công! Hãy đăng nhập.");
-                setIsActive(false); // Chuyển sang form Login
+                setIsActive(false);
             } else {
                 alert(res.data.message);
             }
@@ -100,7 +100,7 @@ export default function LoginModal({ isOpen, onClose }) {
         }
     };
 
-    // Reset form khi đóng/mở modal
+    
     useEffect(() => {
         if (isOpen) {
             setIsActive(false);

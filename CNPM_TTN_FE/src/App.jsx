@@ -12,6 +12,7 @@ import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import OrderDetail from "./pages/OrderDetail";
 import EditOrder from "./pages/EditOrder";
+import PaymentPage from "./pages/PaymentPage";
 
 // Admin imports
 import AdminLayout from "./layouts/AdminLayout";
@@ -20,7 +21,9 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminProducts from "./pages/admin/Products";
 import AdminBatches from "./pages/admin/Batches";
 import AdminInventory from "./pages/admin/Inventory";
-import AdminUsers from './pages/admin/Users';
+import AdminUsers from "./pages/admin/Users";
+import AdminVouchers from "./pages/admin/Vouchers";
+import AdminShipping from "./pages/admin/ShipperOrders";
 
 import "./App.css";
 
@@ -37,20 +40,28 @@ function App() {
           <Route path="subscription" element={<Subscription />} />
           <Route path="orders" element={<Orders />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="orders/:id" element={<OrderDetail />} />
-          <Route path="/orders/edit/:id" element={<EditOrder />} />
+          <Route path="/orders/:id" element={<OrderDetail />} />
+          <Route path="orders/edit/:id" element={<EditOrder />} />
+          <Route path="checkout/payment/:orderId" element={<PaymentPage />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} fallbackTo="/" />}>
+        <Route
+          element={<ProtectedRoute allowedRoles={[1, 2, 3]} fallbackTo="/" />}
+        >
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="batches" element={<AdminBatches />} />
             <Route path="inventory" element={<AdminInventory />} />
-            
-          
-            <Route element={<ProtectedRoute allowedRoles={[1]} fallbackTo="/admin" />}>
+            <Route path="vouchers" element={<AdminVouchers />} />
+            <Route path="shipping" element={<AdminShipping />} />
+
+            <Route
+              element={
+                <ProtectedRoute allowedRoles={[1]} fallbackTo="/admin" />
+              }
+            >
               <Route path="users" element={<AdminUsers />} />
             </Route>
           </Route>

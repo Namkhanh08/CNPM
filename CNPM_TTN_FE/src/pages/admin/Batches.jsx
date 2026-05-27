@@ -10,6 +10,7 @@ import {
   Edit2,
   Search,
   Scale,
+  Filter,
 } from "lucide-react";
 import API from "../../services/api";
 
@@ -23,9 +24,10 @@ export default function Batches() {
   const [updatingId, setUpdatingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [statusFilter, setStatusFilter] = useState("All");
+
   const currentUserName = localStorage.getItem("userName");
 
-  // THIẾT KẾ MỚI: outputWeight ban đầu để null tương thích hoàn toàn với double? ở BE
   const [formData, setFormData] = useState({
     productId: "",
     inventoryReceiptId: "",
@@ -62,12 +64,31 @@ export default function Batches() {
     }
   };
 
+  const getFilterLabel = (filter) => {
+    switch (filter) {
+      case "Đang xử lý":
+        return `Đang xử lý (${
+          batches.filter((b) => b.status === "Đang xử lý").length
+        })`;
+      case "Hoàn thành":
+        return `Hoàn thành (${
+          batches.filter((b) => b.status === "Hoàn thành").length
+        })`;
+      case "Đã đóng gói":
+        return `Đã đóng gói (${
+          batches.filter((b) => b.status === "Đã đóng gói").length
+        })`;
+      default:
+        return `Tất cả (${batches.length})`;
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
       const [batchRes, prodRes, receiptRes] = await Promise.all([
         API.getBatchesDetail(),
-        API.getProducts(),
+        API.getProducts1(),
         API.getInventoryReceipts(),
       ]);
       setBatches(batchRes.data.data || []);
@@ -92,14 +113,12 @@ export default function Batches() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Chuyển đổi dữ liệu chuẩn trước khi gửi
     const submitData = {
       productId: parseInt(formData.productId),
       inventoryReceiptId: parseInt(formData.inventoryReceiptId),
       batchCode: formData.batchCode,
       roastLevel: formData.roastLevel,
       inputWeight: parseFloat(formData.inputWeight),
-      // Nếu trạng thái là Hoàn thành/Đóng gói thì lấy giá trị nhập, ngược lại gửi hẳn null lên BE
       outputWeight:
         formData.status === "Hoàn thành" || formData.status === "Đã đóng gói"
           ? parseFloat(formData.outputWeight)
@@ -137,7 +156,14 @@ export default function Batches() {
 
   const handleStatusChange = async (batchId, newStatus) => {
     const currentBatch = batches.find((b) => b.id === batchId);
-    let outputWeightInput = currentBatch ? currentBatch.outputWeight : null;
+    if (!currentBatch) return;
+
+    if (currentBatch.status === "Hoàn thành" && newStatus === "Đang xử lý") {
+      alert("Mẻ rang đã hoàn thành không thể quay về trạng thái Đang xử lý!");
+      return;
+    }
+
+    let outputWeightInput = currentBatch.outputWeight;
 
     if (newStatus === "Hoàn thành" || newStatus === "Đã đóng gói") {
       if (!outputWeightInput || outputWeightInput <= 0) {
@@ -152,10 +178,6 @@ export default function Batches() {
           alert("Khối lượng thành phẩm nhập vào không hợp lệ!");
           return;
         }
-      } else {
-        console.log(
-          `Sử dụng lại khối lượng đầu ra có sẵn: ${outputWeightInput} kg`
-        );
       }
     } else if (newStatus === "Đang xử lý") {
       outputWeightInput = null;
@@ -182,8 +204,14 @@ export default function Batches() {
   };
 
   const filteredBatches = batches.filter((batch) => {
-    if (!searchQuery.trim()) return true;
-    return batch.batchCode?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      !searchQuery.trim() ||
+      batch.batchCode?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "All" || batch.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -195,8 +223,7 @@ export default function Batches() {
             <Coffee className="text-accent-1 shrink-0" /> Quản Lý Lô Rang Cà Phê
           </h1>
           <p className="font-nunito text-primary/60 text-sm mt-1">
-            Theo dõi tiêu thụ hạt thô. Kho thành phẩm tự động cộng dồn khi đạt
-            trạng thái kết thúc.
+            Theo dõi tiêu thụ hạt thô
           </p>
         </div>
         <button
@@ -207,9 +234,8 @@ export default function Batches() {
         </button>
       </div>
 
-      {/* Tìm kiếm */}
-      <div className="mb-4 max-w-md">
-        <div className="relative flex items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 overflow-visible">
+        <div className="relative flex items-center w-full sm:max-w-xs md:max-w-md">
           <Search
             size={18}
             className="absolute left-4 text-gray-400 pointer-events-none"
@@ -219,7 +245,7 @@ export default function Batches() {
             placeholder="Tìm kiếm theo mã lô rang..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full font-nunito pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 ring-accent-1"
+            className="w-full font-nunito pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 ring-accent-1 transition-all"
           />
           {searchQuery && (
             <X
@@ -228,6 +254,67 @@ export default function Batches() {
               onClick={() => setSearchQuery("")}
             />
           )}
+        </div>
+
+        <div className="relative inline-block text-left group font-nunito text-sm w-full sm:w-auto">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-xl font-bold text-gray-700 cursor-pointer shadow-sm hover:bg-gray-50 transition-colors justify-between sm:justify-start">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+              <Filter size={14} className="text-gray-400" /> Trạng thái:
+            </span>
+            <span className="text-primary text-xs font-bold bg-primary/5 px-2 py-0.5 rounded-md">
+              {getFilterLabel(statusFilter)}
+            </span>
+          </div>
+
+          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-40 opacity-0 invisible scale-95 -translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:scale-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("All")}
+              className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
+                statusFilter === "All"
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Tất cả ({batches.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Đang xử lý")}
+              className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
+                statusFilter === "Đang xử lý"
+                  ? "bg-sky-50 text-sky-700"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Đang xử lý (
+              {batches.filter((b) => b.status === "Đang xử lý").length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Hoàn thành")}
+              className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
+                statusFilter === "Hoàn thành"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Hoàn thành (
+              {batches.filter((b) => b.status === "Hoàn thành").length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Đã đóng gói")}
+              className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
+                statusFilter === "Đã đóng gói"
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Đã đóng gói (
+              {batches.filter((b) => b.status === "Đã đóng gói").length})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -369,7 +456,6 @@ export default function Batches() {
                   </select>
                 </div>
 
-                {/* Khối lượng ra chỉ hiển thị khi không phải là "Đang xử lý" */}
                 {formData.status !== "Đang xử lý" && (
                   <div className="col-span-2 animate-fade-in">
                     <label className="text-[10px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1">
@@ -483,7 +569,6 @@ export default function Batches() {
                             </strong>
                           </span>
                           <span className="text-emerald-600 font-semibold mt-0.5">
-                            {/* Khắc phục việc hiển thị khi giá trị nhận về là null từ BE */}
                             Ra:{" "}
                             {b.outputWeight !== null && b.outputWeight > 0
                               ? `${b.outputWeight} kg`
@@ -529,7 +614,10 @@ export default function Batches() {
                                 b.status
                               )}`}
                             >
-                              <option value="Đang xử lý">Đang xử lý</option>
+                              {b.status !== "Hoàn thành" && (
+                                <option value="Đang xử lý">Đang xử lý</option>
+                              )}
+
                               <option value="Hoàn thành">Hoàn thành</option>
                               <option value="Đã đóng gói">Đã đóng gói ✔</option>
                             </select>
@@ -548,7 +636,7 @@ export default function Batches() {
                       colSpan="9"
                       className="px-4 py-10 text-center text-gray-400 italic"
                     >
-                      Không tìm thấy mẻ rang nào.
+                      Không tìm thấy mẻ rang nào thuộc bộ lọc này.
                     </td>
                   </tr>
                 )}

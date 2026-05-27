@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Entities;
 
-[Index("UserName", Name = "IX_Users_UserName", IsUnique = true)]
+
 public partial class User
 {
-    [Key]
+    
     public string Id { get; set; } = null!;
 
  
@@ -38,16 +38,16 @@ public partial class User
     public int UserType { get; set; }
 
     public DateTime Created { get; set; }
+    public int TotalPoints { get; set; } = 0;
 
-    [InverseProperty("User")]
+    
+    public string MemberTier { get; set; } = "Bronze";
+
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
-    [InverseProperty("User")]
     public virtual ICollection<RawMaterialLog> RawMaterialLogs { get; set; } = new List<RawMaterialLog>();
 
-    [InverseProperty("User")]
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
-    [InverseProperty("User")]
     public virtual ICollection<RoastingBatch> RoastingBatches { get; set; } = new List<RoastingBatch>();
 }

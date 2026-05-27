@@ -8,18 +8,16 @@ namespace CNPM_TTN.Entities
     [Table("RawMaterials")]
     public class RawMaterial
     {
-        [Key]
+       
         public int Id { get; set; }
 
-        [Required]
-        [StringLength(150)]
+   
         public string Name { get; set; }
 
-        [Required]
-        [StringLength(20)]
+     
         public string Unit { get; set; } = "kg";
 
-        [Required]
+
         public int CategoryId { get; set; }
 
         [ForeignKey("CategoryId")]

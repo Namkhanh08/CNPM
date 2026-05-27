@@ -326,13 +326,13 @@ export default function Inventory() {
               {logs.length > 0 ? (
                 logs.map((log) => {
                   const currentUserId = localStorage.getItem("userId");
-                  const currentUserName = localStorage.getItem("userName");
+                  const currentUserName = localStorage.getItem("name");
 
                   const displayName =
                     log.modifiedBy === currentUserId && currentUserName
                       ? currentUserName
                       : log.modifiedByName ||
-                        log.user?.username ||
+                        log.user?.name ||
                         log.modifiedBy ||
                         "Hệ thống";
 

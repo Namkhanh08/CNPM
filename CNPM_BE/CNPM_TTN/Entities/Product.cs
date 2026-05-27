@@ -8,7 +8,7 @@ namespace CNPM_TTN.Entities;
 
 public class Product
 {
-    [Key]
+ 
     public int Id { get; set; }
    
     public string Name { get; set; } = null!;
@@ -35,13 +35,13 @@ public class Product
     [InverseProperty("Product")]
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
-    [InverseProperty("Product")]
+   
     public virtual ICollection<ProductDetail> ProductDetails { get; set; } = new List<ProductDetail>();
 
     [InverseProperty("Product")]
     public virtual ICollection<RoastingBatch> RoastingBatches { get; set; } = new List<RoastingBatch>();
 
-    [ForeignKey("ProductId")]
-    [InverseProperty("Products")]
-    public virtual ICollection<GrindingOption> GrindingOptions { get; set; } = new List<GrindingOption>();
+
+    
+    public virtual ICollection<ProductGrindingOption> ProductGrindingOptions { get; set; } = new List<ProductGrindingOption>();
 }
