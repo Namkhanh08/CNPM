@@ -1,4 +1,61 @@
 # CNPM
+REVO Coffee — E-Commerce & Subscription Management Platform
+
+Một nền tảng thương mại điện tử chuyên biệt cho lĩnh vực cà phê, được phát triển theo mô hình fullstack nhằm tối ưu trải nghiệm mua hàng, quản lý vận hành và hệ thống giao hàng thực tế. Dự án mô phỏng quy trình hoạt động của một thương hiệu cà phê hiện đại với đầy đủ vai trò: khách hàng, quản trị viên và shipper.
+
+Điểm nổi bật của dự án
+Xây dựng hệ thống đặt cà phê trực tuyến với UI/UX hiện đại
+Triển khai quy trình xử lý đơn hàng đa trạng thái theo thực tế vận hành
+Tích hợp hệ thống Subscription cho khách hàng đăng ký cà phê định kỳ
+Hỗ trợ phân quyền nhiều vai trò: User / Admin / Shipper
+Thiết kế dashboard quản trị giúp theo dõi đơn hàng, doanh thu và trạng thái vận chuyển
+Tối ưu trải nghiệm responsive trên nhiều thiết bị
+Chức năng chính
+Người dùng
+Đăng ký / đăng nhập bằng JWT Authentication
+Tìm kiếm và lọc sản phẩm
+Quản lý giỏ hàng và thanh toán
+Theo dõi trạng thái đơn hàng theo thời gian thực
+Đăng ký gói Subscription định kỳ
+Quản lý lịch sử mua hàng
+Quản trị viên
+Quản lý sản phẩm, danh mục và voucher
+Quản lý đơn hàng và trạng thái vận chuyển
+Quản lý người dùng và phân quyền
+Theo dõi dashboard doanh thu
+Shipper
+Nhận đơn và cập nhật trạng thái giao hàng
+Xác nhận hoàn thành đơn vận chuyển
+Công nghệ sử dụng
+Frontend
+ReactJS
+TailwindCSS
+Zustand
+Axios
+React Router DOM
+Backend
+Spring Boot / RESTful API
+JWT Authentication
+Entity Framework / JPA
+Database
+SQL Server
+Dev Tools
+Git & GitHub
+Postman
+VS Code / IntelliJ IDEA
+Vai trò & đóng góp
+Thiết kế kiến trúc hệ thống và database
+Xây dựng toàn bộ frontend UI/UX
+Phát triển REST API backend
+Xử lý authentication & authorization
+Thiết kế luồng xử lý đơn hàng thực tế
+Tối ưu state management và API integration
+Điểm kỹ thuật nổi bật
+Áp dụng mô hình phân quyền đa vai trò
+Xây dựng workflow đơn hàng đồng bộ giữa User – Admin – Shipper
+Thiết kế hệ thống Subscription có khả năng mở rộng
+Quản lý trạng thái dữ liệu realtime ở frontend bằng Zustand
+Tổ chức source code theo hướng scalable và maintainable
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/aa1ab6fd-e0ad-4ec8-85fa-235bd0b75d92" />
 <img width="1918" height="1079" alt="image" src="https://github.com/user-attachments/assets/097f2bb2-aacf-4dc8-b3b4-43355225b1d9" />
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/c95d6a99-b2c3-4f45-80a4-9ea57315558e" />
