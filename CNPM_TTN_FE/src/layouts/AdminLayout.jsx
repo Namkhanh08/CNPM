@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Archive, Database, Users } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Archive, Database, Users, Ticket, CalendarSync } from 'lucide-react';
 import useStore from '../store/useStore';
 import { AdminSidebar, AdminHeader } from '../components';
 
@@ -23,7 +23,9 @@ export default function AdminLayout() {
   const navItems = [
     { name: 'Tổng quan', path: '/admin', icon: <LayoutDashboard size={20} />, roles: [1] },
     { name: 'Đơn hàng', path: '/admin/orders', icon: <ShoppingCart size={20} />, roles: [1, 2] },
+    { name: 'Đăng ký định kỳ', path: '/admin/subscriptions', icon: <CalendarSync size={20} />, roles: [1, 2] },
     { name: 'Sản phẩm', path: '/admin/products', icon: <Package size={20} />, roles: [1] },
+    { name: 'Voucher', path: '/admin/vouchers', icon: <Ticket size={20} />, roles: [1] },
     { name: 'Người dùng', path: '/admin/users', icon: <Users size={20} />, roles: [1] },
     { name: 'Lô rang', path: '/admin/batches', icon: <Database size={20} />, roles: [1, 2] },
     { name: 'Tồn kho', path: '/admin/inventory', icon: <Archive size={20} />, roles: [1, 3] },

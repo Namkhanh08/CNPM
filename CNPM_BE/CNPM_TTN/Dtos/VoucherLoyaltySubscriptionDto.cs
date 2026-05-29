@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace CNPM_TTN.Dtos;
@@ -18,6 +19,14 @@ public class VoucherDto
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public bool IsActive { get; set; }
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public decimal? MaxDiscount { get; set; }
+    public int? UsageLimit { get; set; }
+    public string? PaymentMethod { get; set; }
+    public bool IsExpired { get; set; }
+    public int RemainingUsage { get; set; }
+    public List<int> ProductIds { get; set; } = new();
 }
 
 public class CreateVoucherDto
@@ -31,6 +40,12 @@ public class CreateVoucherDto
     [Required] public DateTime StartDate { get; set; }
     [Required] public DateTime EndDate { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public decimal? MaxDiscount { get; set; }
+    public int? UsageLimit { get; set; }
+    public string? PaymentMethod { get; set; }
+    public List<int> ProductIds { get; set; } = new();
 }
 
 public class VoucherValidateResponseDto
@@ -39,6 +54,14 @@ public class VoucherValidateResponseDto
     public decimal DiscountAmount { get; set; }
     public string Message { get; set; } = string.Empty;
     public VoucherDto? Voucher { get; set; }
+}
+
+public class VoucherValidateRequestDto
+{
+    [Required] public string Code { get; set; } = string.Empty;
+    [Range(0, double.MaxValue)] public decimal OrderTotal { get; set; }
+    public string? PaymentMethod { get; set; }
+    public List<int> ProductIds { get; set; } = new();
 }
 
 // ========== LOYALTY ==========
@@ -108,4 +131,16 @@ public class CreateSubscriptionDto
     public string? ShippingWard { get; set; }
     public string? ShippingDetailAddress { get; set; }
     public string? PaymentMethod { get; set; }
+}
+
+public class SubscriptionAdminDto : SubscriptionDto
+{
+    public string? UserEmail { get; set; }
+    public string? UserFullName { get; set; }
+}
+
+public class SubscriptionStatusUpdateDto
+{
+    [Required]
+    public string Status { get; set; } = string.Empty;
 }

@@ -2,99 +2,80 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ArrowLeft } from 'lucide-react';
 import useStore from '../../store/useStore';
 
-// Logic gợi ý cà phê dựa trên câu trả lời quiz
-const getRecommendation = (answers) => {
-    const roast = answers[1];   // light / medium / dark
-    const flavor = answers[2];  // floral / chocolate / bold
-    const method = answers[3];  // phin / espresso / pour
-    // Bảng gợi ý đơn giản theo tổ hợp
-    if (roast === 'dark' || flavor === 'bold' || method === 'phin') {
-        return {
-            name: 'Robusta Đặc Biệt',
-            subtitle: 'Đậm đà – Rang đậm – Pha phin',
-            reason: 'Dựa trên sở thích của bạn với hương vị mạnh mẽ và đậm đà, Robusta Đặc Biệt là lựa chọn hoàn hảo. Rang đậm tạo ra lớp crema dày và hậu vị kéo dài.',
-            flavorNotes: ['Cacao đắng', 'Gỗ sồi', 'Caramel đậm'],
-            matchScore: 95,
-            price: 185000,
-            imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=600&q=80',
-        };
-    }
-    if (roast === 'light' || flavor === 'floral' || method === 'pour') {
-        return {
-            name: 'Ethiopia Yirgacheffe',
-            subtitle: 'Thanh lịch – Rang nhẹ – Pour-over',
-            reason: 'Với gu thích hương thanh lịch và tươi sáng, Ethiopia Yirgacheffe mang đến trải nghiệm cà phê đặc sản với tầng hương hoa và trái cây tinh tế.',
-            flavorNotes: ['Hoa nhài', 'Cam bergamot', 'Đào chín'],
-            matchScore: 92,
-            price: 225000,
-            imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80',
-        };
-    }
-    // medium / chocolate / espresso — mặc định
-    return {
-        name: 'Colombia Supremo',
-        subtitle: 'Cân bằng – Rang vừa – Espresso',
-        reason: 'Bạn yêu thích sự cân bằng giữa vị đắng và ngọt. Colombia Supremo với rang vừa cho ra tách espresso hoàn hảo — đậm vừa phải, hậu socola nhẹ.',
-        flavorNotes: ['Socola sữa', 'Caramel', 'Hạnh nhân'],
-        matchScore: 90,
-        price: 195000,
-        imageUrl: 'https://images.unsplash.com/photo-1511537190424-bbbab87ac5eb?w=600&q=80',
-    };
-};
-
-const SUGGESTIONS = [
-    {
-        name: 'Brazil Santos',
-        price: 165000,
-        imageUrl: 'https://images.unsplash.com/photo-1504630083234-14187a9df0f5?w=400&q=80',
-    },
-    {
-        name: 'Arabica Đà Lạt',
-        price: 175000,
-        imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=400&q=80',
-    },
-    {
-        name: 'Blend Signature',
-        price: 155000,
-        imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80',
-    },
-];
 
 const RecommendationResult = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const addToCart = useStore((s) => s.addToCart);
 
+    const recommendation = location.state?.recommendation;
     const answers = location.state?.answers;
 
-    // Nếu người dùng vào thẳng URL mà không qua quiz → redirect về quiz
-    if (!answers) {
+    // Nếu không có kết quả từ API (có thể bỏ qua quiz hoặc API lỗi) → hiển thị lỗi
+    if (!recommendation) {
         return (
-            <div className="min-h-screen bg-[#fafaf5] flex flex-col items-center justify-center gap-6">
-                <p className="text-xl text-[#26170c] font-medium">Bạn chưa làm bài quiz!</p>
-                <button
-                    onClick={() => navigate('/quiz')}
-                    className="bg-[#26170c] text-white px-8 py-4 rounded-2xl font-medium hover:bg-black transition"
-                >
-                    Bắt đầu quiz ngay
-                </button>
+            <div className="min-h-screen bg-[#fafaf5] flex flex-col items-center justify-center gap-6 px-6">
+                <div className="text-center">
+                    <p className="text-5xl mb-4">☕</p>
+                    <h2 className="text-2xl font-bold text-[#26170c] mb-2">Chưa có kết quả gợi ý</h2>
+                    <p className="text-gray-500 mb-6">Bạn chưa làm quiz hoặc đã xảy ra lỗi kết nối. Vui lòng thử lại.</p>
+                </div>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => navigate('/quiz')}
+                        className="bg-[#26170c] text-white px-8 py-4 rounded-2xl font-medium hover:bg-black transition"
+                    >
+                        Làm lại quiz
+                    </button>
+                    <Link
+                        to="/shop"
+                        className="border-2 border-[#9a4600] text-[#9a4600] px-8 py-4 rounded-2xl font-medium hover:bg-[#9a4600]/5 transition"
+                    >
+                        Xem cửa hàng
+                    </Link>
+                </div>
             </div>
         );
     }
 
-    const result = getRecommendation(answers);
+    const result = recommendation.MainSuggestion ?? recommendation.mainSuggestion;
+    const otherSuggestions = recommendation.OtherSuggestions ?? recommendation.otherSuggestions ?? [];
 
-    const handleAddToCart = () => {
-        // Gọi addToCart từ Zustand store
-        addToCart(
-            { id: result.productId || null, name: result.name, price: result.price },
-            1,      // quantity
-            null,   // grindType
-            null,   // flavorNotes
-            null,   // weight
-            null, null, null, null, null, null, null
-        );
-        navigate('/cart');
+    const resultName = result?.name ?? result?.Name;
+    const resultSubtitle = result?.subtitle ?? result?.Subtitle;
+    const resultReason = result?.reason ?? result?.Reason;
+    const resultFlavorNotes = result?.flavorNotes ?? result?.FlavorNotes ?? [];
+    const resultMatchScore = result?.matchScore ?? result?.MatchScore ?? 90;
+    const resultPrice = result?.price ?? result?.Price ?? 0;
+    const resultImageUrl = result?.imageUrl ?? result?.ImageUrl;
+    const prodId = result?.productId ?? result?.ProductId;
+
+    const handleAddToCart = async () => {
+        if (!prodId) {
+            alert('Không xác định được sản phẩm. Vui lòng thử lại hoặc tìm sản phẩm trong cửa hàng.');
+            return;
+        }
+        try {
+            // addToCart(product, quantity, grindType, flavorNotes, weight,
+            //           receiverName, receiverPhone, shippingProvince,
+            //           shippingDistrict, shippingWard, shippingDetailAddress, shippingNote)
+            await addToCart(
+                { id: prodId, name: resultName, price: resultPrice },
+                1,       // quantity
+                null,    // grindType
+                null,    // flavorNotes
+                null,    // weight
+                null, null, null, null, null, null, null  // shipping fields (điền ở trang checkout)
+            );
+            navigate('/cart');
+        } catch (err) {
+            const msg = err.response?.data?.Message || err.response?.data?.message || err.message || '';
+            if (err.response?.status === 401 || msg.toLowerCase().includes('unauthor')) {
+                alert('Bạn cần đăng nhập để thêm vào giỏ hàng!');
+            } else {
+                alert('Thêm vào giỏ thất bại: ' + msg);
+            }
+        }
     };
 
     return (
@@ -105,7 +86,7 @@ const RecommendationResult = () => {
                     <Link to="/" className="text-2xl font-bold text-[#26170c]">REVO Coffee</Link>
                     <nav className="hidden md:flex gap-8 text-sm font-medium">
                         <Link to="/shop" className="hover:text-[#9a4600]">Cửa hàng</Link>
-                        <Link to="/subscription" className="hover:text-[#9a4600]">Subscription</Link>
+                        <Link to="/subscription" className="hover:text-[#9a4600]">Đăng ký</Link>
                         <span className="text-[#9a4600] font-semibold">Gợi ý cà phê</span>
                     </nav>
                 </div>
@@ -124,14 +105,14 @@ const RecommendationResult = () => {
                     {/* Hình ảnh */}
                     <div className="relative">
                         <img
-                            src={result.imageUrl}
-                            alt={result.name}
+                            src={resultImageUrl}
+                            alt={resultName}
                             className="w-full aspect-square object-cover rounded-3xl shadow-2xl"
                         />
                         <div className="absolute top-8 left-8 bg-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
                             <span className="text-3xl">⭐</span>
                             <div>
-                                <p className="font-bold text-[#26170c] text-xl">{result.matchScore}% Phù hợp</p>
+                                <p className="font-bold text-[#26170c] text-xl">{resultMatchScore}% Phù hợp</p>
                                 <p className="text-sm text-gray-500">Với gu của bạn</p>
                             </div>
                         </div>
@@ -141,13 +122,13 @@ const RecommendationResult = () => {
                     <div className="space-y-8">
                         <div>
                             <span className="uppercase text-[#9a4600] tracking-widest text-sm">LỰA CHỌN HOÀN HẢO</span>
-                            <h1 className="text-4xl lg:text-5xl font-bold text-[#26170c] mt-3">{result.name}</h1>
-                            <p className="text-lg text-gray-600 mt-2">{result.subtitle}</p>
+                            <h1 className="text-4xl lg:text-5xl font-bold text-[#26170c] mt-3">{resultName}</h1>
+                            <p className="text-lg text-gray-600 mt-2">{resultSubtitle}</p>
                         </div>
 
                         {/* Flavor Notes */}
                         <div className="flex flex-wrap gap-3">
-                            {result.flavorNotes.map((flavor, i) => (
+                            {resultFlavorNotes.map((flavor, i) => (
                                 <span key={i} className="bg-amber-100 text-amber-800 px-5 py-2 rounded-full text-sm font-medium">
                                     {flavor}
                                 </span>
@@ -157,21 +138,22 @@ const RecommendationResult = () => {
                         {/* Lý do */}
                         <div className="bg-[#f4f4ef] p-8 rounded-3xl">
                             <h3 className="font-semibold mb-4 text-[#26170c]">Tại sao chúng tôi gợi ý cho bạn?</h3>
-                            <p className="text-gray-700 leading-relaxed">{result.reason}</p>
+                            <p className="text-gray-700 leading-relaxed">{resultReason}</p>
                         </div>
 
                         {/* Giá và nút hành động */}
                         <div className="flex flex-col sm:flex-row gap-4">
                             <button
                                 onClick={handleAddToCart}
-                                className="flex-1 bg-[#26170c] text-white py-5 rounded-3xl font-medium flex items-center justify-center gap-3 text-lg hover:bg-black transition"
+                                className="flex-1 bg-[#26170c] text-white py-5 rounded-3xl font-medium flex items-center justify-center gap-3 text-lg hover:bg-black transition cursor-pointer"
                             >
                                 <ShoppingBag size={24} />
-                                Thêm vào giỏ • {result.price.toLocaleString('vi-VN')}đ
+                                Thêm vào giỏ • {resultPrice.toLocaleString('vi-VN')}đ
                             </button>
                             <Link
                                 to="/subscription"
-                                className="flex-1 border-2 border-[#9a4600] text-[#9a4600] py-5 rounded-3xl font-medium hover:bg-[#9a4600]/5 transition text-center"
+                                state={{ productId: prodId }}
+                                className="flex-1 border-2 border-[#9a4600] text-[#9a4600] py-5 rounded-3xl font-medium hover:bg-[#9a4600]/5 transition text-center flex items-center justify-center"
                             >
                                 Thêm vào Subscription
                             </Link>
@@ -183,17 +165,27 @@ const RecommendationResult = () => {
                 <div className="mt-20">
                     <h2 className="text-2xl font-semibold mb-8">Các gợi ý khác cho bạn</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {SUGGESTIONS.map((item, index) => (
-                            <div key={index} className="cursor-pointer group">
-                                <img
-                                    src={item.imageUrl}
-                                    alt={item.name}
-                                    className="w-full aspect-square object-cover rounded-3xl mb-4 group-hover:scale-105 transition"
-                                />
-                                <h4 className="font-medium">{item.name}</h4>
-                                <p className="text-[#9a4600]">{item.price.toLocaleString('vi-VN')}đ</p>
-                            </div>
-                        ))}
+                        {otherSuggestions.map((item, index) => {
+                            const prodId = item.productId ?? item.ProductId;
+                            const name = item.name ?? item.Name;
+                            const price = item.price ?? item.Price ?? 0;
+                            const imageUrl = item.imageUrl ?? item.ImageUrl;
+                            return (
+                                <div 
+                                    key={index} 
+                                    className="cursor-pointer group"
+                                    onClick={() => prodId && navigate(`/product/${prodId}`)}
+                                >
+                                    <img
+                                        src={imageUrl}
+                                        alt={name}
+                                        className="w-full aspect-square object-cover rounded-3xl mb-4 group-hover:scale-105 transition"
+                                    />
+                                    <h4 className="font-medium">{name}</h4>
+                                    <p className="text-[#9a4600]">{price.toLocaleString('vi-VN')}đ</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Plus, History, Loader2, Coffee, X, Save, User } from "lucide-react";
+import { Plus, History, Loader2, Coffee, X, Save, User, RefreshCcw, CheckCircle2, ClipboardEdit } from "lucide-react";
 import API from "../../services/api";
+
+const STATUS_OPTIONS = ["Đang xử lý", "Hoàn thành", "Đã đóng gói"];
 
 export default function Batches() {
   const [batches, setBatches] = useState([]);
@@ -9,10 +11,13 @@ export default function Batches() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State cho cập nhật trạng thái
+  const [editingBatch, setEditingBatch] = useState(null); // batch đang được chọn để đổi trạng thái
+  const [newStatus, setNewStatus] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const currentUserName = localStorage.getItem("userName");
 
-  
   const [formData, setFormData] = useState({
     productId: "",
     batchCode: "",
@@ -66,9 +71,7 @@ export default function Batches() {
   const handleCreateBatch = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
-      
       await API.createBatchDetail(
         parseInt(formData.productId),
         formData.batchCode,
@@ -76,21 +79,40 @@ export default function Batches() {
         parseFloat(formData.inputWeight),
         formData.status
       );
-  
       setIsModalOpen(false);
       alert("Tạo mẻ rang thành công!");
       loadData();
-      
-      
       setFormData({ productId: "", batchCode: "", roastLevel: "Medium", inputWeight: "", status: "Hoàn thành" });
-  
     } catch (err) {
       console.error("Lỗi:", err);
-      alert("Lỗi tạo mẻ rang: " + (err.response?.data || "Vui lòng thử lại"));
+      alert("Lỗi tạo mẻ rang: " + (err.response?.data?.Message || err.response?.data?.message || "Vui lòng thử lại"));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const openUpdateStatusModal = (batch) => {
+    setEditingBatch(batch);
+    setNewStatus(batch.status ?? batch.Status ?? "");
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!editingBatch || !newStatus) return;
+    setIsUpdating(true);
+    try {
+      const id = editingBatch.id ?? editingBatch.Id;
+      await API.updateBatchStatus(id, newStatus);
+      setEditingBatch(null);
+      setNewStatus("");
+      await loadData();
+      alert("Cập nhật trạng thái lô rang thành công!");
+    } catch (err) {
+      alert("Lỗi cập nhật: " + (err.response?.data?.Message || err.response?.data?.message || "Vui lòng thử lại"));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in p-4 md:p-6">
       {/* Header */}
@@ -99,17 +121,25 @@ export default function Batches() {
           <h1 className="font-montserrat font-bold text-2xl text-primary flex items-center gap-2">
             <Coffee className="text-accent-1" /> Quản Lý Lô Rang
           </h1>
-          <p className="font-nunito text-primary/60 text-sm">Theo dõi nhật ký sản xuất và lịch sử mẻ rang.</p>
+          <p className="font-nunito text-primary/60 text-sm">Theo dõi nhật ký sản xuất và cập nhật trạng thái mẻ rang.</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition-all active:scale-95 whitespace-nowrap"
-        >
-          <Plus size={18} /> Ghi Lô Rang Mới
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadData}
+            className="bg-white border border-gray-200 text-primary px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:shadow-md transition-all active:scale-95"
+          >
+            <RefreshCcw size={16} /> Tải lại
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition-all active:scale-95 whitespace-nowrap"
+          >
+            <Plus size={18} /> Ghi Lô Rang Mới
+          </button>
+        </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal tạo lô rang mới */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
@@ -159,13 +189,10 @@ export default function Batches() {
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Trạng Thái</label>
                   <select className="w-full mt-1 bg-gray-50 border border-gray-100 rounded-xl p-3 outline-none focus:ring-2 ring-accent-1"
                     value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
-                    <option value="Đang xử lý">Đang xử lý</option>
-                    <option value="Hoàn thành">Hoàn thành</option>
-                    <option value="Đã đóng gói">Đã đóng gói</option>
+                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
 
-           
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Người thực hiện</label>
                   <div className="mt-1 flex items-center gap-3 bg-gray-100 border border-gray-200 rounded-xl p-3 text-gray-600 select-none">
@@ -183,13 +210,94 @@ export default function Batches() {
         </div>
       )}
 
+      {/* Modal cập nhật trạng thái */}
+      {editingBatch && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="font-montserrat font-bold text-xl flex items-center gap-2 text-primary">
+                <ClipboardEdit className="text-accent-1" /> Cập Nhật Trạng Thái
+              </h2>
+              <X className="cursor-pointer text-gray-400 hover:text-red-500" onClick={() => { setEditingBatch(null); setNewStatus(""); }} />
+            </div>
+
+            <div className="p-6 space-y-5 font-nunito">
+              {/* Thông tin lô rang */}
+              <div className="bg-gray-50 rounded-2xl p-4 space-y-1">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Thông tin lô rang</p>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Mã lô:</span>
+                  <span className="font-black text-primary">{editingBatch.batchCode ?? editingBatch.BatchCode}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Sản phẩm:</span>
+                  <span className="font-semibold text-gray-700">{editingBatch.productName ?? editingBatch.ProductName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Trạng thái hiện tại:</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(editingBatch.status ?? editingBatch.Status)}`}>
+                    {editingBatch.status ?? editingBatch.Status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Chọn trạng thái mới */}
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-2">Trạng thái mới</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {STATUS_OPTIONS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setNewStatus(s)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                        newStatus === s
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-gray-100 hover:border-gray-300 text-gray-600"
+                      }`}
+                    >
+                      <span>{s}</span>
+                      {newStatus === s && <CheckCircle2 size={18} className="text-primary" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setEditingBatch(null); setNewStatus(""); }}
+                  className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  disabled={isUpdating || !newStatus || newStatus === (editingBatch.status ?? editingBatch.Status)}
+                  onClick={handleUpdateStatus}
+                  className="flex-1 bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-accent-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUpdating ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                  Lưu thay đổi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bảng dữ liệu */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="py-20 flex flex-col items-center"><Loader2 className="animate-spin text-primary" size={40} /></div>
+        ) : batches.length === 0 ? (
+          <div className="py-16 text-center text-gray-400 font-nunito">
+            <Coffee size={40} className="mx-auto mb-3 text-gray-200" />
+            <p className="font-semibold">Chưa có lô rang nào được ghi nhận.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full text-left font-nunito text-sm min-w-[900px]">
+            <table className="w-full text-left font-nunito text-sm min-w-[1000px]">
               <thead className="bg-gray-50 border-y border-gray-100 font-bold text-gray-600">
                 <tr>
                   <th className="px-6 py-4 whitespace-nowrap">Mã Lô</th>
@@ -199,6 +307,7 @@ export default function Batches() {
                   <th className="px-6 py-4 whitespace-nowrap text-right">Khối Lượng</th>
                   <th className="px-6 py-4 whitespace-nowrap text-center">Người Rang</th>
                   <th className="px-6 py-4 whitespace-nowrap">Trạng Thái</th>
+                  <th className="px-6 py-4 whitespace-nowrap text-center">Thao Tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -207,7 +316,7 @@ export default function Batches() {
                     <td className="px-6 py-4 font-bold text-primary whitespace-nowrap">{b.batchCode ?? b.BatchCode ?? `#${b.id ?? b.Id}`}</td>
                     <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{new Date(b.date ?? b.Date ?? b.roastDate ?? b.RoastDate).toLocaleDateString("vi-VN")}</td>
                     <td className="px-6 py-4 font-semibold text-gray-700">{b.productName ?? b.ProductName}</td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 rounded text-[10px] font-black uppercase border ${getRoastLevelColor(b.roastLevel ?? b.RoastLevel)}`}>
                         {b.roastLevel ?? b.RoastLevel}
@@ -226,6 +335,16 @@ export default function Batches() {
                       <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getStatusColor(b.status ?? b.Status)}`}>
                         {b.status ?? b.Status}
                       </span>
+                    </td>
+
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <button
+                        onClick={() => openUpdateStatusModal(b)}
+                        title="Cập nhật trạng thái"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/15 text-primary font-bold text-xs transition-all active:scale-95"
+                      >
+                        <ClipboardEdit size={13} /> Cập nhật
+                      </button>
                     </td>
                   </tr>
                 ))}

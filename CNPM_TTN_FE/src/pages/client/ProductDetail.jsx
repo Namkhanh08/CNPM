@@ -19,7 +19,7 @@ const splitOptions = (value, fallback) => {
 };
 
 const getGrindId = (grind) => grind?.Id ?? grind?.id;
-const getGrindName = (grind) => grind?.Name ?? grind?.name ?? 'Mac dinh';
+const getGrindName = (grind) => grind?.Name ?? grind?.name ?? 'Mặc định';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -49,18 +49,18 @@ export default function ProductDetail() {
 
         const formatted = {
           id: p.Id ?? p.id ?? baseProduct.Id ?? baseProduct.id,
-          name: baseProduct.Name ?? baseProduct.name ?? 'San pham',
+          name: baseProduct.Name ?? baseProduct.name ?? 'Sản phẩm',
           desc: baseProduct.Description ?? baseProduct.description ?? '',
           price: Number(baseProduct.Price ?? baseProduct.price ?? 0),
           image: baseProduct.ImageUrl ?? baseProduct.imageUrl,
-          region: p.Region ?? p.region ?? 'Dang cap nhat',
-          process: p.Process ?? p.process ?? 'Dang cap nhat',
-          roast: p.Roast ?? p.roast ?? 'Dang cap nhat',
+          region: p.Region ?? p.region ?? 'Đang cập nhật',
+          process: p.Process ?? p.process ?? 'Đang cập nhật',
+          roast: p.Roast ?? p.roast ?? 'Đang cập nhật',
           flavorNotes: p.FlavorNotes ?? p.flavorNotes ?? 'Original',
           type: String(baseProduct.CategoryId ?? baseProduct.categoryId ?? ''),
           grindingOptions: p.GrindingOption ?? p.grindingOptions ?? p.GrindingOptions ?? [],
           weightOptions: p.WeightOptions ?? p.weightOptions ?? '',
-          altitude: p.Altitude ?? p.altitude ?? 'Dang cap nhat',
+          altitude: p.Altitude ?? p.altitude ?? 'Đang cập nhật',
         };
 
         setProduct(formatted);
@@ -69,7 +69,7 @@ export default function ProductDetail() {
         setGrindType(formatted.grindingOptions[0] || null);
       } catch (err) {
         console.error('Loi lay san pham:', err);
-        setError('Khong the tai san pham. Vui long thu lai sau.');
+        setError('Không thể tải sản phẩm. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
       }
@@ -91,7 +91,7 @@ export default function ProductDetail() {
       setShowTrace(true);
     } catch (err) {
       console.error('Loi lay thong tin truy xuat:', err);
-      alert('Khong the lay thong tin truy xuat nguon goc. Vui long thu lai sau.');
+      alert('Không thể lấy thông tin truy xuất nguồn gốc. Vui lòng thử lại sau.');
     } finally {
       setTraceLoading(false);
     }
@@ -99,23 +99,23 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!grindType) {
-      alert('Vui long chon kieu xay truoc khi them vao gio hang.');
+      alert('Vui lòng chọn kiểu xay trước khi thêm vào giỏ hàng.');
       return;
     }
 
     try {
       await addToCart(product, quantity, getGrindId(grindType), flavorNotes, weights);
-      alert('San pham da duoc them vao gio hang!');
+      alert('Sản phẩm đã được thêm vào giỏ hàng!');
     } catch (err) {
       console.error('Loi them vao gio hang:', err);
-      alert('Khong the them san pham vao gio hang. Vui long thu lai.');
+      alert('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
     }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <span className="text-primary font-nunito text-lg">Dang tai san pham...</span>
+        <span className="text-primary font-nunito text-lg">Đang tải sản phẩm...</span>
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function ProductDetail() {
   }
 
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500 font-nunito">San pham khong ton tai.</div>;
+    return <div className="min-h-screen flex items-center justify-center text-gray-500 font-nunito">Sản phẩm không tồn tại.</div>;
   }
 
   return (
@@ -136,7 +136,7 @@ export default function ProductDetail() {
           onClick={() => navigate('/shop')}
           className="text-primary font-nunito font-bold mb-8 hover:text-accent-1 flex items-center gap-2"
         >
-          <ArrowLeft size={18} /> Quay lai cua hang
+          <ArrowLeft size={18} /> Quay lại cửa hàng
         </button>
 
         <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-2xl flex flex-col lg:flex-row gap-10">
@@ -155,20 +155,20 @@ export default function ProductDetail() {
               {product.name}
             </h1>
             <p className="font-nunito text-primary/70 mb-6 text-lg text-center">
-              {product.desc || 'Dang cap nhat mo ta san pham.'}
+              {product.desc || 'Đang cập nhật mô tả sản phẩm.'}
             </p>
             <div className="font-montserrat font-black text-3xl text-accent-1 mb-8 text-center">
-              {product.price.toLocaleString('vi-VN')}d
+              {product.price.toLocaleString('vi-VN')}đ
             </div>
 
             <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-6 font-nunito text-sm border-t border-b border-accent-1 py-6 text-center">
-              <div><span className="text-primary/60 block mb-1">Giong ca phe</span><span className="font-bold text-primary">{CATEGORY_MAP[product.type] || product.type}</span></div>
-              <div><span className="text-primary/60 block mb-1">Vung trong</span><span className="font-bold text-primary">{product.region}</span></div>
-              <div><span className="text-primary/60 block mb-1">Phuong phap so che</span><span className="font-bold text-primary">{product.process}</span></div>
-              <div><span className="text-primary/60 block mb-1">Muc do rang</span><span className="font-bold text-primary">{product.roast}</span></div>
-              <div><span className="text-primary/60 block mb-1">Do cao</span><span className="font-bold text-primary">{product.altitude}</span></div>
-              <div><span className="text-primary/60 block mb-1">Trong luong</span><span className="font-bold text-primary">{weightOptions.join(', ')}</span></div>
-              <div className="col-span-2"><span className="text-primary/60 block mb-1">Huong vi</span><span className="font-bold text-primary">{product.flavorNotes}</span></div>
+              <div><span className="text-primary/60 block mb-1">Giống cà phê</span><span className="font-bold text-primary">{CATEGORY_MAP[product.type] || product.type}</span></div>
+              <div><span className="text-primary/60 block mb-1">Vùng trồng</span><span className="font-bold text-primary">{product.region}</span></div>
+              <div><span className="text-primary/60 block mb-1">Phương pháp sơ chế</span><span className="font-bold text-primary">{product.process}</span></div>
+              <div><span className="text-primary/60 block mb-1">Mức độ rang</span><span className="font-bold text-primary">{product.roast}</span></div>
+              <div><span className="text-primary/60 block mb-1">Độ cao</span><span className="font-bold text-primary">{product.altitude}</span></div>
+              <div><span className="text-primary/60 block mb-1">Trọng lượng</span><span className="font-bold text-primary">{weightOptions.join(', ')}</span></div>
+              <div className="col-span-2"><span className="text-primary/60 block mb-1">Hương vị</span><span className="font-bold text-primary">{product.flavorNotes}</span></div>
             </div>
 
             <div className="mb-8">
@@ -178,24 +178,24 @@ export default function ProductDetail() {
                 disabled={traceLoading}
                 className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-primary to-[#53352A] text-white font-nunito font-bold text-sm shadow-md hover:shadow-lg hover:scale-[1.01] transition-all flex items-center justify-center gap-2"
               >
-                {traceLoading ? 'Dang tai nguon goc...' : 'Xem nguon goc & Truy xuat lo hang'}
+                {traceLoading ? 'Đang tải nguồn gốc...' : 'Xem nguồn gốc & Truy xuất lô hàng'}
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
               <div className="flex items-center justify-center gap-2 rounded-2xl bg-pinky-gray px-3 py-3 text-sm font-nunito text-primary">
-                <Truck size={18} /> Giao hang nhanh
+                <Truck size={18} /> Giao hàng nhanh
               </div>
               <div className="flex items-center justify-center gap-2 rounded-2xl bg-pinky-gray px-3 py-3 text-sm font-nunito text-primary">
-                <BadgeCheck size={18} /> Rang tuoi moi ngay
+                <BadgeCheck size={18} /> Rang tươi mới mỗi ngày
               </div>
               <div className="flex items-center justify-center gap-2 rounded-2xl bg-pinky-gray px-3 py-3 text-sm font-nunito text-primary">
-                <PackageCheck size={18} /> Doi tra 7 ngay
+                <PackageCheck size={18} /> Đổi trả 7 ngày
               </div>
             </div>
 
             <div className="mb-8 border-b border-accent-1 pb-10">
-              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chon huong vi</h3>
+              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chọn hương vị</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {flavorOptions.map((flavor) => (
                   <button
@@ -214,7 +214,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="mb-8">
-              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chon khoi luong</h3>
+              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chọn khối lượng</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {weightOptions.map((weight) => (
                   <button
@@ -233,7 +233,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="mb-8 border-t border-accent-1 pt-6">
-              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chon kieu xay</h3>
+              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chọn kiểu xay</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {grindOptions.map((grind) => (
                   <button
@@ -275,17 +275,17 @@ export default function ProductDetail() {
                 onClick={handleAddToCart}
                 className="flex-1 bg-primary text-white font-nunito font-bold text-lg h-14 rounded-full hover:bg-accent-1 shadow-lg hover:shadow-xl transform hover:-translate-y-1 uppercase tracking-wider hover:scale-105 transition-all duration-300"
               >
-                Them vao gio hang
+                Thêm vào giỏ hàng
               </button>
             </div>
 
             <div className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => navigate('/subscription')}
+                onClick={() => navigate('/subscription', { state: { productId: product.id } })}
                 className="text-accent-1 font-nunito font-bold hover:underline"
               >
-                Hoac dang ky goi giao dinh ky (Tiet kiem 15%)
+                Hoặc đăng ký gói giao định kỳ (Tiết kiệm 15%)
               </button>
             </div>
           </div>

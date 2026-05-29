@@ -9,6 +9,7 @@ namespace CNPM_TTN.Services
         Task<IEnumerable<InventoryLogDto>> GetInventoryLogsAsync();
         Task<ApiResponse<string>> CreateRoastingBatchAsync(CreateRoastingBatchDto dto, string userId);
         Task<IEnumerable<RoastingBatchDto>> GetRoastingBatchesAsync();
+        Task<ApiResponse<string>> UpdateBatchStatusAsync(int id, string newStatus);
         Task<int> GetTotalStockAsync();
     }
 }

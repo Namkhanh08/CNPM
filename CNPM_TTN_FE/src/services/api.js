@@ -8,6 +8,7 @@ import dashboard from './dashboard';
 import vouchers from './vouchers';
 import loyalty from './loyalty';
 import subscriptions from './subscriptions';
+import recommendation from './recommendation';
 
 const API = {
     ...auth,
@@ -19,7 +20,8 @@ const API = {
     ...dashboard,
     ...vouchers,
     ...loyalty,
-    ...subscriptions
+    ...subscriptions,
+    ...recommendation
 };
 
 export default API;

@@ -18,6 +18,12 @@ const subscriptions = {
     },
     processDueSubscriptions: () => {
         return axiosClient.post('/api/subscriptions/process-due');
+    },
+    adminGetSubscriptions: (params) => {
+        return axiosClient.get('/api/subscriptions/admin', { params });
+    },
+    adminUpdateSubscriptionStatus: (id, status) => {
+        return axiosClient.put(`/api/subscriptions/admin/${id}/status`, { status });
     }
 };
 

@@ -131,6 +131,13 @@ namespace CNPM_TTN.Services
                     };
                     await _orderDetailRepository.AddAsync(orderDetail);
 
+                    // Kiểm tra tồn kho lần nữa bên trong transaction để chống Race Condition
+                    if (product.Stock < item.Quantity)
+                    {
+                        throw new InvalidOperationException(
+                            $"Sản phẩm '{product.Name}' hiện không đủ số lượng trong kho (chỉ còn {product.Stock}). Vui lòng cập nhật lại giỏ hàng.");
+                    }
+
                     // Cập nhật tồn kho sản phẩm
                     int oldStock = product.Stock;
                     product.Stock -= item.Quantity;
@@ -153,12 +160,29 @@ namespace CNPM_TTN.Services
                 // 4. Áp dụng voucher và tính tổng tiền
                 if (voucherCode != null)
                 {
-                    var voucherResult = await _voucherService.ValidateAsync(voucherCode, totalAmount);
+                    var orderProductIds = cart.CartItems
+                        .Select(item => item.ProductId)
+                        .Distinct()
+                        .ToList();
+                    var voucherResult = await _voucherService.ValidateAsync(voucherCode, totalAmount, order.PaymentMethod, userId, orderProductIds);
                     if (voucherResult.Success && voucherResult.Data != null && voucherResult.Data.IsValid)
                     {
                         discountAmount = voucherResult.Data.DiscountAmount;
-                        await _voucherService.IncrementUsageAsync(voucherCode);
+                        await _voucherService.IncrementUsageAsync(voucherCode, userId, order.Id);
                     }
+                    else
+                    {
+                        var errMsg = voucherResult.Data?.Message ?? voucherResult.Message ?? "Mã giảm giá không hợp lệ hoặc đã hết hạn.";
+                        throw new InvalidOperationException(errMsg);
+                    }
+                }
+
+                // 4.5 Áp dụng chiết khấu hạng Diamond (10% tổng tiền hàng)
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null && "Diamond".Equals(user.MemberTier, StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal tierDiscount = Math.Round(totalAmount * 0.1m);
+                    discountAmount += tierDiscount;
                 }
 
                 // 5. Cập nhật tổng tiền đơn hàng

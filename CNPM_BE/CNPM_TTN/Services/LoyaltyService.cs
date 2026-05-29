@@ -90,7 +90,12 @@ public class LoyaltyService : ILoyaltyService
             return ApiResponse<VoucherDto>.FailureResponse($"Số điểm không đủ. Bạn có {user.TotalPoints} điểm.");
 
         decimal voucherValue = (points / REDEEM_POINTS_UNIT) * REDEEM_VALUE_UNIT;
-        string voucherCode = $"LOYALTY{userId[..6].ToUpper()}{DateTime.UtcNow:yyyyMMddHHmmss}";
+        var userCodePart = new string(userId.Where(char.IsLetterOrDigit).Take(6).ToArray()).ToUpper();
+        if (string.IsNullOrWhiteSpace(userCodePart))
+        {
+            userCodePart = "USER";
+        }
+        string voucherCode = $"LOYALTY{userCodePart}{DateTime.Now:yyyyMMddHHmmss}";
 
         // Tạo voucher 1 lần dùng
         var voucher = new Voucher
@@ -101,10 +106,14 @@ public class LoyaltyService : ILoyaltyService
             DiscountValue = voucherValue,
             MinOrderValue = 0,
             MaxUsage = 1,
+            UsageLimit = 1,
             UsedCount = 0,
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddDays(30),
-            IsActive = true
+            StartDate = DateTime.Now,
+            EndDate = DateTime.Now.AddDays(30),
+            IsActive = true,
+            Title = $"Voucher đổi {points} điểm",
+            Description = $"Voucher giảm {voucherValue:N0}đ, tạo từ chương trình đổi điểm thưởng. Mỗi mã dùng 1 lần.",
+            CreatedAt = DateTime.Now
         };
 
         user.TotalPoints -= points;
@@ -122,6 +131,17 @@ public class LoyaltyService : ILoyaltyService
 
         await _context.SaveChangesAsync();
 
+        _context.UserVouchers.Add(new UserVoucher
+        {
+            UserId = userId,
+            VoucherId = voucher.Id,
+            IsUsed = false,
+            AssignedAt = DateTime.Now,
+            Source = "loyalty"
+        });
+
+        await _context.SaveChangesAsync();
+
         return ApiResponse<VoucherDto>.SuccessResponse(new VoucherDto
         {
             Id = voucher.Id,
@@ -129,9 +149,16 @@ public class LoyaltyService : ILoyaltyService
             Name = voucher.Name,
             DiscountType = voucher.DiscountType,
             DiscountValue = voucher.DiscountValue,
+            MinOrderValue = voucher.MinOrderValue,
+            MaxUsage = voucher.MaxUsage,
+            UsedCount = voucher.UsedCount,
             StartDate = voucher.StartDate,
             EndDate = voucher.EndDate,
-            IsActive = true
+            IsActive = true,
+            Title = voucher.Title,
+            Description = voucher.Description,
+            UsageLimit = voucher.UsageLimit,
+            RemainingUsage = 1
         });
     }
 

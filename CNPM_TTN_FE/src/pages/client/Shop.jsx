@@ -108,7 +108,7 @@ export default function Shop() {
 
         const formattedProducts = productList.map((p) => ({
           id: p.Id ?? p.id,
-          name: p.Name ?? p.name ?? 'San pham',
+          name: p.Name ?? p.name ?? 'Sản phẩm',
           price: Number(p.Price ?? p.price ?? 0),
           image: p.ImageUrl ?? p.imageUrl,
           description: p.Description ?? p.description ?? '',
@@ -121,7 +121,7 @@ export default function Shop() {
         setProducts(formattedProducts);
       } catch (err) {
         console.error('Loi lay san pham:', err);
-        setError('Khong the tai san pham. Vui long thu lai sau.');
+        setError('Không thể tải sản phẩm. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
       }
@@ -166,7 +166,7 @@ export default function Shop() {
     return (
       <div className="flex items-center justify-center min-h-screen text-primary font-nunito font-bold text-lg">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mr-3" />
-        Dang tai san pham...
+        Đang tải sản phẩm...
       </div>
     );
   }
@@ -180,7 +180,7 @@ export default function Shop() {
               <Search size={20} className="text-gray-400 shrink-0" />
               <input
                 type="text"
-                placeholder="Tim kiem san pham..."
+                placeholder="Tìm kiếm sản phẩm..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -196,7 +196,7 @@ export default function Shop() {
                     setPage(1);
                   }}
                   className="text-gray-400 hover:text-primary"
-                  aria-label="Xoa tim kiem"
+                  aria-label="Xóa tìm kiếm"
                 >
                   <X size={16} />
                 </button>
@@ -205,27 +205,27 @@ export default function Shop() {
 
             <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
               <div className="flex justify-between items-center mb-2 border-b border-gray-100 pb-4">
-                <h2 className="font-montserrat font-bold text-xl text-primary uppercase">Bo loc</h2>
+                <h2 className="font-montserrat font-bold text-xl text-primary uppercase">Bộ lọc</h2>
                 {hasActiveFilters && (
                   <button
                     type="button"
                     onClick={resetFilters}
                     className="text-xs font-nunito font-bold text-accent-1 hover:underline"
                   >
-                    Xoa bo loc
+                    Xóa bộ lọc
                   </button>
                 )}
               </div>
 
               <FilterSection
-                title="Giong ca phe"
-                summary={filterType === 'all' ? 'Tat ca giong ca phe' : CATEGORY_MAP[filterType]}
+                title="Giống cà phê"
+                summary={filterType === 'all' ? 'Tất cả giống cà phê' : CATEGORY_MAP[filterType]}
                 isOpen={openFilter === 'type'}
                 onToggle={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
               >
                 <div className="space-y-2 font-nunito text-primary/80">
                   {[
-                    ['all', 'Tat ca'],
+                    ['all', 'Tất cả'],
                     ['1', 'Arabica'],
                     ['2', 'Blend'],
                     ['3', 'Robusta'],
@@ -246,14 +246,14 @@ export default function Shop() {
               </FilterSection>
 
               <FilterSection
-                title="Khoang gia"
-                summary={`${minPrice.toLocaleString('vi-VN')}d - ${maxPrice.toLocaleString('vi-VN')}d`}
+                title="Khoảng giá"
+                summary={`${minPrice.toLocaleString('vi-VN')}đ - ${maxPrice.toLocaleString('vi-VN')}đ`}
                 isOpen={openFilter === 'price'}
                 onToggle={() => setOpenFilter(openFilter === 'price' ? null : 'price')}
               >
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex-1">
-                    <span className="text-xs font-nunito text-primary/60 block mb-1">Tu (d)</span>
+                    <span className="text-xs font-nunito text-primary/60 block mb-1">Từ (đ)</span>
                     <input
                       type="number"
                       value={minPrice}
@@ -266,7 +266,7 @@ export default function Shop() {
                   </div>
                   <span className="text-primary/40 mt-4">-</span>
                   <div className="flex-1">
-                    <span className="text-xs font-nunito text-primary/60 block mb-1">Den (d)</span>
+                    <span className="text-xs font-nunito text-primary/60 block mb-1">Đến (đ)</span>
                     <input
                       type="number"
                       value={maxPrice}
@@ -296,14 +296,14 @@ export default function Shop() {
                 />
 
                 <div className="flex justify-between text-xs font-nunito text-primary/50 mt-1">
-                  <span>0d</span>
-                  <span>500.000d+</span>
+                  <span>0đ</span>
+                  <span>500.000đ+</span>
                 </div>
               </FilterSection>
 
               <FilterSection
-                title="Vung trong"
-                summary={selectedRegion === 'all' ? 'Tat ca vung trong' : selectedRegion}
+                title="Vùng trồng"
+                summary={selectedRegion === 'all' ? 'Tất cả vùng trồng' : selectedRegion}
                 isOpen={openFilter === 'region'}
                 onToggle={() => setOpenFilter(openFilter === 'region' ? null : 'region')}
               >
@@ -316,7 +316,7 @@ export default function Shop() {
                       onChange={() => updateRegion('all')}
                       className="accent-accent-1"
                     />
-                    <span>Tat ca</span>
+                    <span>Tất cả</span>
                   </label>
                   {availableRegions.map((region) => (
                     <label key={region} className="flex items-center gap-2 cursor-pointer">
@@ -334,19 +334,19 @@ export default function Shop() {
               </FilterSection>
 
               <div className="mt-5">
-                <span className="font-montserrat font-bold text-primary block mb-2">Sap xep</span>
+                <span className="font-montserrat font-bold text-primary block mb-2">Sắp xếp</span>
                 <select
                   value={sortBy}
                   onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
+                     setSortBy(e.target.value);
+                     setPage(1);
                   }}
                   className="w-full border border-gray-200 rounded-full px-4 py-3 outline-none focus:border-accent-1 font-nunito text-primary"
                 >
-                  <option value="default">Mac dinh</option>
-                  <option value="price-asc">Gia tang dan</option>
-                  <option value="price-desc">Gia giam dan</option>
-                  <option value="name">Ten A-Z</option>
+                  <option value="default">Mặc định</option>
+                  <option value="price-asc">Giá tăng dần</option>
+                  <option value="price-desc">Giá giảm dần</option>
+                  <option value="name">Tên A-Z</option>
                 </select>
               </div>
 
@@ -355,16 +355,16 @@ export default function Shop() {
                 onClick={resetFilters}
                 className="w-full mt-5 bg-gray-100 text-primary font-nunito font-bold py-2.5 rounded-full hover:bg-gray-200 transition-colors text-sm"
               >
-                THIET LAP LAI
+                THIẾT LẬP LẠI
               </button>
             </div>
           </aside>
 
           <section className="w-full md:w-3/4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
-              <h1 className="font-montserrat font-black text-3xl text-primary">CUA HANG</h1>
+              <h1 className="font-montserrat font-black text-3xl text-primary">CỬA HÀNG</h1>
               <span className="font-nunito text-primary/70">
-                Hien thi {filteredProducts.length}/{totalCount} san pham
+                Hiển thị {filteredProducts.length}/{totalCount} sản phẩm
               </span>
             </div>
 
@@ -390,24 +390,24 @@ export default function Shop() {
                   </div>
                   <div className="mt-auto">
                     <span className="text-xs font-nunito tracking-widest text-accent-1 uppercase font-bold mb-1 block">
-                      {CATEGORY_MAP[product.type] || 'Khac'}
+                      {CATEGORY_MAP[product.type] || 'Khác'}
                     </span>
                     <h3 className="font-montserrat font-bold text-xl text-primary mb-2 line-clamp-1">
                       {product.name}
                     </h3>
                     <p className="text-sm font-nunito text-primary/60 mb-4 line-clamp-2">
-                      {product.description || 'Dang cap nhat mo ta san pham.'}
+                      {product.description || 'Đang cập nhật mô tả sản phẩm.'}
                     </p>
                     <div className="flex items-center justify-between gap-3 mt-4 border-t border-gray-50 pt-4">
                       <span className="font-montserrat font-bold text-lg text-primary whitespace-nowrap">
-                        {product.price.toLocaleString('vi-VN')}d
+                        {product.price.toLocaleString('vi-VN')}đ
                       </span>
                       <Link
                         to={`/product/${product.id}`}
                         className="bg-primary text-white px-4 py-2 rounded-full text-sm font-nunito font-bold hover:bg-accent-1 transition-colors min-w-[130px] text-center"
                         style={{ color: '#ffffff' }}
                       >
-                        XEM CHI TIET
+                        XEM CHI TIẾT
                       </Link>
                     </div>
                   </div>
@@ -419,14 +419,14 @@ export default function Shop() {
               <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm mt-6">
                 <Search size={48} className="text-primary/40 mx-auto mb-4" />
                 <p className="font-nunito text-lg text-primary/60">
-                  Khong tim thay san pham nao phu hop voi bo loc.
+                  Không tìm thấy sản phẩm nào phù hợp với bộ lọc.
                 </p>
                 <button
                   type="button"
                   onClick={resetFilters}
                   className="mt-4 text-sm font-nunito font-bold text-accent-1 hover:underline"
                 >
-                  Xoa bo loc de xem tat ca san pham
+                  Xóa bộ lọc để xem tất cả sản phẩm
                 </button>
               </div>
             )}
@@ -439,7 +439,7 @@ export default function Shop() {
                   onClick={() => setPage((value) => Math.max(1, value - 1))}
                   className="px-4 py-2 rounded-xl border border-gray-200 bg-white font-bold text-primary disabled:opacity-50"
                 >
-                  Truoc
+                  Trước
                 </button>
                 <span className="px-4 py-2 font-bold text-primary">
                   Trang {page}/{totalPages}

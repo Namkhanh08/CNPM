@@ -77,5 +77,18 @@ namespace CNPM_TTN.Controllers
             var totalStock = await _inventoryService.GetTotalStockAsync();
             return Ok(ApiResponse<object>.SuccessResponse(new { TotalWeight = totalStock }));
         }
+
+        [HttpPatch("batches/{id}/status")]
+        [Authorize(Roles = "1,2")]
+        public async Task<IActionResult> UpdateBatchStatus(int id, [FromBody] UpdateBatchStatusDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.FailureResponse("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _inventoryService.UpdateBatchStatusAsync(id, dto.Status);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
     }
 }

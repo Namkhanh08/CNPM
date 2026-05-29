@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import { Coffee, CalendarSync, CreditCard, ChevronRight, X, Info } from 'lucide-react';
 import API from '../../services/api';
@@ -14,6 +14,7 @@ const getProductCategoryId = (product) => getValue(product, 'CategoryId', 'categ
 
 export default function Subscription() {
   const navigate = useNavigate();
+  const location = useLocation();
   const products = useStore((state) => state.products);
   const fetchProducts = useStore((state) => state.fetchProducts);
   const user = useStore((state) => state.user);
@@ -28,6 +29,32 @@ export default function Subscription() {
   const [frequency, setFrequency] = useState('2weeks'); // 1week, 2weeks, 1month
   const [flavorNotes, setFlavorNotes] = useState('Original');
   const [quantity, setQuantity] = useState(1);
+
+  const getFrequencyDiscountRate = (freq) => {
+    if (freq === '1week') return 0.10; // Giảm 10%
+    if (freq === '2weeks') return 0.05; // Giảm 5%
+    return 0;
+  };
+
+  const getPriceSummary = () => {
+    const unitPrice = getProductPrice(selectedProduct);
+    const originalPrice = unitPrice * quantity;
+    const discountRate = getFrequencyDiscountRate(frequency);
+    const discountAmount = Math.round(originalPrice * discountRate);
+    
+    const memberTier = user?.memberTier ?? user?.MemberTier ?? user?.Tier ?? "";
+    const isDiamond = "Diamond".toLowerCase() === memberTier.toLowerCase();
+    const tierDiscountAmount = isDiamond ? Math.round((originalPrice - discountAmount) * 0.10) : 0;
+    
+    const finalPrice = originalPrice - discountAmount - tierDiscountAmount;
+    return {
+      originalPrice,
+      discountRate,
+      discountAmount,
+      tierDiscountAmount,
+      finalPrice
+    };
+  };
 
   // Shipping Form States
   const [receiverName, setReceiverName] = useState('');
@@ -211,13 +238,13 @@ export default function Subscription() {
       setProductDetail(detail);
 
       // Flavor options
-      const flavors = detail.FlavorNotes
-        ? detail.FlavorNotes.split(',').map(f => f.trim())
+      const flavors = (detail.FlavorNotes ?? detail.flavorNotes)
+        ? (detail.FlavorNotes ?? detail.flavorNotes).split(',').map(f => f.trim())
         : [];
 
       // Weight options
-      const weightList = detail.Weight
-        ? detail.Weight.split(',').map(w => w.trim())
+      const weightList = (detail.WeightOptions ?? detail.weightOptions)
+        ? (detail.WeightOptions ?? detail.weightOptions).split(',').map(w => w.trim())
         : [];
 
       // Default selected values
@@ -233,14 +260,20 @@ export default function Subscription() {
 
   }, []);
   useEffect(() => {
-
-    if (products.length > 0 && !selectedProduct) {
-
-      handleSelectProduct(products[0]);
-
+    if (products.length > 0) {
+      const stateProductId = location.state?.productId;
+      if (stateProductId) {
+        const found = products.find(p => getProductId(p) === stateProductId || String(p.id) === String(stateProductId) || String(p.ProductId) === String(stateProductId));
+        if (found) {
+          handleSelectProduct(found);
+          return;
+        }
+      }
+      if (!selectedProduct) {
+        handleSelectProduct(products[0]);
+      }
     }
-
-  }, [handleSelectProduct, products, selectedProduct]);
+  }, [handleSelectProduct, products, selectedProduct, location.state]);
   const CategoryMap = {
     '1': 'Arabica',
     '2': 'Blend',
@@ -253,12 +286,12 @@ export default function Subscription() {
     { id: 2, label: 'Định lượng' },
     { id: 3, label: 'Chu kỳ Giao' }
   ];
-  const flavorOptions = productDetail?.FlavorNotes
-    ? productDetail.FlavorNotes.split(',').map(f => f.trim())
+  const flavorOptions = (productDetail?.FlavorNotes ?? productDetail?.flavorNotes)
+    ? (productDetail.FlavorNotes ?? productDetail.flavorNotes).split(',').map(f => f.trim())
     : [];
 
-  const weightOptions = productDetail?.Weight
-    ? productDetail.Weight.split(',').map(w => w.trim())
+  const weightOptions = (productDetail?.WeightOptions ?? productDetail?.weightOptions)
+    ? (productDetail.WeightOptions ?? productDetail.weightOptions).split(',').map(w => w.trim())
     : [];
 
   const grindOptions = productDetail?.GrindingOption || [];
@@ -768,10 +801,29 @@ export default function Subscription() {
                     <span className="font-bold text-[#5C3D2E]">{getProductPrice(selectedProduct).toLocaleString('vi-VN')}đ</span>
                   </div>
 
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Tạm tính mỗi kỳ:</span>
+                    <span className="font-bold text-[#5C3D2E]">{getPriceSummary().originalPrice.toLocaleString('vi-VN')}đ</span>
+                  </div>
+
+                  {getPriceSummary().discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Ưu đãi chu kỳ ({getPriceSummary().discountRate * 100}%):</span>
+                      <span className="font-bold">-{getPriceSummary().discountAmount.toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
+
+                  {getPriceSummary().tierDiscountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Ưu đãi Diamond (10%):</span>
+                      <span className="font-bold">-{getPriceSummary().tierDiscountAmount.toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center border-t border-[#F2ECE4] pt-2 text-[#5C3D2E]">
                     <span className="font-bold text-sm">Tổng cộng mỗi kỳ:</span>
                     <span className="font-black text-xl text-[#7F5539]">
-                      {(getProductPrice(selectedProduct) * quantity).toLocaleString('vi-VN')}đ
+                      {getPriceSummary().finalPrice.toLocaleString('vi-VN')}đ
                     </span>
                   </div>
                 </div>
@@ -838,7 +890,7 @@ export default function Subscription() {
                   Số tiền thanh toán mỗi kỳ
                 </span>
                 <span className="font-montserrat font-black text-3xl text-blue-900">
-                  {(getProductPrice(selectedProduct) * quantity).toLocaleString('vi-VN')}đ
+                  {getPriceSummary().finalPrice.toLocaleString('vi-VN')}đ
                 </span>
                 <span className="text-primary/60 font-nunito text-xs mt-2 font-semibold">
                   Đăng ký: {getProductName(selectedProduct)} ({quantity} túi)

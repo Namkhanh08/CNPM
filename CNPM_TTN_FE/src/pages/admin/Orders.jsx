@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useStore from '../../store/useStore';
-import { Search, Filter, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Filter, Truck, CheckCircle, XCircle, Calendar, X } from 'lucide-react';
 
 const mapDbStatusToKey = (dbStatus) => {
   if (!dbStatus) return 'unpaid';
@@ -38,6 +38,8 @@ export default function AdminOrders() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
     if (fetchAdminOrders) {
@@ -49,14 +51,30 @@ export default function AdminOrders() {
     const id = order.Id ?? order.id ?? '';
     const name = order.ReceiverName ?? order.shippingInfo?.name ?? '';
     const status = mapDbStatusToKey(order.Status ?? order.status);
+    const orderDate = order.OrderDate ?? order.orderDate ?? order.date;
 
     const matchesSearch = 
       String(id).toLowerCase().includes(searchTerm.toLowerCase()) || 
       name.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
+
+    let matchesDate = true;
+    if (orderDate) {
+      const d = new Date(orderDate);
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (d < from) matchesDate = false;
+      }
+      if (dateTo && matchesDate) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (d > to) matchesDate = false;
+      }
+    }
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const handleUpdateStatus = async (id, newStatus) => {
@@ -78,32 +96,92 @@ export default function AdminOrders() {
     { value: 'cancelled', label: 'Đã hủy' },
   ];
 
+  const hasDateFilter = dateFrom || dateTo;
+
   return (
     <div className="animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <h1 className="font-montserrat font-bold text-2xl">Quản Lý Đơn Hàng</h1>
-        <div className="flex gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-             <input 
-               type="text" 
-               placeholder="Tìm mã đơn, tên KH..." 
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary font-nunito text-sm"
-             />
-             <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
-          </div>
-          <div className="relative">
-             <select 
-               value={statusFilter}
-               onChange={(e) => setStatusFilter(e.target.value)}
-               className="pl-4 pr-10 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary font-nunito text-sm appearance-none"
-             >
-               {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-             </select>
-             <Filter size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+      <div className="flex flex-col gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="font-montserrat font-bold text-2xl">Quản Lý Đơn Hàng</h1>
+          <div className="flex flex-wrap gap-3 w-full md:w-auto">
+            {/* Ô tìm kiếm */}
+            <div className="relative flex-1 md:w-56">
+               <input 
+                 type="text" 
+                 placeholder="Tìm mã đơn, tên KH..." 
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+                 className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary font-nunito text-sm"
+               />
+               <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
+            </div>
+
+            {/* Lọc trạng thái */}
+            <div className="relative">
+               <select 
+                 value={statusFilter}
+                 onChange={(e) => setStatusFilter(e.target.value)}
+                 className="pl-4 pr-10 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary font-nunito text-sm appearance-none"
+               >
+                 {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+               </select>
+               <Filter size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Lọc theo ngày */}
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+              <Calendar size={16} className="text-gray-400 shrink-0" />
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 font-nunito leading-none mb-0.5">Từ ngày</span>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    max={dateTo || undefined}
+                    className="text-sm font-nunito border-none outline-none bg-transparent cursor-pointer text-gray-700"
+                  />
+                </div>
+                <span className="text-gray-300 font-bold">—</span>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 font-nunito leading-none mb-0.5">Đến ngày</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    min={dateFrom || undefined}
+                    className="text-sm font-nunito border-none outline-none bg-transparent cursor-pointer text-gray-700"
+                  />
+                </div>
+                {hasDateFilter && (
+                  <button
+                    onClick={() => { setDateFrom(''); setDateTo(''); }}
+                    className="ml-1 p-0.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                    title="Xóa lọc ngày"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Hiển thị tóm tắt bộ lọc */}
+        {(hasDateFilter || statusFilter !== 'all' || searchTerm) && (
+          <div className="flex items-center gap-2 text-sm font-nunito text-gray-500">
+            <span>Kết quả:</span>
+            <span className="font-bold text-primary">{filteredOrders.length}</span>
+            <span>đơn hàng</span>
+            {hasDateFilter && (
+              <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                {dateFrom && `Từ ${new Date(dateFrom).toLocaleDateString('vi-VN')}`}
+                {dateFrom && dateTo && ' - '}
+                {dateTo && `Đến ${new Date(dateTo).toLocaleDateString('vi-VN')}`}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

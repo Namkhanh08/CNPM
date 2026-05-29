@@ -26,4 +26,11 @@ namespace CNPM_TTN.Dtos
         public int Sales { get; set; }
         public int Stock { get; set; }
     }
+
+    public class DailyRevenueDto
+    {
+        public string Date { get; set; } = string.Empty;   // "dd/MM"
+        public decimal Revenue { get; set; }
+        public int OrderCount { get; set; }
+    }
 }

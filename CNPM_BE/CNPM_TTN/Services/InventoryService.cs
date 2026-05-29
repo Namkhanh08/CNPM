@@ -160,5 +160,24 @@ namespace CNPM_TTN.Services
         {
             return await _context.Products.SumAsync(product => product.Stock);
         }
+
+        public async Task<ApiResponse<string>> UpdateBatchStatusAsync(int id, string newStatus)
+        {
+            var validStatuses = new[] { "Đang xử lý", "Hoàn thành", "Đã đóng gói" };
+            if (!validStatuses.Contains(newStatus.Trim()))
+            {
+                return ApiResponse<string>.FailureResponse("Trạng thái không hợp lệ.");
+            }
+
+            var batch = await _context.RoastingBatches.FindAsync(id);
+            if (batch == null)
+            {
+                return ApiResponse<string>.FailureResponse("Không tìm thấy lô rang.");
+            }
+
+            batch.Status = newStatus.Trim();
+            await _context.SaveChangesAsync();
+            return ApiResponse<string>.SuccessResponse(null, "Cập nhật trạng thái lô rang thành công.");
+        }
     }
 }

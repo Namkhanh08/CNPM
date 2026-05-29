@@ -5,5 +5,6 @@ namespace CNPM_TTN.Services
     public interface IDashboardService
     {
         Task<DashboardSummaryDto> GetSummaryAsync();
+        Task<IEnumerable<DailyRevenueDto>> GetRevenueChartAsync(int? days, DateTime? startDate, DateTime? endDate);
     }
 }

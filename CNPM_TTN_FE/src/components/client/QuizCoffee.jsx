@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import API from '../../services/api';
+import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 
 const quizQuestions = [
     {
@@ -46,6 +47,7 @@ const QuizCoffee = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const [answers, setAnswers] = useState({});
     const [selectedOption, setSelectedOption] = useState(null);
+    const [calculating, setCalculating] = useState(false);
 
     const currentQuestion = quizQuestions[currentStep];
     const progress = Math.round(((currentStep + 1) / quizQuestions.length) * 100);
@@ -55,13 +57,31 @@ const QuizCoffee = () => {
         setAnswers(prev => ({ ...prev, [currentQuestion.id]: optionId }));
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (currentStep < quizQuestions.length - 1) {
             setCurrentStep(prev => prev + 1);
             setSelectedOption(null);
         } else {
-            // Chuyển sang trang kết quả, truyền answers qua location.state
-            navigate('/recommendation/result', { state: { answers } });
+            setCalculating(true);
+            try {
+                const payload = {
+                    roast: answers[1],
+                    flavor: answers[2],
+                    method: answers[3],
+                    timeOfDay: answers[4]  // câu hỏi thời gian uống
+                };
+                const res = await API.getRecommendation(payload);
+                const data = res.data?.Data ?? res.data?.data ?? res.data ?? null;
+                
+                // Giả lập chút thời gian loading cho mượt mà
+                setTimeout(() => {
+                    navigate('/recommendation/result', { state: { recommendation: data } });
+                }, 1200);
+            } catch (err) {
+                console.error("Lấy gợi ý lỗi:", err);
+                // Fallback nếu lỗi
+                navigate('/recommendation/result', { state: { answers } });
+            }
         }
     };
 
@@ -72,18 +92,42 @@ const QuizCoffee = () => {
         }
     };
 
+    if (calculating) {
+        return (
+            <div className="min-h-screen bg-[#fafaf5] flex flex-col items-center justify-center gap-6">
+                <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 border-4 border-amber-900/10 rounded-full" />
+                    <div className="absolute inset-0 border-4 border-t-amber-800 rounded-full animate-spin" />
+                </div>
+                <div className="text-center">
+                    <h3 className="text-xl font-bold text-[#26170c] mb-1 animate-pulse">Đang phân tích gu của bạn...</h3>
+                    <p className="text-gray-500 text-sm">Tìm kiếm hạt cà phê phù hợp nhất từ kho lưu trữ</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#fafaf5]">
             {/* Progress */}
             <div className="sticky top-0 bg-white border-b z-50">
-                <div className="max-w-4xl mx-auto px-6 py-6">
-                    <div className="flex justify-between text-sm mb-3">
-                        <span className="font-medium text-[#9a4600]">Câu {currentStep + 1} / {quizQuestions.length}</span>
-                        <span className="font-medium">{progress}%</span>
+                <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                    <div className="flex-grow mr-6">
+                        <div className="flex justify-between text-sm mb-2">
+                            <span className="font-medium text-[#9a4600]">Câu {currentStep + 1} / {quizQuestions.length}</span>
+                            <span className="font-medium">{progress}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#9a4600] transition-all" style={{ width: `${progress}%` }} />
+                        </div>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#9a4600] transition-all" style={{ width: `${progress}%` }} />
-                    </div>
+                    <button 
+                        onClick={() => navigate('/')} 
+                        className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 hover:border-red-200 hover:text-red-500 hover:bg-red-50 text-gray-500 rounded-xl text-sm font-bold transition-all duration-200 shadow-sm cursor-pointer"
+                    >
+                        <X size={16} />
+                        Thoát
+                    </button>
                 </div>
             </div>
 

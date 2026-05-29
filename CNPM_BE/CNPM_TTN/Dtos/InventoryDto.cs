@@ -57,4 +57,11 @@ namespace CNPM_TTN.Dtos
         public string Status { get; set; } = string.Empty;
         public DateTime? Date { get; set; }
     }
+
+    public class UpdateBatchStatusDto
+    {
+        [Required]
+        [StringLength(50)]
+        public string Status { get; set; } = string.Empty;
+    }
 }

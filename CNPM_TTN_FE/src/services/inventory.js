@@ -27,6 +27,8 @@ const inventoryApi = {
             inputWeight,
             status,
         }),
+    updateBatchStatus: (id, status) =>
+        axiosClient.patch(`/api/Inventory/batches/${id}/status`, { status }),
 };
 
 export default inventoryApi;

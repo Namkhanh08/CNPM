@@ -64,6 +64,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddHostedService<SubscriptionCronJob>();
 
 builder.Services.AddControllers()

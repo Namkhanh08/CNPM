@@ -65,6 +65,8 @@ public partial class ShopCoffeeContext : DbContext
 
     public virtual DbSet<UserAddress> UserAddresses { get; set; }
 
+    public virtual DbSet<UserVoucher> UserVouchers { get; set; }
+
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -517,6 +519,34 @@ public partial class ShopCoffeeContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.UserAddresses)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK__UserAddre__UserI__37703C52");
+        });
+
+        modelBuilder.Entity<UserVoucher>(entity =>
+        {
+            entity.HasIndex(e => new { e.UserId, e.VoucherId, e.Source }, "IX_UserVouchers_UserId_VoucherId_Source");
+
+            entity.Property(e => e.AssignedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Source)
+                .HasMaxLength(30)
+                .HasDefaultValue("public");
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.UsedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.UserVouchers)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("FK_UserVouchers_Orders");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserVouchers)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserVouchers_Users");
+
+            entity.HasOne(d => d.Voucher).WithMany(p => p.UserVouchers)
+                .HasForeignKey(d => d.VoucherId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserVouchers_Vouchers");
         });
 
         modelBuilder.Entity<Voucher>(entity =>

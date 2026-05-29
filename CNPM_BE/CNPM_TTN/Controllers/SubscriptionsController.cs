@@ -88,5 +88,26 @@ namespace CNPM_TTN.Controllers
             await _subscriptionService.ProcessDueSubscriptionsAsync();
             return Ok(ApiResponse<string>.SuccessResponse("Đã chạy xử lý subscription thành công."));
         }
+
+        [HttpGet("admin")]
+        [Authorize(Roles = "1")]
+        public async Task<IActionResult> GetAllForAdmin([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] string? searchTerm = null)
+        {
+            var result = await _subscriptionService.GetAllForAdminAsync(page, pageSize, status, searchTerm);
+            return Ok(result);
+        }
+
+        [HttpPut("admin/{id}/status")]
+        [Authorize(Roles = "1")]
+        public async Task<IActionResult> AdminUpdateStatus(int id, [FromBody] SubscriptionStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.FailureResponse("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _subscriptionService.AdminUpdateStatusAsync(id, dto.Status);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
     }
 }

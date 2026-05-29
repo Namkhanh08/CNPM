@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using System.Security.Claims;
 using CNPM_TTN.Dtos;
 using CNPM_TTN.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,11 @@ namespace CNPM_TTN.Controllers
             _voucherService = voucherService;
         }
 
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
         // Khách hàng validate voucher
         [HttpGet("validate")]
         [Authorize]
@@ -27,8 +33,44 @@ namespace CNPM_TTN.Controllers
                 return BadRequest(ApiResponse<VoucherValidateResponseDto>.FailureResponse("Mã voucher không được để trống."));
             }
 
-            var result = await _voucherService.ValidateAsync(code.Trim().ToUpper(), total);
+            var result = await _voucherService.ValidateAsync(code.Trim().ToUpper(), total, userId: GetCurrentUserId());
             return Ok(result);
+        }
+
+        [HttpPost("validate")]
+        [Authorize]
+        public async Task<IActionResult> ValidateVoucherPost([FromBody] VoucherValidateRequestDto dto)
+        {
+            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(dto.Code))
+            {
+                return BadRequest(ApiResponse<VoucherValidateResponseDto>.FailureResponse("Mã voucher không được để trống."));
+            }
+
+            var result = await _voucherService.ValidateAsync(dto.Code, dto.OrderTotal, dto.PaymentMethod, GetCurrentUserId(), dto.ProductIds);
+            return Ok(result);
+        }
+
+        [HttpGet("available")]
+        [Authorize]
+        public async Task<IActionResult> GetAvailable([FromQuery] decimal total = 0, [FromQuery] string? paymentMethod = null, [FromQuery] string? productIds = null)
+        {
+            var result = await _voucherService.GetAvailableAsync(total, paymentMethod, GetCurrentUserId(), ParseProductIds(productIds));
+            return Ok(result);
+        }
+
+        private static List<int> ParseProductIds(string? productIds)
+        {
+            if (string.IsNullOrWhiteSpace(productIds))
+            {
+                return new List<int>();
+            }
+
+            return productIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(item => int.TryParse(item, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
         }
 
         // Admin lấy danh sách vouchers

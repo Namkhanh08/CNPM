@@ -1,14 +1,30 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useStore from "../../store/useStore";
 import API from "../../services/api";
-import { Edit3, Key, Lock, Mail, MapPin, Phone, Save, User, Award, Calendar, ClipboardCopy } from "lucide-react";
+import { CheckCircle, Edit3, Key, Lock, Mail, MapPin, Phone, Save, User, Award, Calendar, ClipboardCopy } from "lucide-react";
 
 const roleLabels = {
     0: "Khách hàng",
     1: "Quản lý",
     2: "Nhân viên",
     3: "Quản lý kho",
+};
+
+const getUserOfferIdentity = (user) =>
+    user?.Id || user?.id || user?.UserName || user?.userName || localStorage.getItem("userName") || "guest";
+const getTodayOfferSeenKey = (identity) => `revo_seen_offers_${identity}_${new Date().toISOString().slice(0, 10)}`;
+const hasSeenTodayOffers = (identity) => localStorage.getItem(getTodayOfferSeenKey(identity)) === "true";
+const markTodayOffersSeen = (identity) => {
+    localStorage.setItem(getTodayOfferSeenKey(identity), "true");
+    window.dispatchEvent(new CustomEvent("revo-offers-seen", { detail: { identity } }));
+};
+const formatVoucherExpiry = (voucher) => {
+    const value = voucher?.EndDate ?? voucher?.endDate;
+    if (!value) return "Không giới hạn";
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Không giới hạn" : date.toLocaleDateString("vi-VN");
 };
 
 export default function Profile() {
@@ -38,6 +54,8 @@ export default function Profile() {
     const [redeemPointsAmount, setRedeemPointsAmount] = useState(100);
     const [redeemMessage, setRedeemMessage] = useState({ text: "", type: "" });
     const [redeemedVoucherCode, setRedeemedVoucherCode] = useState("");
+    const [availableOffers, setAvailableOffers] = useState([]);
+    const [offersSeen, setOffersSeen] = useState(false);
 
     // Subscriptions states
     const [subs, setSubs] = useState([]);
@@ -47,10 +65,15 @@ export default function Profile() {
         setLoyaltyLoading(true);
         setRedeemMessage({ text: "", type: "" });
         try {
-            const res = await API.getLoyaltyInfo();
-            // Backend trả về ApiResponse<LoyaltyInfoDto>, data nằm trong res.data.Data
-            const info = res.data?.Data ?? res.data?.data ?? res.data;
+            const [loyaltyRes, voucherRes] = await Promise.all([
+                API.getLoyaltyInfo(),
+                API.getAvailableVouchers(),
+            ]);
+            const info = loyaltyRes.data?.Data ?? loyaltyRes.data?.data ?? loyaltyRes.data;
+            const offers = voucherRes.data?.Data ?? voucherRes.data?.data ?? voucherRes.data ?? [];
             setLoyaltyInfo(info);
+            setAvailableOffers(Array.isArray(offers) ? offers : []);
+            setOffersSeen(hasSeenTodayOffers(getUserOfferIdentity(user)));
         } catch (err) {
             console.error("Fetch loyalty failed:", err);
         } finally {
@@ -70,6 +93,24 @@ export default function Profile() {
         }
     };
 
+    const fetchOfferBadgeState = async () => {
+        if (!user) {
+            setAvailableOffers([]);
+            setOffersSeen(false);
+            return;
+        }
+
+        try {
+            const res = await API.getAvailableVouchers();
+            const offers = res.data?.Data ?? res.data?.data ?? res.data ?? [];
+            setAvailableOffers(Array.isArray(offers) ? offers : []);
+            setOffersSeen(hasSeenTodayOffers(getUserOfferIdentity(user)));
+        } catch (err) {
+            console.error("Fetch offers failed:", err);
+            setAvailableOffers([]);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === "loyalty") {
             fetchLoyaltyInfo();
@@ -77,6 +118,21 @@ export default function Profile() {
             fetchSubscriptions();
         }
     }, [activeTab]);
+
+    useEffect(() => {
+        fetchOfferBadgeState();
+    }, [user]);
+
+    const handleOpenLoyaltyTab = () => {
+        setActiveTab("loyalty");
+    };
+
+    const handleConfirmOffersSeen = () => {
+        const identity = getUserOfferIdentity(user);
+        markTodayOffersSeen(identity);
+        setOffersSeen(true);
+        setRedeemMessage({ text: "Đã ghi nhận ưu đãi hôm nay. Bạn có thể dùng voucher ở bước thanh toán.", type: "success" });
+    };
 
     const handleRedeemPoints = async (e) => {
         e.preventDefault();
@@ -329,14 +385,19 @@ export default function Profile() {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setActiveTab("loyalty")}
+                                onClick={handleOpenLoyaltyTab}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all duration-300 ${
                                     activeTab === "loyalty"
                                         ? "bg-[#7F5539] text-white shadow-md shadow-[#7F5539]/10"
                                         : "text-[#7F5539] hover:bg-[#F7F2EC]"
                                 }`}
                             >
-                                <Award size={18} />
+                                <span className="relative">
+                                    <Award size={18} />
+                                    {availableOffers.length > 0 && !offersSeen && (
+                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500" />
+                                    )}
+                                </span>
                                 Điểm tích lũy & Ưu đãi
                             </button>
                             <button
@@ -544,6 +605,61 @@ export default function Profile() {
                                             </div>
                                         </div>
 
+                                        {availableOffers.length > 0 && (
+                                            <div className="bg-red-50 border border-red-100 rounded-3xl p-6">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="text-lg font-bold text-red-700 font-montserrat">Ưu đãi hôm nay</h4>
+                                                            {!offersSeen && <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />}
+                                                        </div>
+                                                        <p className="text-sm text-red-600/80">Bạn có voucher khả dụng. Sao chép mã và dùng ở bước thanh toán.</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleConfirmOffersSeen}
+                                                        disabled={offersSeen}
+                                                        className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition-all ${
+                                                            offersSeen
+                                                                ? "bg-white text-green-700 border border-green-200 cursor-default"
+                                                                : "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                                                        }`}
+                                                    >
+                                                        <CheckCircle size={17} />
+                                                        {offersSeen ? "Đã nhận" : "Đã nhận ưu đãi"}
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {availableOffers.map((voucher) => {
+                                                        const code = voucher.Code ?? voucher.code;
+                                                        const title = voucher.Title ?? voucher.title ?? voucher.Name ?? voucher.name;
+                                                        const type = voucher.DiscountType ?? voucher.discountType;
+                                                        const value = Number(voucher.DiscountValue ?? voucher.discountValue ?? 0);
+                                                        const discountText = type === "percent" ? `Giảm ${value}%` : `Giảm ${value.toLocaleString("vi-VN")}đ`;
+
+                                                        return (
+                                                            <button
+                                                                key={code}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(code);
+                                                                    setRedeemMessage({ text: `Đã sao chép mã ${code}. Bạn có thể áp dụng ở trang thanh toán.`, type: "success" });
+                                                                }}
+                                                                className="text-left rounded-2xl bg-white border border-red-100 p-4 hover:border-red-300 hover:shadow-sm transition-all"
+                                                            >
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <span className="font-mono font-black text-red-600 tracking-wider">{code}</span>
+                                                                    <span className="text-xs font-black text-red-500">{discountText}</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600 mt-1">{title}</p>
+                                                                <p className="text-xs font-bold text-red-500/80 mt-2">HSD: {formatVoucherExpiry(voucher)}</p>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Redeem Section */}
                                         <div className="bg-amber-50/50 border border-amber-200/60 rounded-3xl p-6">
                                             <h4 className="text-lg font-bold text-[#5C3D2E] mb-2 font-montserrat">Đổi Điểm Lấy Voucher</h4>
@@ -552,8 +668,12 @@ export default function Profile() {
                                             </p>
 
                                             {/* Hiển thị lỗi nếu có */}
-                                            {redeemMessage.text && redeemMessage.type === "error" && (
-                                                <div className="p-4 mb-4 rounded-2xl bg-red-50 text-red-700 border border-red-200 text-sm font-bold">
+                                            {redeemMessage.text && (
+                                                <div className={`p-4 mb-4 rounded-2xl text-sm font-bold ${
+                                                    redeemMessage.type === "error"
+                                                        ? "bg-red-50 text-red-700 border border-red-200"
+                                                        : "bg-green-50 text-green-700 border border-green-200"
+                                                }`}>
                                                     {redeemMessage.text}
                                                 </div>
                                             )}

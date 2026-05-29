@@ -1,8 +1,16 @@
 import axiosClient from './axiosClient';
 
 const vouchers = {
-    validateVoucher: (code, total) => {
-        return axiosClient.get(`/api/vouchers/validate?code=${code}&total=${total}`);
+    validateVoucher: (code, total, paymentMethod, productIds = []) => {
+        return axiosClient.post('/api/vouchers/validate', {
+            code,
+            orderTotal: total,
+            paymentMethod,
+            productIds
+        });
+    },
+    getAvailableVouchers: (params) => {
+        return axiosClient.get('/api/vouchers/available', { params });
     },
     getAllVouchers: () => {
         return axiosClient.get('/api/vouchers');

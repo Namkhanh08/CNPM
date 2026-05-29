@@ -77,5 +77,66 @@ namespace CNPM_TTN.Services
                 TopProducts = topProducts
             };
         }
+
+        public async Task<IEnumerable<DailyRevenueDto>> GetRevenueChartAsync(int? days, DateTime? startDate, DateTime? endDate)
+        {
+            DateTime fromDate;
+            DateTime toDate = DateTime.Today;
+            int totalDays;
+
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                fromDate = startDate.Value.Date;
+                toDate = endDate.Value.Date;
+
+                if (toDate < fromDate)
+                {
+                    var temp = fromDate;
+                    fromDate = toDate;
+                    toDate = temp;
+                }
+
+                totalDays = (toDate - fromDate).Days + 1;
+                if (totalDays > 365)
+                {
+                    totalDays = 365;
+                    fromDate = toDate.AddDays(-364);
+                }
+            }
+            else
+            {
+                totalDays = days ?? 7;
+                if (totalDays <= 0 || totalDays > 365) totalDays = 7;
+                fromDate = DateTime.Today.AddDays(-(totalDays - 1));
+            }
+
+            // Lấy doanh thu từng ngày từ DB
+            var rawData = await _context.Orders
+                .Where(o => o.Status.ToLower() != "cancelled" && o.OrderDate.Date >= fromDate && o.OrderDate.Date <= toDate)
+                .GroupBy(o => o.OrderDate.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    Revenue = g.Sum(o => o.TotalAmount),
+                    OrderCount = g.Count()
+                })
+                .ToListAsync();
+
+            // Tạo đầy đủ N ngày (kể cả ngày không có đơn)
+            var result = Enumerable.Range(0, totalDays)
+                .Select(i =>
+                {
+                    var date = fromDate.AddDays(i);
+                    var match = rawData.FirstOrDefault(r => r.Date == date);
+                    return new DailyRevenueDto
+                    {
+                        Date = date.ToString("dd/MM", System.Globalization.CultureInfo.InvariantCulture),
+                        Revenue = match?.Revenue ?? 0,
+                        OrderCount = match?.OrderCount ?? 0
+                    };
+                });
+
+            return result;
+        }
     }
 }

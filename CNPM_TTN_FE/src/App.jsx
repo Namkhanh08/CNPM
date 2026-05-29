@@ -25,6 +25,8 @@ const AdminProducts = lazy(() => import('./pages/admin/Products'));
 const AdminBatches = lazy(() => import('./pages/admin/Batches'));
 const AdminInventory = lazy(() => import('./pages/admin/Inventory'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminVouchers = lazy(() => import('./pages/admin/Vouchers'));
+const AdminSubscriptions = lazy(() => import('./pages/admin/Subscriptions'));
 
 import './App.css';
 
@@ -74,10 +76,12 @@ function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="vouchers" element={<AdminVouchers />} />
               </Route>
               <Route element={<ProtectedRoute allowedRoles={[1, 2]} />}>
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="batches" element={<AdminBatches />} />
+                <Route path="subscriptions" element={<AdminSubscriptions />} />
               </Route>
               <Route element={<ProtectedRoute allowedRoles={[1, 3]} />}>
                 <Route path="inventory" element={<AdminInventory />} />
