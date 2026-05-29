@@ -1,23 +1,23 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { ProtectedRoute, QuizCoffee } from './components';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ProtectedRoute, QuizCoffee } from './components';
 import Layout from './layouts/Layout';
 import useStore from './store/useStore';
+import './App.css';
 
-// Lazy load client pages
 const Home = lazy(() => import('./pages/client/Home'));
 const Shop = lazy(() => import('./pages/client/Shop'));
 const ProductDetail = lazy(() => import('./pages/client/ProductDetail'));
 const Cart = lazy(() => import('./pages/client/Cart'));
 const Checkout = lazy(() => import('./pages/client/Checkout'));
 const Subscription = lazy(() => import('./pages/client/Subscription'));
+const SubscriptionPortal = lazy(() => import('./pages/SubscriptionPortal'));
 const Orders = lazy(() => import('./pages/client/Orders'));
 const Profile = lazy(() => import('./pages/client/Profile'));
 const OrderDetail = lazy(() => import('./pages/client/OrderDetail'));
 const EditOrder = lazy(() => import('./pages/client/EditOrder'));
 const RecommendationResult = lazy(() => import('./pages/client/RecommendationResult'));
 
-// Lazy load admin pages
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
@@ -27,15 +27,13 @@ const AdminInventory = lazy(() => import('./pages/admin/Inventory'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminVouchers = lazy(() => import('./pages/admin/Vouchers'));
 const AdminSubscriptions = lazy(() => import('./pages/admin/Subscriptions'));
-
-import './App.css';
+const AdminSubscriptionPreview = lazy(() => import('./pages/admin/Subscription'));
 
 function App() {
   const user = useStore((state) => state.user);
   const loadCart = useStore((state) => state.loadCart);
   const fetchOrders = useStore((state) => state.fetchOrders);
 
-  // Tự động đồng bộ giỏ hàng và đơn hàng khi người dùng đã đăng nhập
   useEffect(() => {
     if (user) {
       loadCart();
@@ -45,12 +43,14 @@ function App() {
 
   return (
     <Router>
-      <Suspense fallback={
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#F7F2EC] text-[#7F5539] font-nunito">
-          <div className="w-12 h-12 border-4 border-[#7F5539] border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-lg font-semibold tracking-wide">Đang tải trang...</p>
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="flex flex-col items-center justify-center min-h-screen bg-[#F7F2EC] text-[#7F5539] font-nunito">
+            <div className="w-12 h-12 border-4 border-[#7F5539] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-lg font-semibold tracking-wide">Dang tai trang...</p>
+          </div>
+        }
+      >
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
@@ -59,17 +59,16 @@ function App() {
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="subscription" element={<Subscription />} />
+            <Route path="subscription/portal" element={<SubscriptionPortal />} />
             <Route path="orders" element={<Orders />} />
             <Route path="profile" element={<Profile />} />
             <Route path="orders/:id" element={<OrderDetail />} />
-            <Route path="/orders/edit/:id" element={<EditOrder />} />
+            <Route path="orders/edit/:id" element={<EditOrder />} />
           </Route>
 
-          {/* Quiz & Recommendation — layout riêng, không có Header/Footer của Layout */}
           <Route path="/quiz" element={<QuizCoffee />} />
           <Route path="/recommendation/result" element={<RecommendationResult />} />
 
-          {/* Lớp Admin Routing */}
           <Route element={<ProtectedRoute allowedRoles={[1, 2, 3]} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route element={<ProtectedRoute allowedRoles={[1]} />}>
@@ -77,6 +76,7 @@ function App() {
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="vouchers" element={<AdminVouchers />} />
+                <Route path="subscription-preview" element={<AdminSubscriptionPreview />} />
               </Route>
               <Route element={<ProtectedRoute allowedRoles={[1, 2]} />}>
                 <Route path="orders" element={<AdminOrders />} />
@@ -88,7 +88,6 @@ function App() {
               </Route>
             </Route>
           </Route>
-          
         </Routes>
       </Suspense>
     </Router>

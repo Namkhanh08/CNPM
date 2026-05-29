@@ -4,11 +4,17 @@ const subscriptions = {
     getMySubscriptions: () => {
         return axiosClient.get('/api/subscriptions');
     },
+    getSubscriptions: () => {
+        return axiosClient.get('/api/subscriptions');
+    },
     createSubscription: (data) => {
         return axiosClient.post('/api/subscriptions', data);
     },
     pauseSubscription: (id) => {
         return axiosClient.put(`/api/subscriptions/${id}/pause`);
+    },
+    toggleSkipSubscription: (id) => {
+        return axiosClient.put(`/api/subscriptions/${id}/toggle-skip`);
     },
     resumeSubscription: (id) => {
         return axiosClient.put(`/api/subscriptions/${id}/resume`);
@@ -24,6 +30,9 @@ const subscriptions = {
     },
     adminUpdateSubscriptionStatus: (id, status) => {
         return axiosClient.put(`/api/subscriptions/admin/${id}/status`, { status });
+    },
+    updateSubscriptionConfig: (id, data) => {
+        return axiosClient.put(`/api/subscriptions/${id}/config`, data);
     }
 };
 

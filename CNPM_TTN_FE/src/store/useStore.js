@@ -16,6 +16,7 @@ const useStore = create(
       user: null,
       orders: [],
       products: [],
+      subscriptions: [],
 
       setUser: (user) => set({ user }),
 
@@ -285,6 +286,49 @@ const useStore = create(
           });
         }catch(err){
           console.error("Fetch products failed:", err.response?.data?.Message || err.response?.data?.message || err.message);
+        }
+      },
+
+      fetchSubscriptions: async () => {
+        try {
+          const res = await (API.getSubscriptions ? API.getSubscriptions() : API.getMySubscriptions());
+          set({ subscriptions: res.data || [] });
+        } catch (err) {
+          console.error("Fetch subscriptions failed:", err.response?.data || err.message);
+        }
+      },
+
+      toggleSkipSubscription: async (id) => {
+        try {
+          if (API.toggleSkipSubscription) {
+            await API.toggleSkipSubscription(id);
+          } else if (API.pauseSubscription) {
+            await API.pauseSubscription(id);
+          }
+          await get().fetchSubscriptions();
+        } catch (err) {
+          console.error("Toggle subscription failed:", err.response?.data || err.message);
+          throw err;
+        }
+      },
+
+      cancelSubscription: async (id) => {
+        try {
+          await API.cancelSubscription(id);
+          await get().fetchSubscriptions();
+        } catch (err) {
+          console.error("Cancel subscription failed:", err.response?.data || err.message);
+          throw err;
+        }
+      },
+
+      updateSubscriptionConfig: async (id, payload) => {
+        try {
+          await API.updateSubscriptionConfig(id, payload);
+          await get().fetchSubscriptions();
+        } catch (err) {
+          console.error("Update subscription config failed:", err.response?.data || err.message);
+          throw err;
         }
       }
 
