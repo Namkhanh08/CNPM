@@ -13,6 +13,7 @@ import OrderDetail from './pages/OrderDetail';
 import EditOrder from './pages/EditOrder';
 import PaymentPage from './pages/PaymentPage';
 import Contact from './pages/Contact';
+import SubscriptionPortal from './pages/SubscriptionPortal';
 
 // Admin imports
 import AdminLayout from './layouts/AdminLayout';
@@ -23,6 +24,7 @@ import AdminBatches from './pages/admin/Batches';
 import AdminInventory from './pages/admin/Inventory';
 import AdminShipping from './pages/admin/ShipperOrders';
 import AdminVouchers from './pages/admin/Vouchers';
+import AdminSubscriptions from './pages/admin/Subscription';
 
 import './App.css';
 
@@ -40,9 +42,10 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="profile" element={<Profile />} />
           <Route path="orders/:id" element={<OrderDetail />} />
-          <Route path="/orders/edit/:id" element={<EditOrder />} />
+          <Route path="orders/edit/:id" element={<EditOrder />} />
           <Route path="checkout/payment/:orderId" element={<PaymentPage />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="portal" element={<SubscriptionPortal />} />
          
           
         </Route>
@@ -56,6 +59,7 @@ function App() {
           <Route path="inventory" element={<AdminInventory />} />
           <Route path="shipping" element={<AdminShipping />} />
           <Route path="vouchers" element={<AdminVouchers />} />
+          <Route path="subscription" element={<AdminSubscriptions />} />
         </Route>
       </Routes>
     </Router>

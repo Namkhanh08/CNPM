@@ -16,15 +16,21 @@ namespace CNPM_TTN.Services
         {
             return new DashboardDto
             {
+                // Dữ liệu cũ
                 ExpectedRevenue = _oRepo.GetExpectedRevenue(),
                 PendingOrders = _oRepo.GetPendingOrdersCount(),
                 LatestOrders = _oRepo.GetLatestOrders(),
                 TopProducts = _oRepo.GetTopProducts(),
                 RevenueHistory = _oRepo.GetRevenueLast7Days(),
-
-                // Đã động hóa hoàn toàn
                 RevenueGrowthRate = _oRepo.GetRevenueGrowthRate(),
-                IsStockLow = _oRepo.CheckLowStockStatus()
+                IsStockLow = _oRepo.CheckLowStockStatus(),
+
+                // DỮ LIỆU MỚI THÊM THEO YÊU CẦU
+                ActualRevenue = _oRepo.GetActualRevenue(),
+                OrderStatusSummary = _oRepo.GetOrderStatusSummary(),
+                CancellationRate = _oRepo.GetCancellationRate(),
+                FulfillmentRate = _oRepo.GetFulfillmentRate(),
+                OnlinePaymentRate = _oRepo.GetOnlinePaymentRate()
             };
         }
     }

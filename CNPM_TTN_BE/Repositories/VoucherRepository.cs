@@ -85,7 +85,7 @@ namespace CNPM_TTN.Repositories
                         && v.UsedCount < v.UsageLimit
                         && v.StartDate <= now
                         && v.EndDate >= now
-                        && (string.IsNullOrEmpty(v.PaymentMethod) || v.PaymentMethod == paymentMethod))
+                        && (string.IsNullOrEmpty(v.PaymentMethod) || v.PaymentMethod == paymentMethod || v.PaymentMethod == "ALL"))
                 .ToList();
         }
 
@@ -141,6 +141,18 @@ namespace CNPM_TTN.Repositories
                 existing.IsActive = active;
                 _context.SaveChanges();
             }
+        }
+
+        public Voucher? GetByCode(string code)
+        {
+            return _context.Vouchers.FirstOrDefault(v => v.Code == code);
+        }
+
+        public void UpdateUsedCount(Voucher voucher, int amount)
+        {
+            voucher.UsedCount += amount;
+            // Đảm bảo không bị âm UsedCount
+            if (voucher.UsedCount < 0) voucher.UsedCount = 0;
         }
     }
 }

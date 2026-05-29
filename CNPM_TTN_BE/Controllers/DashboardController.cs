@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CNPM_TTN.Controllers
 {
-    [Authorize] // Yêu cầu bảo mật bằng Token JWT
     [ApiController]
     [Route("api/[controller]")]
     public class DashboardController : ControllerBase

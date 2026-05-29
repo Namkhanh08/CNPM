@@ -34,11 +34,29 @@ export default function Orders() {
     }
   };
 
-  const filteredOrders = activeTab === 'all'
-    ? orders
-    : activeTab === 'Chờ xử lý'
-      ? orders.filter(o => o.status === 'Chờ xử lý' || o.status === 'Đã xác nhận' || o.status === 'Đã thanh toán')
-      : orders.filter(o => o.status === activeTab);
+  // Cập nhật bộ lọc để Tab "Đã hủy" gom cả các đơn đang chạy luồng hoàn tiền
+  const filteredOrders =
+    activeTab === 'all'
+      ? orders
+      : activeTab === 'Chờ xử lý'
+        ? orders.filter(o =>
+          ['Chờ xử lý', 'Đã xác nhận', 'Đã thanh toán']
+            .includes(o.status)
+        )
+        : activeTab === 'Đang giao'
+          ? orders.filter(o =>
+            [
+              'Đang giao',
+              'Đang trung chuyển',
+              'Shipper đã nhận'
+            ].includes(o.status)
+          )
+          : activeTab === 'Đã hủy'
+            ? orders.filter(o => 
+              ['Đã hủy', 'Chờ hoàn tiền', 'Đã hoàn tiền']
+                .includes(o.status)
+            )
+            : orders.filter(o => o.status === activeTab);
 
   const translateStatus = (status) => {
     const statusMap = {
@@ -50,7 +68,11 @@ export default function Orders() {
       'Shipper đã nhận': { text: 'ĐANG GIAO HÀNG', color: 'text-indigo-500 bg-indigo-50 border-indigo-100' },
       'Đang giao': { text: 'ĐANG GIAO HÀNG', color: 'text-indigo-500 bg-indigo-50 border-indigo-100' },
       'Hoàn thành': { text: 'HOÀN THÀNH', color: 'text-emerald-500 bg-emerald-50 border-emerald-100' },
+      'Chờ hoàn tiền': { text: 'ĐÃ HỦY', color: 'text-rose-500 bg-rose-50 border-rose-100' },
+      'Đã hoàn tiền': { text: 'ĐÃ HỦY', color: 'text-rose-500 bg-rose-50 border-rose-100' },
       'Đã hủy': { text: 'ĐÃ HỦY', color: 'text-rose-500 bg-rose-50 border-rose-100' },
+      'Chờ hoàn tiền': { text: 'CHỜ HOÀN TIỀN', color: 'text-rose-400 bg-rose-50 border-rose-100' },
+      'Đang hoàn tiền': { text: 'ĐANG HOÀN TIỀN', color: 'text-rose-600 bg-rose-50 border-rose-100' },
     };
     return statusMap[status] || { text: status, color: 'text-gray-500 bg-gray-50 border-gray-100' };
   };
@@ -75,16 +97,15 @@ export default function Orders() {
   return (
     <div className="bg-gray-50/50 min-h-screen py-12 pb-24 font-nunito">
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
-        
+
         {/* Tabs Điều Hướng Kiểu Shopee */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex overflow-x-auto sticky top-20 z-20 md:scrollbar-none mb-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[110px] sm:min-w-0 py-4 text-center font-bold text-[15px] transition-all relative whitespace-nowrap ${
-                activeTab === tab.id ? 'text-accent-1' : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className={`flex-1 min-w-[110px] sm:min-w-0 py-4 text-center font-bold text-[15px] transition-all relative whitespace-nowrap ${activeTab === tab.id ? 'text-accent-1' : 'text-gray-500 hover:text-gray-900'
+                }`}
             >
               {tab.label}
               {activeTab === tab.id && (
@@ -103,8 +124,8 @@ export default function Orders() {
               </div>
               <h3 className="font-montserrat font-bold text-lg text-gray-800 mb-1">Chưa có đơn hàng</h3>
               <p className="text-gray-400 text-sm mb-6">Bạn chưa có đơn hàng nào trong trạng thái này.</p>
-              <Link 
-                to="/shop" 
+              <Link
+                to="/shop"
                 className="bg-accent-1 text-white px-8 py-2.5 rounded-lg font-bold text-sm hover:bg-accent-1/90 shadow-sm shadow-accent-1/10 transition-all hover:-translate-y-0.5"
               >
                 Tiếp tục mua sắm
@@ -117,7 +138,7 @@ export default function Orders() {
 
               return (
                 <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
-                  
+
                   {/* Card Header */}
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50 bg-gray-50/20">
                     <div className="flex items-center gap-2">
@@ -138,9 +159,9 @@ export default function Orders() {
                       order.orderDetails.map((item, index) => (
                         <div key={index} className="py-4 flex gap-4 items-start first:pt-4 last:pb-4">
                           <div className="w-20 h-20 bg-gray-50 rounded-xl p-1.5 shrink-0 border border-gray-100/80 overflow-hidden">
-                            <img 
-                              src={item.product?.imageUrl || "https://via.placeholder.com/150"} 
-                              alt={item.product?.name} 
+                            <img
+                              src={item.product?.imageUrl || "https://via.placeholder.com/150"}
+                              alt={item.product?.name}
                               className="w-full h-full object-cover rounded-lg"
                             />
                           </div>
@@ -151,7 +172,6 @@ export default function Orders() {
                                 <span>Phân loại: {translateGrind(item.grindingOptionId)}</span>
                                 {item.flavorNotes && <span>• Vị: {item.flavorNotes}</span>}
                                 {item.weight && <span>• Khối lượng: {item.weight}</span>}
-
                               </div>
                               <span className="text-xs text-gray-500 font-medium block mt-1">x{item.quantity}</span>
                             </div>
@@ -170,11 +190,11 @@ export default function Orders() {
 
                   {/* Card Footer */}
                   <div className="bg-gray-50/10 px-6 py-4 border-t border-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    
+
                     {/* Ngày đặt hàng */}
                     <div className="text-xs text-gray-400 text-left">
-                      Đặt lúc: {new Date(order.orderDate).toLocaleDateString('vi-VN', { 
-                        hour: '2-digit', 
+                      Đặt lúc: {new Date(order.orderDate).toLocaleDateString('vi-VN', {
+                        hour: '2-digit',
                         minute: '2-digit',
                         day: '2-digit',
                         month: '2-digit',
@@ -193,26 +213,22 @@ export default function Orders() {
 
                       {/* Các Nút Hành Động */}
                       <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        
-                        {/* Nút Xem Chi Tiết (Luôn có cho các đơn trừ Đã Hủy) */}
-                        {order.status !== 'Đã hủy' && (
-                          <Link
-                            to={`/orders/${order.id}`}
-                            className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-                          >
-                            <MessageSquare size={14} /> Chi tiết đơn hàng
-                          </Link>
-                        )}
+
+                        {/* Luôn hiển thị nút Xem chi tiết. Nếu là trạng thái hủy thì đổi nhãn chuyên dụng */}
+                        <Link
+                          to={`/orders/${order.id}`}
+                          className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                        >
+                          <MessageSquare size={14} /> 
+                          {['Đã hủy', 'Chờ hoàn tiền', 'Đã hoàn tiền'].includes(order.status)
+                            ? 'Chi tiết hủy đơn'
+                            : 'Chi tiết đơn hàng'
+                          }
+                        </Link>
 
                         {/* Button Thanh toán nhanh */}
                         {order.status === 'Chờ thanh toán' && (
                           <>
-                            <button
-                              onClick={() => handleCancel(order.id)}
-                              className="px-4 py-2 border border-rose-200 text-rose-500 rounded-lg text-xs font-bold hover:bg-rose-50 transition-colors"
-                            >
-                              Hủy đơn
-                            </button>
                             <button
                               onClick={() => handlePayment(order.id, order.totalAmount)}
                               className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm shadow-emerald-500/10 transition-colors"
@@ -223,7 +239,7 @@ export default function Orders() {
                         )}
 
                         {/* Mua lại cho đơn đã hủy hoặc hoàn thành */}
-                        {(order.status === 'Đã hủy' || order.status === 'Hoàn thành') && (
+                        {(order.status === 'Đã hủy' || order.status === 'Hoàn thành' || order.status === 'Chờ hoàn tiền' || order.status === 'Đã hoàn tiền') && (
                           <Link
                             to="/shop"
                             className="flex items-center gap-1.5 px-5 py-2 bg-accent-1 hover:bg-accent-1/90 text-white rounded-lg text-xs font-bold shadow-sm shadow-accent-1/10 transition-all hover:-translate-y-0.5"

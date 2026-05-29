@@ -52,6 +52,8 @@ builder.Services.AddScoped<VoucherService>();
 builder.Services.AddScoped<OrderRepository>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<SubscriptionRepository>();
+builder.Services.AddScoped<SubscriptionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();

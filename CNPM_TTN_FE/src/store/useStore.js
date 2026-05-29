@@ -282,6 +282,31 @@ const useStore = create(
         }
       },
 
+      //
+      //PRODUCTS
+      fetchProducts: async () => {
+        try {
+          const res = await API.getProducts();
+          console.log("PRODUCT API:", res.data);
+
+          set({
+            products: res.data
+          });
+        } catch (err) {
+          console.error("Fetch products failed:", err.response?.data?.message || err.message);
+        }
+      },
+
+      fetchQuizMatchedProducts: async (flavorNotes, region, process, roast, height) => {
+        try {
+          const res = await API.getQuizMatchedProducts(flavorNotes, region, process, roast, height);
+          console.log("MATCHED:", res.data);
+          return res.data || [];
+        } catch (err) {
+          console.error("Lỗi khi lấy sản phẩm theo gu: ", err.response?.data || err.message);
+        }
+      },
+
 
 
       // VOUCHERS ADMIN
@@ -400,7 +425,78 @@ const useStore = create(
           console.error("Cập nhật đơn hàng Shipper thất bại:", err);
           return { success: false, error: err.response?.data || "Cập nhật trạng thái thất bại" };
         }
-      }
+      },
+
+      //SUBSCRIPTIONS
+      fetchSubscriptions: async () => {
+        try {
+
+          const res = await API.getSubscriptions();
+
+          set({
+            subscriptions: res.data || []
+          });
+
+        } catch (err) {
+
+          console.error(
+            "Fetch subscriptions failed:",
+            err.response?.data || err.message
+          );
+
+        }
+      },
+
+      toggleSkipSubscription: async (id) => {
+        try {
+
+          await API.toggleSkipSubscription(id);
+
+          await get().fetchSubscriptions();
+
+        } catch (err) {
+
+          console.error(
+            "Toggle subscription failed:",
+            err.response?.data || err.message
+          );
+
+        }
+      },
+
+      cancelSubscription: async (id) => {
+        try {
+
+          await API.cancelSubscription(id);
+
+          await get().fetchSubscriptions();
+
+        } catch (err) {
+
+          console.error(
+            "Cancel subscription failed:",
+            err.response?.data || err.message
+          );
+
+        }
+      },
+
+      updateSubscriptionConfig: async (id, payload) => {
+        try {
+
+          await API.updateSubscriptionConfig(id, payload);
+
+          await get().fetchSubscriptions();
+
+        } catch (err) {
+
+          console.error(
+            "Update subscription config failed:",
+            err.response?.data || err.message
+          );
+
+        }
+      },
     }),
     {
       name: 'revo-coffee-storage',

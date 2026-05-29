@@ -422,7 +422,7 @@ export default function AdminVouchers() {
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in font-nunito">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-2xl space-y-5 shadow-xl border border-slate-100">
                         <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                            <h2 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                            <h2 className="text-xl font-nunito font-bold text-slate-800 flex items-center gap-2">
                                 {editingVoucher ? "✏️ Hiệu Chỉnh Voucher" : "✨ Thiết Lập Chiến Dịch Voucher Tặng Khách"}
                             </h2>
                             <button

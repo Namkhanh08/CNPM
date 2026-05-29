@@ -101,6 +101,22 @@ const API = {
         api.patch(`/vouchers/${id}/toggle`, null, {
             params: { active }
         }),
+
+    // SUBSCRIPTIONS
+    createSubscription: (data) =>
+        api.post("/subscriptions/create", data),
+
+    getSubscriptions: () =>
+        api.get("/subscriptions"),
+
+    toggleSkipSubscription: (id) =>
+        api.put(`/subscriptions/${id}/toggle-skip`),
+
+    cancelSubscription: (id) =>
+        api.put(`/subscriptions/${id}/cancel`),
+
+    updateSubscriptionConfig: (id, data) =>
+        api.put(`/subscriptions/${id}/config`, data),
 };
 
 export default API;

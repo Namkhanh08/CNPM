@@ -70,12 +70,12 @@ namespace CNPM_TTN.Repositories
         {
             return _context.Orders
                 .Where(o => o.Status != "Chờ thanh toán" && o.Status != "Đã hủy")
-                .Sum(o => (decimal?)o.TotalAmount) ?? 0;
+                .Sum(o => (decimal?)o.FinalAmount) ?? 0;
         }
 
         public int GetPendingOrdersCount()
         {
-            return _context.Orders.Count(o => o.Status != "Đã hủy" || o.Status != "Hoàn thành");
+            return _context.Orders.Count(o => o.Status != "Đã hủy" && o.Status != "Hoàn thành");
         }
 
         public List<Order> GetLatestOrders()
@@ -115,16 +115,69 @@ namespace CNPM_TTN.Repositories
 
             return _context.Orders
                 .Where(o => o.OrderDate >= sevenDaysAgo && o.Status != "Chờ thanh toán" && o.Status != "Đã hủy")
-                .Select(o => new { o.OrderDate, o.TotalAmount }) // Chỉ lấy các cột cần thiết để tối ưu hiệu năng
+                .Select(o => new { o.OrderDate, o.FinalAmount }) // Chỉ lấy các cột cần thiết để tối ưu hiệu năng
                 .AsEnumerable() // Chuyển sang xử lý trên bộ nhớ (Client-side) để tránh lỗi dịch LINQ to SQL
                 .GroupBy(o => o.OrderDate.Date) // Gom nhóm theo ngày cực kỳ an toàn
                 .Select(g => new RevenueTimelineDto
                 {
                     Date = g.Key.ToString("dd/MM"), // Hàm ToString() chạy mượt mà trên RAM
-                    Amount = g.Sum(o => (decimal?)o.TotalAmount) ?? 0
+                    Amount = g.Sum(o => (decimal?)o.FinalAmount) ?? 0
                 })
                 .OrderBy(r => r.Date)
                 .ToList();
+        }
+
+        // 1. TÍNH DOANH THU THỰC TẾ: Chỉ tính các đơn đã "Hoàn thành" và "Đã thanh toán"
+        public decimal GetActualRevenue()
+        {
+            return _context.Orders
+                .Where(o => o.Status == "Hoàn thành" || o.Status == "Đã thanh toán")
+                .Sum(o => (decimal?)o.FinalAmount) ?? 0;
+        }
+
+        // 2. THỐNG KÊ SỐ LƯỢNG ĐƠN THEO TRẠNG THÁI (Dùng cho biểu đồ tròn)
+        public Dictionary<string, int> GetOrderStatusSummary()
+        {
+            return _context.Orders
+                .GroupBy(o => o.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToDictionary(
+                    x => string.IsNullOrEmpty(x.Status) ? "Không xác định" : x.Status,
+                    x => x.Count
+                );
+        }
+
+        // 3. TỶ LỆ HỦY ĐƠN (%)
+        public decimal GetCancellationRate()
+        {
+            var totalOrders = _context.Orders.Count();
+            if (totalOrders == 0) return 0;
+
+            var cancelledOrders = _context.Orders.Count(o => o.Status == "Đã hủy");
+            return Math.Round(((decimal)cancelledOrders / totalOrders) * 100, 1);
+        }
+
+        // 4. TỶ LỆ HOÀN THÀNH ĐƠN (%)
+        public decimal GetFulfillmentRate()
+        {
+            var totalOrders = _context.Orders.Count();
+            if (totalOrders == 0) return 0;
+
+            var completedOrders = _context.Orders.Count(o => o.Status == "Hoàn thành");
+            return Math.Round(((decimal)completedOrders / totalOrders) * 100, 1);
+        }
+
+        // 5. TỶ LỆ THANH TOÁN ONLINE (%) 
+        // (Giả sử thực thể Order của bạn có trường PaymentMethod. Nếu chưa có, bạn có thể tạm thời hardcode trả về 0 hoặc bỏ hàm này qua)
+        public decimal GetOnlinePaymentRate()
+        {
+            var totalOrders = _context.Orders.Count();
+            if (totalOrders == 0) return 0;
+
+            // Đếm các đơn không phải là Ship COD (Thanh toán khi nhận hàng)
+            // Bạn thay đổi chuỗi "COD" theo đúng DB thực tế của bạn nhé
+            var onlinePaidOrders = _context.Orders.Count(o => o.PaymentMethod != "COD");
+            return Math.Round(((decimal)onlinePaidOrders / totalOrders) * 100, 1);
         }
 
         // 1. Tính toán % tăng trưởng doanh thu hôm nay so với hôm qua
@@ -230,5 +283,71 @@ namespace CNPM_TTN.Repositories
 
             return query.Count();
         }
+
+
+        //Tự động tăng usedCount khi tạo đơn hàng
+        public void CreateWithVoucherUpdate(Order order)
+        {
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    _context.Orders.Add(order);
+                    _context.SaveChanges();
+
+                    if (!string.IsNullOrEmpty(order.VoucherCode))
+                    {
+                        var voucher = _context.Set<Entities.Voucher>().FirstOrDefault(v => v.Code == order.VoucherCode);
+
+                        if(voucher != null)
+                        {
+                            if(voucher.UsedCount >= voucher.UsageLimit)
+                            {
+                                throw new Exception("Voucher này đã đạt giới hạn lượt sử dụng");
+                            }
+
+                            voucher.UsedCount++;
+                        }
+                    }
+
+                    _context.SaveChanges();
+                    transaction.Commit();
+                }catch(Exception ex)
+                {
+                    transaction.Rollback();
+                    throw ex;
+                }
+            }
+        }
+
+        //Tự động hoàn lại voucher khi hủy đơn hàng
+        public void CancelOrderWithVoucherRelease(int orderId)
+        {
+            var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
+            if (order == null) throw new Exception("Không tìm thấy đơn hàng");
+            if (order.Status == "Đã hủy") throw new Exception("Đơn hàng này đã được hủy từ trước");
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    order.Status = "Đã hủy";
+
+                    if (!string.IsNullOrEmpty(order.VoucherCode))
+                    {
+                        var voucher = _context.Set<Entities.Voucher>().FirstOrDefault(v => v.Code == order.VoucherCode);
+                        if (voucher != null && voucher.UsedCount > 0)
+                        {
+                            voucher.UsedCount--;
+                        }
+                    }
+
+                    _context.SaveChanges();
+                    transaction.Commit();
+                }
+                catch (Exception ex) { transaction.Rollback(); throw ex; }
+            }
+        }
+        
     }
 }

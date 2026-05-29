@@ -31,7 +31,7 @@ export default function LoginModal({isOpen, onClose}) {
             });
 
             await loadCart();
-//            await loadOrder();
+            await loadOrder();
             onClose();
         } catch (err) {
             // axios ném lỗi khi status != 2xx

@@ -12,11 +12,16 @@ export default function EditOrder() {
     const updateOrder = useStore((state) => state.updateOrder);
     console.log(useStore.getState().updateOrder);
 
-    const order = orders.find(o => o.Id === Number(id));
+
+    const order = orders.find(o => o.id === Number(id));
+
 
     const [provinces, setProvinces] = useState([]);
     const [districts, setDistricts] = useState([]);
     const [wards, setWards] = useState([]);
+    const isPaymentLocked =
+        order.status === "Đã xác nhận" ||
+        order.status === 'Đã thanh toán';
 
     const [paymentMethod, setPaymentMethod] = useState('cod');
 
@@ -34,17 +39,17 @@ export default function EditOrder() {
         if (!order) return;
 
         setForm({
-            receiverName: order.ReceiverName || '',
-            receiverPhone: order.ReceiverPhone || '',
-            shippingProvince: order.ShippingProvince || '',
-            shippingDistrict: order.ShippingDistrict || '',
-            shippingWard: order.ShippingWard || '',
-            shippingDetailAddress: order.ShippingDetailAddress || '',
-            shippingNote: order.ShippingNote || '',
+            receiverName: order.receiverName || '',
+            receiverPhone: order.receiverPhone || '',
+            shippingProvince: order.shippingProvince || '',
+            shippingDistrict: order.shippingDistrict || '',
+            shippingWard: order.shippingWard || '',
+            shippingDetailAddress: order.shippingDetailAddress || '',
+            shippingNote: order.shippingNote || '',
         });
 
         setPaymentMethod(
-            order.PaymentMethod === 'VNPAY'
+            order.paymentMethod === 'VNPAY'
                 ? 'vnpay'
                 : 'cod'
         );
@@ -127,9 +132,9 @@ export default function EditOrder() {
     };
 
     const totalPrice =
-        order?.OrderDetails?.reduce(
+        order?.orderDetails?.reduce(
             (total, item) =>
-                total + ((item.UnitPrice || 0) * item.Quantity),
+                total + ((item.unitPrice || 0) * item.quantity),
             0
         ) || 0;
 
@@ -149,6 +154,7 @@ export default function EditOrder() {
 
                 shippingDetailAddress: form.shippingDetailAddress,
                 shippingNote: form.shippingNote,
+                status: order.status,
 
                 paymentMethod:
                     paymentMethod === 'cod'
@@ -156,7 +162,7 @@ export default function EditOrder() {
                         : 'VNPAY'
             };
 
-            await updateOrder(order.Id, payload);
+            await updateOrder(order.id, payload);
 
             alert('Cập nhật đơn hàng thành công!');
             navigate('/orders');
@@ -193,11 +199,11 @@ export default function EditOrder() {
                             {/* SHIPPING */}
                             <div className="bg-white rounded-[32px] p-8 shadow-sm mb-8">
 
-                                <h2 className="font-montserrat font-bold text-xl text-primary mb-6 border-b border-gray-100 pb-4">
+                                <h2 className="font-montserrat font-bold text-xl text-primary mb-6 border-b border-gray-100 pb-4 text-center">
                                     Thông tin giao hàng
                                 </h2>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
 
                                     <div className="space-y-2">
                                         <label className="font-nunito font-semibold text-primary/80">Họ và tên <span className="text-red-500">*</span></label>
@@ -309,12 +315,17 @@ export default function EditOrder() {
                             </div>
 
                             {/* PAYMENT */}
-                            <div className="space-y-4">
+                            <div className={`space-y-4 ${isPaymentLocked ? 'opacity-60 pointer-events-none' : ''}`}>
+                                {isPaymentLocked && (
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-4 text-sm text-yellow-700 font-nunito">
+                                        Phương thức thanh toán đã bị khóa vì đơn hàng đã được xác nhận.
+                                    </div>
+                                )}
                                 <label className={`flex items-start gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}>
                                     <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'cod' ? 'border-primary' : 'border-gray-300'}`}>
                                         {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-primary rounded-full"></div>}
                                     </div>
-                                    <input type="radio" name="payment" value="cod" className="hidden" onChange={() => setPaymentMethod('cod')} />
+                                    <input type="radio" disabled={isPaymentLocked} name="payment" value="cod" className="hidden" onChange={() => setPaymentMethod('cod')} />
                                     <div>
                                         <h3 className="font-montserrat font-bold text-primary mb-1">Thanh toán khi nhận hàng (COD)</h3>
                                         <p className="font-nunito text-primary/60 text-sm">Trả bằng tiền mặt hoặc chuyển khoản QR Code cho Shipper khi giao cà phê đến tay bạn.</p>
@@ -325,7 +336,7 @@ export default function EditOrder() {
                                     <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'vnpay' ? 'border-primary' : 'border-gray-300'}`}>
                                         {paymentMethod === 'vnpay' && <div className="w-2.5 h-2.5 bg-primary rounded-full"></div>}
                                     </div>
-                                    <input type="radio" name="payment" value="vnpay" className="hidden" onChange={() => setPaymentMethod('vnpay')} />
+                                    <input type="radio" name="payment" disabled={isPaymentLocked} value="vnpay" className="hidden" onChange={() => setPaymentMethod('vnpay')} />
                                     <div>
                                         <h3 className="font-montserrat font-bold text-primary mb-1">Chuyển khoản trực tuyến / VNPAY</h3>
                                         <p className="font-nunito text-primary/60 text-sm">Thanh toán qua ví điện tử VNPay hoặc ứng dụng ngân hàng chuẩn bảo mật.</p>
@@ -341,13 +352,13 @@ export default function EditOrder() {
 
                         <div className="bg-pinky-gray/50 rounded-[32px] p-8 border border-gray-200/50 sticky top-24">
 
-                            <h2 className="font-montserrat font-bold text-xl text-primary mb-6 border-b border-gray-200 pb-4">
+                            <h2 className="font-montserrat font-bold text-xl text-primary mb-6 border-b border-gray-200 pb-4 text-center">
                                 Sản phẩm trong đơn
                             </h2>
 
                             <div className="space-y-4 mb-8 opacity-60 pointer-events-none select-none ">
 
-                                {order.OrderDetails?.map((item, index) => (
+                                {order.orderDetails?.map((item, index) => (
 
                                     <div
                                         key={index}
@@ -357,8 +368,8 @@ export default function EditOrder() {
                                         <div className="w-16 h-16 bg-white rounded-xl p-1 shrink-0">
 
                                             <img
-                                                src={item.Product?.ImageUrl}
-                                                alt={item.Product?.Name}
+                                                src={item.product?.imageUrl}
+                                                alt={item.product?.name}
                                                 className="w-full h-full object-contain"
                                             />
                                         </div>
@@ -366,27 +377,27 @@ export default function EditOrder() {
                                         <div className="flex-1 font-nunito text-left">
 
                                             <h4 className="font-bold text-primary text-sm">
-                                                {item.Product?.Name}
+                                                {item.product?.name}
                                             </h4>
 
                                             <p className="text-primary/60 text-xs">
-                                                Số lượng: {item.Quantity}
+                                                Số lượng: {item.quantity}
                                             </p>
 
                                             <p className="text-primary/60 text-xs">
-                                                Xay: {translateGrind(item.GrindingOptionId)}
+                                                Xay: {translateGrind(item.grindingOptionId)}
                                             </p>
 
                                             <p className="text-primary/60 text-xs">
-                                                Vị: {item.FlavorNotes}
+                                                Vị: {item.flavorNotes}
                                             </p>
 
                                             <p className="text-primary/60 text-xs">
-                                                Khối lượng: {item.Weight}
+                                                Khối lượng: {item.weight}
                                             </p>
 
                                             <p className="font-bold text-accent-1 text-sm mt-1">
-                                                {(item.UnitPrice * item.Quantity).toLocaleString('vi-VN')}đ
+                                                {(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ
                                             </p>
                                         </div>
                                     </div>
@@ -404,7 +415,7 @@ export default function EditOrder() {
                                     <span>Tạm tính</span>
 
                                     <span className="font-bold">
-                                        {totalPrice.toLocaleString('vi-VN')}đ
+                                        {totalPrice.toLocaleString()}đ
                                     </span>
                                 </div>
 
@@ -412,7 +423,15 @@ export default function EditOrder() {
                                     <span>Phí giao hàng</span>
 
                                     <span className="font-bold">
-                                        {shippingFee.toLocaleString('vi-VN')}đ
+                                        {shippingFee.toLocaleString()}đ
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span className='text-green-500'>Giảm giá</span>
+
+                                    <span className="font-bold text-green-500">
+                                        - {order.discountAmount.toLocaleString()}đ
                                     </span>
                                 </div>
 
@@ -423,7 +442,7 @@ export default function EditOrder() {
                                     </span>
 
                                     <span className="font-montserrat font-black text-3xl text-red-custom">
-                                        {(totalPrice + shippingFee).toLocaleString('vi-VN')}đ
+                                        {order.finalAmount.toLocaleString()}đ
                                     </span>
                                 </div>
                             </div>
@@ -438,7 +457,7 @@ export default function EditOrder() {
                                 </button>
 
                                 <button
-                                    onClick={() => navigate('/orders')}
+                                    onClick={() => navigate(-1)}
                                     className="w-full border border-red-400 text-red-500 font-nunito font-bold py-4 rounded-full text-lg hover:bg-red-50 hover:-translate-y-1 transition-all duration-300 hover:scale-110"
                                 >
                                     HỦY

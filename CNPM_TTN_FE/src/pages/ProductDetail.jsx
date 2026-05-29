@@ -39,7 +39,7 @@ export default function ProductDetail() {
     };
     fetchPublicVouchers();
   }, []);
-  
+
   const [activeImage, setActiveImage] = useState(null);
 
   const ImageMap = {
@@ -158,7 +158,7 @@ export default function ProductDetail() {
   return (
     <div className="bg-neutral-50 min-h-screen py-10 antialiased selection:bg-accent-1/20 font-nunito">
       <div className="container mx-auto px-4 max-w-7xl">
-        
+
         {/* Breadcrumb điều hướng */}
         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-primary/50 mb-6 select-none uppercase">
           <span className="hover:text-accent-1 cursor-pointer transition-colors" onClick={() => navigate('/')}>REVO Coffee</span>
@@ -170,18 +170,18 @@ export default function ProductDetail() {
 
         {/* Khối nội dung chính (Giao diện mua hàng) */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-10 flex flex-col lg:flex-row gap-12">
-          
+
           {/* CỘT TRÁI: Gallery hình ảnh */}
           <div className="w-full lg:w-[42%] flex flex-col gap-4">
             {/* Khung ảnh chính lớn */}
             <div className="w-full aspect-square bg-neutral-50 rounded-xl p-8 flex items-center justify-center border border-gray-100/80 overflow-hidden relative group">
-              <img 
-                src={activeImage} 
-                alt={product.name} 
-                className="max-h-full max-w-full object-contain transition-all duration-500 group-hover:scale-105" 
+              <img
+                src={activeImage}
+                alt={product.name}
+                className="max-h-full max-w-full object-contain transition-all duration-500 group-hover:scale-105"
               />
             </div>
-            
+
             {/* Danh sách ảnh nhỏ phía dưới */}
             <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin snap-x">
               {Object.values(ImageMap).map((imgUrl, index) => (
@@ -189,11 +189,10 @@ export default function ProductDetail() {
                   key={index}
                   onMouseEnter={() => setActiveImage(imgUrl)}
                   onClick={() => setActiveImage(imgUrl)}
-                  className={`w-16 h-16 border-2 rounded-lg p-1.5 bg-neutral-50 shrink-0 flex items-center justify-center transition-all duration-200 snap-start ${
-                    activeImage === imgUrl 
-                      ? 'border-accent-1 bg-white shadow-sm ring-2 ring-accent-1/10' 
+                  className={`w-16 h-16 border-2 rounded-lg p-1.5 bg-neutral-50 shrink-0 flex items-center justify-center transition-all duration-200 snap-start ${activeImage === imgUrl
+                      ? 'border-accent-1 bg-white shadow-sm ring-2 ring-accent-1/10'
                       : 'border-transparent hover:border-primary/20 hover:bg-white'
-                  }`}
+                    }`}
                 >
                   <img src={imgUrl} alt={`sub-${index}`} className="max-h-full object-contain rounded" />
                 </button>
@@ -208,7 +207,7 @@ export default function ProductDetail() {
               <div className="mb-2">
                 <span className="text-[10px] font-bold tracking-widest text-accent-1 uppercase bg-accent-1/5 px-2.5 py-1 rounded-full">Premium Coffee</span>
               </div>
-              
+
               {/* Tiêu đề sản phẩm */}
               <h1 className="font-extrabold text-2xl lg:text-3xl text-primary leading-tight mb-4 tracking-tight">
                 {product.name}
@@ -229,11 +228,11 @@ export default function ProductDetail() {
                   <span className="w-28 text-primary/40 font-bold uppercase tracking-wider text-xs shrink-0">Ưu đãi độc quyền</span>
                   <div className="flex flex-wrap gap-2">
                     {publicVouchers.map((voucher) => (
-                      <div 
-                        key={voucher.id} 
+                      <div
+                        key={voucher.id}
                         className="inline-flex items-center gap-1.5 bg-accent-1/[0.03] border border-dashed border-accent-1/60 text-accent-1 px-3 py-1.5 rounded-lg font-bold text-xs transition-colors hover:bg-accent-1/[0.06]"
                       >
-                        <BsFillTicketPerforatedFill size={13} className="opacity-80"/>
+                        <BsFillTicketPerforatedFill size={13} className="opacity-80" />
                         {voucher.discountType === 'percent' && `Giảm ${voucher.discountPreview}%`}
                         {voucher.discountType === 'fixed' && `${voucher.title}`}
                         {voucher.discountType === 'shipping' && `Freeship`}
@@ -245,7 +244,7 @@ export default function ProductDetail() {
 
               {/* KHU VỰC CHỌN BIẾN THỂ PHÂN LOẠI */}
               <div className="flex flex-col gap-5 py-4 mb-8 text-sm">
-                
+
                 {/* Hương vị */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <span className="w-28 text-primary/50 font-bold shrink-0">Hương vị</span>
@@ -254,11 +253,10 @@ export default function ProductDetail() {
                       <button
                         key={index}
                         onClick={() => setFlavorNotes(flavor)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${
-                          flavorNotes === flavor
+                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${flavorNotes === flavor
                             ? 'border-primary text-white bg-primary shadow-sm'
                             : 'border-gray-200 text-primary/70 bg-white hover:border-primary/40 hover:text-primary'
-                        }`}
+                          }`}
                       >
                         {flavor}
                       </button>
@@ -274,11 +272,10 @@ export default function ProductDetail() {
                       <button
                         key={index}
                         onClick={() => setWeight(weight)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${
-                          weights === weight
+                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${weights === weight
                             ? 'border-primary text-white bg-primary shadow-sm'
                             : 'border-gray-200 text-primary/70 bg-white hover:border-primary/40 hover:text-primary'
-                        }`}
+                          }`}
                       >
                         {weight}
                       </button>
@@ -294,11 +291,10 @@ export default function ProductDetail() {
                       <button
                         key={grind.id}
                         onClick={() => setGrindType(grind)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${
-                          grindType?.id === grind.id
+                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${grindType?.id === grind.id
                             ? 'border-primary text-white bg-primary shadow-sm'
                             : 'border-gray-200 text-primary/70 bg-white hover:border-primary/40 hover:text-primary'
-                        }`}
+                          }`}
                       >
                         {grind.name}
                       </button>
@@ -354,7 +350,7 @@ export default function ProductDetail() {
                 <div className="flex items-center gap-2"><span className="text-accent-1 text-sm">✓</span> Hàng Chính Hãng 100%</div>
                 <div className="flex items-center gap-2"><span className="text-accent-1 text-sm">✓</span> Giao Toàn Quốc Miễn Phí</div>
                 <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/subscription')}>
-                  <span className="text-accent-1 text-sm group-hover:scale-110 transition-transform">✓</span> 
+                  <span className="text-accent-1 text-sm group-hover:scale-110 transition-transform">✓</span>
                   <span className="group-hover:text-accent-1 transition-colors">Đăng ký định kỳ tiết kiệm 15%</span>
                 </div>
               </div>
@@ -365,12 +361,12 @@ export default function ProductDetail() {
 
         {/* THÔNG TIN CHI TIẾT VÀ MÔ TẢ PHÍA DƯỚI */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-10 mt-8 text-left">
-          
+
           {/* Section Chi tiết */}
           <h2 className="font-extrabold text-base text-primary uppercase tracking-wider mb-6 flex items-center gap-2">
             <span className="w-1 h-5 bg-primary rounded-full"></span> Chi tiết sản phẩm
           </h2>
-          
+
           <div className="max-w-4xl divide-y divide-gray-100 border-b border-gray-100 mb-10">
             <div className="flex py-3.5 items-center text-sm">
               <span className="w-52 text-primary/40 font-bold">Danh Mục</span>
@@ -378,22 +374,22 @@ export default function ProductDetail() {
                 Cà phê &gt; {CategoryMap[product.type] || product.type}
               </span>
             </div>
-            
+
             <div className="flex py-3.5 items-center text-sm">
               <span className="w-52 text-primary/40 font-bold">Vùng trồng (Region)</span>
               <span className="text-primary font-bold">{product.region || "Đang cập nhật"}</span>
             </div>
-            
+
             <div className="flex py-3.5 items-center text-sm">
               <span className="w-52 text-primary/40 font-bold">Phương pháp sơ chế</span>
               <span className="text-primary/80 font-medium">{product.process || "Đang cập nhật"}</span>
             </div>
-            
+
             <div className="flex py-3.5 items-center text-sm">
               <span className="w-52 text-primary/40 font-bold">Mức độ rang (Roast)</span>
               <span className="text-primary/80 font-medium">{product.roast || "Đang cập nhật"}</span>
             </div>
-            
+
             <div className="flex py-3.5 items-center text-sm">
               <span className="w-52 text-primary/40 font-bold">Độ cao nông trại</span>
               <span className="text-primary/80 font-medium">{product.height || "Đang cập nhật"}</span>
@@ -408,7 +404,7 @@ export default function ProductDetail() {
               <span className="w-52 text-primary/40 font-bold">Trọng lượng đóng bao</span>
               <span className="text-primary/80 font-medium">{product.weight || "250g"}</span>
             </div>
-            
+
             <div className="flex py-3.5 items-center text-sm">
               <span className="w-52 text-primary/40 font-bold">Hạn sử dụng</span>
               <span className="text-primary font-bold text-neutral-700">12 tháng kể từ ngày rang đóng gói</span>
@@ -419,14 +415,14 @@ export default function ProductDetail() {
           <h2 className="font-extrabold text-base text-primary uppercase tracking-wider mb-6 flex items-center gap-2">
             <span className="w-1 h-5 bg-primary rounded-full"></span> Mô tả sản phẩm
           </h2>
-          
+
           <div className="text-primary/80 text-sm leading-relaxed whitespace-pre-line max-w-4xl space-y-4">
             <p className="font-extrabold text-primary text-base flex items-center gap-1.5 text-neutral-800">
               <span>☕</span> THƯỞNG THỨC HƯƠNG VỊ NGUYÊN BẢN TỪ HỆ THỐNG NÔNG SẢN CHẤT LƯỢNG CAO
             </p>
-            
+
             <p className="text-neutral-600 font-bold">{product.desc || "Thông tin mô tả sản phẩm hiện đang được cập nhật thêm nội dung chi tiết từ nhà rang..."}</p>
-            
+
             {/* Box mẹo vặt nhỏ nhắn tinh tế */}
             <div className="bg-neutral-50 p-5 rounded-xl border border-neutral-200/60 mt-8 text-xs text-primary/70 relative overflow-hidden">
               <div className="absolute top-0 left-0 h-full w-1 bg-accent-1"></div>

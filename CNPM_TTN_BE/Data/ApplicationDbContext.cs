@@ -24,6 +24,11 @@ namespace CNPM_TTN.Data
         public DbSet<Order> Orders { get; set; }
 
         public DbSet<OrderDetail> OrderDetails { get; set; }
+
+        public DbSet<Subscription> Subscriptions { get; set; }
+
+        public DbSet<SubscriptionConfig> SubscriptionConfigs { get; set; }
+        public DbSet<SubscriptionOrder> SubscriptionOrders { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

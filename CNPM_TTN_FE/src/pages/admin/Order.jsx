@@ -215,7 +215,7 @@ export default function AdminOrders() {
                     {/* Tổng giá trị đơn hàng */}
                     <td className="px-6 py-5 align-top text-right">
                       <div className="font-nunito font-bold text-slate-900 text-base tracking-tight">
-                        {order.finalAmount?.toLocaleString('vi-VN')}₫
+                        {(order.totalAmount + 30000 - order.discountAmount)?.toLocaleString('vi-VN')}₫
                       </div>
                       <div className="mt-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-accent-1 bg-accent-1/5 px-2 py-0.5 rounded-md border border-accent-1/10">
@@ -248,8 +248,16 @@ export default function AdminOrders() {
                             <Truck size={14} /> Giao ĐVVC
                           </button>
                         )}
+                        {(order.status === "Chờ hoàn tiền") && (
+                          <button 
+                            onClick={() => handleUpdateStatus(order.id, 'Đã hoàn tiền')} 
+                            className='w-full py-2 px-3 bg-blue-600 hover:opacity-90 text-white font-bold text-xs rounded-full shadow-sm transitsion-all flex items-center justify-center gap-1.5 active:scale-95'
+                          > 
+                            <Check size={14} strokeWidth={2.5} /> Xác nhận
+                          </button>
+                        )}
                         
-                        {!['Hoàn thành', 'Đang giao', 'Đã hủy', 'Shipper đã nhận'].includes(order.status || order.Status) && (
+                        {!['Hoàn thành', 'Đang giao', 'Đã hủy', 'Shipper đã nhận', 'Đã hoàn tiền', 'Chờ hoàn tiền'].includes(order.status || order.Status) && (
                           <button 
                             onClick={() => handleUpdateStatus(order.id, 'Đã hủy')}
                             className="w-full py-1.5 px-3 bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-500 hover:text-red-600 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1"
@@ -323,6 +331,8 @@ const StatusBadge = ({ status }) => {
     'Đang giao': 'bg-blue-50 text-blue-600 border-blue-200/70',
     'Hoàn thành': 'bg-green-50 text-green-600 border-green-200/70',
     'Đã hủy': 'bg-rose-50 text-rose-500 border-rose-200/70',
+    'Chờ hoàn tiền': 'bg-rose-50 text-rose-500 border-rose-200/70',
+    'Đã hoàn tiền': 'bg-green-50 text-green-600 border-green-200/70',
   };
 
   return (

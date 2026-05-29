@@ -144,5 +144,35 @@ namespace CNPM_TTN.Services
         {
             _voucherRepo.ToggleVoucher(id, active);
         }
+
+        // Thêm vào cuối file VoucherService.cs
+
+        public void ApplyVoucher(string voucherCode)
+        {
+            if (string.IsNullOrWhiteSpace(voucherCode)) return;
+
+            var voucher = _voucherRepo.GetByCode(voucherCode);
+            if (voucher == null) throw new Exception("Voucher không tồn tại!");
+            if (!voucher.IsActive) throw new Exception("Voucher này đang bị khóa!");
+
+            var now = DateTime.Now;
+            if (voucher.StartDate > now || voucher.EndDate < now) throw new Exception("Voucher đã hết hạn sử dụng!");
+            if (voucher.UsedCount >= voucher.UsageLimit) throw new Exception("Voucher này đã hết lượt sử dụng!");
+
+            // Tăng lượt dùng lên 1
+            _voucherRepo.UpdateUsedCount(voucher, 1);
+        }
+
+        public void ReleaseVoucher(string voucherCode)
+        {
+            if (string.IsNullOrWhiteSpace(voucherCode)) return;
+
+            var voucher = _voucherRepo.GetByCode(voucherCode);
+            if (voucher != null)
+            {
+                // Giảm lượt dùng đi 1 khi hủy đơn
+                _voucherRepo.UpdateUsedCount(voucher, -1);
+            }
+        }
     }
 }

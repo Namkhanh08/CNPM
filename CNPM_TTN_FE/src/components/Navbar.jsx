@@ -224,6 +224,7 @@ export default function Header() {
                 <div className="absolute -right-2 top-12 w-44 bg-zinc-900 border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden text-sm text-center">
                   <Link to="/profile" className="block px-4 py-3 hover:bg-zinc-800">Hồ sơ</Link>
                   <Link to="/orders" className="block px-4 py-3 hover:bg-zinc-800">Đơn hàng</Link>
+                  <Link to="/portal" className="block px-4 py-3 hover:bg-zinc-800">Đăng ký định kỳ</Link>
                   <button onClick={logout} className="w-full px-4 py-3 text-red-400 hover:bg-zinc-800 border-t border-white/10 text-center">
                     Đăng xuất
                   </button>
