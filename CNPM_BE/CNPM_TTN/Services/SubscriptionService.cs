@@ -59,11 +59,22 @@ public class SubscriptionService : ISubscriptionService
     {
         var subs = await _context.Subscriptions
             .Include(s => s.Product)
+                .ThenInclude(p => p.ProductDetails)
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
 
-        var result = subs.Select(s => MapToDto(s, s.Product)).ToList();
+        var grindIds = subs
+            .Select(s => s.GrindingOptionId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+        var grindNames = await _context.GrindingOptions
+            .Where(g => grindIds.Contains(g.Id))
+            .ToDictionaryAsync(g => g.Id, g => g.Name);
+
+        var result = subs.Select(s => MapToDto(s, s.Product, GetGrindingName(s.GrindingOptionId, grindNames))).ToList();
         return ApiResponse<List<SubscriptionDto>>.SuccessResponse(result);
     }
 
@@ -104,6 +115,82 @@ public class SubscriptionService : ISubscriptionService
         sub.Status = "cancelled";
         await _context.SaveChangesAsync();
         return ApiResponse<string>.SuccessResponse("Hủy gói subscription thành công.");
+    }
+
+    public async Task<ApiResponse<string>> ToggleSkipAsync(int id, string userId)
+    {
+        var sub = await _context.Subscriptions.FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
+        if (sub == null) return ApiResponse<string>.FailureResponse("Không tìm thấy gói subscription.");
+        if (sub.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase))
+            return ApiResponse<string>.FailureResponse("Gói subscription đã bị hủy.");
+
+        sub.Status = sub.Status.Equals("paused", StringComparison.OrdinalIgnoreCase)
+            || sub.Status.Equals("skipped", StringComparison.OrdinalIgnoreCase)
+                ? "active"
+                : "paused";
+
+        if (sub.Status == "active" && sub.NextDeliveryDate < DateTime.UtcNow)
+        {
+            sub.NextDeliveryDate = DateTime.UtcNow.Date;
+        }
+
+        await _context.SaveChangesAsync();
+        return ApiResponse<string>.SuccessResponse("Cập nhật trạng thái subscription thành công.");
+    }
+
+    public async Task<ApiResponse<SubscriptionDto>> UpdateConfigAsync(int id, string userId, UpdateSubscriptionConfigDto dto)
+    {
+        var sub = await _context.Subscriptions
+            .Include(s => s.Product)
+                .ThenInclude(p => p.ProductDetails)
+            .FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
+
+        if (sub == null) return ApiResponse<SubscriptionDto>.FailureResponse("Không tìm thấy gói subscription.");
+        if (sub.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase))
+            return ApiResponse<SubscriptionDto>.FailureResponse("Không thể cập nhật gói đã hủy.");
+
+        var flavor = dto.Flavor ?? dto.FlavorNote;
+        if (!string.IsNullOrWhiteSpace(flavor))
+        {
+            sub.FlavorNotes = flavor.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.Weight))
+        {
+            sub.Weight = dto.Weight.Trim();
+        }
+
+        if (dto.Quantity.HasValue)
+        {
+            sub.Quantity = dto.Quantity.Value;
+        }
+
+        var grindOptionId = dto.GrindingOptionId ?? dto.GrindTypeId;
+        if (grindOptionId.HasValue)
+        {
+            var exists = await _context.GrindingOptions.AnyAsync(g => g.Id == grindOptionId.Value);
+            if (!exists) return ApiResponse<SubscriptionDto>.FailureResponse("Kiểu xay không hợp lệ.");
+            sub.GrindingOptionId = grindOptionId;
+        }
+        else if (!string.IsNullOrWhiteSpace(dto.GrindType))
+        {
+            var grindType = dto.GrindType.Trim();
+            var grind = await _context.GrindingOptions
+                .FirstOrDefaultAsync(g => g.Name.ToLower() == grindType.ToLower());
+            if (grind != null)
+            {
+                sub.GrindingOptionId = grind.Id;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        var grindName = await _context.GrindingOptions
+            .Where(g => g.Id == sub.GrindingOptionId)
+            .Select(g => g.Name)
+            .FirstOrDefaultAsync();
+
+        return ApiResponse<SubscriptionDto>.SuccessResponse(MapToDto(sub, sub.Product, grindName));
     }
 
     /// <summary>
@@ -272,29 +359,51 @@ public class SubscriptionService : ISubscriptionService
         }
     }
 
-    private static SubscriptionDto MapToDto(Subscription s, Product? p) => new SubscriptionDto
+    private static SubscriptionDto MapToDto(Subscription s, Product? p, string? grindType = null)
     {
-        Id = s.Id,
-        ProductId = s.ProductId,
-        ProductName = p?.Name,
-        ProductImage = p?.ImageUrl,
-        GrindingOptionId = s.GrindingOptionId,
-        FlavorNotes = s.FlavorNotes,
-        Weight = s.Weight,
-        Quantity = s.Quantity,
-        Frequency = s.Frequency,
-        StartDate = s.StartDate,
-        NextDeliveryDate = s.NextDeliveryDate,
-        ReceiverName = s.ReceiverName,
-        ReceiverPhone = s.ReceiverPhone,
-        ShippingProvince = s.ShippingProvince,
-        ShippingDistrict = s.ShippingDistrict,
-        ShippingWard = s.ShippingWard,
-        ShippingDetailAddress = s.ShippingDetailAddress,
-        PaymentMethod = s.PaymentMethod,
-        Status = s.Status,
-        CreatedAt = s.CreatedAt
-    };
+        var primaryDetail = p?.ProductDetails?.FirstOrDefault();
+        var flavor = s.FlavorNotes ?? primaryDetail?.FlavorNotes ?? "Original";
+        var weight = s.Weight ?? primaryDetail?.WeightOptions?.Split(',', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim() ?? "250g";
+
+        return new SubscriptionDto
+        {
+            Id = s.Id,
+            ProductId = s.ProductId,
+            ProductName = p?.Name,
+            ProductImage = p?.ImageUrl,
+            Price = (p?.Price ?? 0) * s.Quantity,
+            GrindingOptionId = s.GrindingOptionId,
+            FlavorNotes = s.FlavorNotes,
+            Flavor = flavor,
+            GrindType = grindType ?? s.GrindingOptionId?.ToString() ?? "Mac dinh",
+            Weight = weight,
+            Quantity = s.Quantity,
+            Frequency = s.Frequency,
+            StartDate = s.StartDate,
+            NextDeliveryDate = s.NextDeliveryDate,
+            NextBilling = s.NextDeliveryDate.ToString("dd/MM/yyyy"),
+            CardInfo = string.IsNullOrWhiteSpace(s.PaymentMethod) ? "COD" : s.PaymentMethod,
+            History = $"Dang ky tu {s.CreatedAt:dd/MM/yyyy}",
+            Product = new
+            {
+                id = p?.Id,
+                name = p?.Name,
+                imageUrl = p?.ImageUrl,
+                price = p?.Price ?? 0,
+                flavorNotes = primaryDetail?.FlavorNotes,
+                availableGrinds = grindType
+            },
+            ReceiverName = s.ReceiverName,
+            ReceiverPhone = s.ReceiverPhone,
+            ShippingProvince = s.ShippingProvince,
+            ShippingDistrict = s.ShippingDistrict,
+            ShippingWard = s.ShippingWard,
+            ShippingDetailAddress = s.ShippingDetailAddress,
+            PaymentMethod = s.PaymentMethod,
+            Status = NormalizeStatusForClient(s.Status),
+            CreatedAt = s.CreatedAt
+        };
+    }
 
     public async Task<ApiResponse<object>> GetAllForAdminAsync(int page, int pageSize, string? status, string? searchTerm)
     {
@@ -377,9 +486,34 @@ public class SubscriptionService : ISubscriptionService
         ShippingWard = s.ShippingWard,
         ShippingDetailAddress = s.ShippingDetailAddress,
         PaymentMethod = s.PaymentMethod,
-        Status = s.Status,
+        Price = (p?.Price ?? 0) * s.Quantity,
+        Flavor = s.FlavorNotes,
+        GrindType = s.GrindingOptionId?.ToString(),
+        NextBilling = s.NextDeliveryDate.ToString("dd/MM/yyyy"),
+        CardInfo = string.IsNullOrWhiteSpace(s.PaymentMethod) ? "COD" : s.PaymentMethod,
+        History = $"Dang ky tu {s.CreatedAt:dd/MM/yyyy}",
+        Status = NormalizeStatusForClient(s.Status),
         CreatedAt = s.CreatedAt,
         UserEmail = u?.Email,
         UserFullName = u?.Name
     };
+
+    private static string? GetGrindingName(int? grindingOptionId, Dictionary<int, string> grindNames)
+    {
+        return grindingOptionId.HasValue && grindNames.TryGetValue(grindingOptionId.Value, out var name)
+            ? name
+            : null;
+    }
+
+    private static string NormalizeStatusForClient(string status)
+    {
+        return status.ToLower() switch
+        {
+            "active" => "ACTIVE",
+            "paused" => "SKIPPED",
+            "skipped" => "SKIPPED",
+            "cancelled" => "CANCELLED",
+            _ => status.ToUpper()
+        };
+    }
 }

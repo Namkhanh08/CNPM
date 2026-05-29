@@ -49,6 +49,12 @@ namespace CNPM_TTN.Controllers
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateFromKhanhFlow([FromBody] CreateSubscriptionDto dto)
+        {
+            return await Create(dto);
+        }
+
         [HttpPut("{id}/pause")]
         public async Task<IActionResult> Pause(int id)
         {
@@ -70,6 +76,16 @@ namespace CNPM_TTN.Controllers
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
+        [HttpPut("{id}/toggle-skip")]
+        public async Task<IActionResult> ToggleSkip(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _subscriptionService.ToggleSkipAsync(id, userId);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
@@ -77,6 +93,21 @@ namespace CNPM_TTN.Controllers
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var result = await _subscriptionService.CancelAsync(id, userId);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPut("{id}/config")]
+        public async Task<IActionResult> UpdateConfig(int id, [FromBody] UpdateSubscriptionConfigDto dto)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.FailureResponse("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _subscriptionService.UpdateConfigAsync(id, userId, dto);
             return result.Success ? Ok(result) : BadRequest(result);
         }
 

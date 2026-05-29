@@ -292,7 +292,8 @@ const useStore = create(
       fetchSubscriptions: async () => {
         try {
           const res = await (API.getSubscriptions ? API.getSubscriptions() : API.getMySubscriptions());
-          set({ subscriptions: res.data || [] });
+          const items = res.data?.data || res.data?.Data || res.data || [];
+          set({ subscriptions: Array.isArray(items) ? items : [] });
         } catch (err) {
           console.error("Fetch subscriptions failed:", err.response?.data || err.message);
         }

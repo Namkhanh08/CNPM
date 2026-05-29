@@ -97,13 +97,20 @@ public class SubscriptionDto
     public int ProductId { get; set; }
     public string? ProductName { get; set; }
     public string? ProductImage { get; set; }
+    public decimal Price { get; set; }
     public int? GrindingOptionId { get; set; }
     public string? FlavorNotes { get; set; }
+    public string? Flavor { get; set; }
+    public string? GrindType { get; set; }
     public string? Weight { get; set; }
     public int Quantity { get; set; }
     public string Frequency { get; set; } = string.Empty;
     public DateTime StartDate { get; set; }
     public DateTime NextDeliveryDate { get; set; }
+    public string NextBilling { get; set; } = string.Empty;
+    public string CardInfo { get; set; } = "COD";
+    public string History { get; set; } = string.Empty;
+    public object? Product { get; set; }
     public string? ReceiverName { get; set; }
     public string? ReceiverPhone { get; set; }
     public string? ShippingProvince { get; set; }
@@ -143,4 +150,16 @@ public class SubscriptionStatusUpdateDto
 {
     [Required]
     public string Status { get; set; } = string.Empty;
+}
+
+public class UpdateSubscriptionConfigDto
+{
+    public string? Flavor { get; set; }
+    public string? FlavorNote { get; set; }
+    public int? GrindingOptionId { get; set; }
+    public int? GrindTypeId { get; set; }
+    public string? GrindType { get; set; }
+    public string? Weight { get; set; }
+    [Range(1, 100)]
+    public int? Quantity { get; set; }
 }
