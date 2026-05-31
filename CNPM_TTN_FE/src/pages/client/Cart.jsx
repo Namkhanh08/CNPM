@@ -51,21 +51,21 @@ export default function Cart() {
   const handleRemove = async (item) => {
     try {
       await removeFromCart(item.id);
-      alert(`Da xoa san pham ${item.product.name} khoi gio hang!`);
+      alert(`Đã xóa sản phẩm ${item.product.name} khỏi giỏ hàng!`);
     } catch (err) {
       console.error('Remove item failed:', err);
-      alert('Khong the xoa san pham. Vui long thu lai.');
+      alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
     }
   };
 
   const translateGrind = (type) => {
     switch (Number(type)) {
-      case 1: return 'Nguyen Hat';
-      case 2: return 'Phan Phin';
-      case 3: return 'Pha May';
-      case 4: return 'U Lanh';
-      case 5: return 'Kieu Phap';
-      default: return type || 'Mac dinh';
+      case 1: return 'Nguyên Hạt';
+      case 2: return 'Pha Phin';
+      case 3: return 'Pha Máy';
+      case 4: return 'Ủ Lạnh';
+      case 5: return 'Kiểu Pháp';
+      default: return type || 'Mặc định';
     }
   };
 
@@ -73,16 +73,16 @@ export default function Cart() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center bg-white px-6 pb-20">
         <h2 className="font-nunito font-bold text-4xl text-primary mb-4 text-center">
-          GIO HANG CUA BAN DANG TRONG
+          GIỎ HÀNG CỦA BẠN ĐANG TRỐNG
         </h2>
         <p className="font-nunito text-accent-1 text-base mb-8 max-w-md text-center">
-          Hay kham pha them cac san pham ca phe hoac thu cac goi subscription cua chung toi.
+          Hãy khám phá thêm các sản phẩm cà phê hoặc thử các gói đăng ký của chúng tôi.
         </p>
         <Link
           to="/shop"
-          className="inline-flex items-center justify-center bg-primary text-white font-nunito font-bold py-4 rounded-full px-10 hover:bg-accent-1 hover:text-white hover:-translate-y-1 transition-all duration-300 hover:scale-105"
+          className="inline-flex items-center justify-center bg-primary !text-white font-nunito font-bold py-4 rounded-full px-10 hover:bg-accent-1 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
         >
-          DI DEN CUA HANG
+          <span className="text-white">ĐI ĐẾN CỬA HÀNG</span>
         </Link>
       </div>
     );
@@ -94,20 +94,20 @@ export default function Cart() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-primary font-nunito font-bold mb-8 hover:text-accent-1 transition-colors"
+          className="flex items-center gap-2 text-primary font-nunito font-bold mb-8 hover:text-accent-1 transition-colors cursor-pointer"
         >
-          <ArrowLeft size={20} /> Quay lai
+          <ArrowLeft size={20} /> Quay lại
         </button>
 
-        <h1 className="font-nunito font-bold text-5xl text-primary mb-10">GIO HANG</h1>
+        <h1 className="font-nunito font-black text-5xl text-primary mb-10 uppercase tracking-tight">GIỎ HÀNG</h1>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          <div className="w-full lg:w-2/3 bg-white rounded-3xl p-6 md:p-10 shadow-lg">
-            <div className="hidden md:grid grid-cols-12 gap-4 pb-4 border-b border-gray-100 font-montserrat font-bold text-sm text-primary/60 uppercase tracking-widest mb-6">
-              <div className="col-span-6 text-accent-1">San pham</div>
-              <div className="col-span-2 text-center text-accent-1">Don gia</div>
-              <div className="col-span-2 text-center text-accent-1">So luong</div>
-              <div className="col-span-2 text-right text-accent-1">Tong</div>
+          <div className="w-full lg:w-2/3 bg-white rounded-3xl p-6 md:p-10 shadow-[0_10px_30px_rgba(65,81,103,0.03)] border border-[#edf0f5]">
+            <div className="hidden md:grid grid-cols-12 gap-4 pb-4 border-b border-gray-100 font-montserrat font-bold text-xs text-primary/60 uppercase tracking-widest mb-6">
+              <div className="col-span-6 text-accent-1">Sản phẩm</div>
+              <div className="col-span-2 text-center text-accent-1">Đơn giá</div>
+              <div className="col-span-2 text-center text-accent-1">Số lượng</div>
+              <div className="col-span-2 text-right text-accent-1">Tổng cộng</div>
             </div>
 
             <div className="space-y-8">
@@ -119,6 +119,7 @@ export default function Cart() {
                   <div className="col-span-6 w-full flex items-center gap-4">
                     <input
                       type="checkbox"
+                      className="cursor-pointer"
                       checked={item.selected}
                       onChange={() => toggleSelected(
                         item.productId,
@@ -138,58 +139,58 @@ export default function Cart() {
                     <div className="flex flex-col flex-1 text-left">
                       <Link
                         to={`/product/${item.productId}`}
-                        className="font-montserrat font-bold text-xl text-primary hover:text-accent-1 mb-1 line-clamp-2"
+                        className="font-montserrat font-bold text-lg text-primary hover:text-accent-1 mb-2 line-clamp-2 uppercase tracking-wide"
                       >
                         {item.product.name}
                       </Link>
-                      <span className="font-nunito text-primary/60 text-sm mb-2">
-                        Kieu xay: <strong className="text-primary">{translateGrind(item.grindingOptionId)}</strong>
+                      <span className="font-nunito text-primary/60 text-xs mb-1">
+                        Kiểu xay: <strong className="text-primary font-bold">{translateGrind(item.grindingOptionId)}</strong>
                       </span>
-                      <span className="font-nunito text-primary/60 text-sm mb-2">
-                        Vi: <strong className="text-primary">{item.flavorNotes}</strong>
+                      <span className="font-nunito text-primary/60 text-xs mb-1">
+                        Vị: <strong className="text-primary font-bold">{item.flavorNotes}</strong>
                       </span>
-                      <span className="font-nunito text-primary/60 text-sm mb-2">
-                        Khoi luong: <strong className="text-primary">{item.weight}</strong>
+                      <span className="font-nunito text-primary/60 text-xs mb-2">
+                        Khối lượng: <strong className="text-primary font-bold">{item.weight}</strong>
                       </span>
                       <button
                         type="button"
                         onClick={() => handleRemove(item)}
-                        className="flex items-center gap-1 text-red-400 hover:text-red-600 font-nunito text-sm w-fit"
+                        className="flex items-center gap-1.5 text-red-500 hover:text-red-700 font-nunito font-semibold text-xs w-fit transition-colors cursor-pointer"
                       >
-                        <Trash2 size={16} /> Bo phan nay
+                        <Trash2 size={14} /> Xóa sản phẩm
                       </button>
                     </div>
                   </div>
 
-                  <div className="col-span-2 w-full flex md:justify-center justify-between items-center mt-4 md:mt-0 font-montserrat font-bold text-primary/80">
-                    <span className="md:hidden font-nunito text-sm text-primary/60">Don gia:</span>
-                    {item.product.price.toLocaleString('vi-VN')}d
+                  <div className="col-span-2 w-full flex md:justify-center justify-between items-center mt-4 md:mt-0 font-montserrat font-bold text-primary/80 text-sm">
+                    <span className="md:hidden font-nunito text-xs text-primary/60">Đơn giá:</span>
+                    {item.product.price.toLocaleString('vi-VN')}đ
                   </div>
 
                   <div className="col-span-2 w-full flex md:justify-center justify-between items-center font-montserrat">
-                    <span className="md:hidden font-nunito text-sm text-primary/60">So luong:</span>
-                    <div className="flex items-center border border-gray-200 rounded-full bg-white px-1 py-1">
+                    <span className="md:hidden font-nunito text-xs text-primary/60">Số lượng:</span>
+                    <div className="flex items-center border border-[#edf0f5] rounded-full bg-white px-1 py-1">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-primary/50 hover:bg-pinky-gray"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-primary/50 hover:bg-[#edf0f5] cursor-pointer transition-colors"
                       >
-                        <Minus size={14} />
+                        <Minus size={12} />
                       </button>
-                      <span className="font-bold text-sm w-6 text-center">{item.quantity}</span>
+                      <span className="font-bold text-xs w-6 text-center">{item.quantity}</span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-primary/50 hover:bg-pinky-gray"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-primary/50 hover:bg-[#edf0f5] cursor-pointer transition-colors"
                       >
-                        <Plus size={14} />
+                        <Plus size={12} />
                       </button>
                     </div>
                   </div>
 
                   <div className="col-span-2 w-full flex md:justify-end justify-between items-center font-montserrat font-black text-primary text-base">
-                    <span className="md:hidden font-nunito text-xs text-primary/60 font-bold">Thanh tien:</span>
-                    {(item.product.price * item.quantity).toLocaleString('vi-VN')}d
+                    <span className="md:hidden font-nunito text-xs text-primary/60 font-bold">Thành tiền:</span>
+                    {(item.product.price * item.quantity).toLocaleString('vi-VN')}đ
                   </div>
                 </div>
               ))}
@@ -197,25 +198,25 @@ export default function Cart() {
           </div>
 
           <div className="w-full lg:w-1/3">
-            <div className="bg-white rounded-3xl p-8 shadow-lg sticky top-4">
-              <h2 className="font-montserrat font-bold text-xl text-primary mb-6 border-b border-gray-100 pb-4">
-                Tong cong gio hang
+            <div className="bg-white rounded-3xl p-8 shadow-[0_10px_30px_rgba(65,81,103,0.03)] border border-[#edf0f5] sticky top-24">
+              <h2 className="font-montserrat font-bold text-lg text-primary mb-6 border-b border-gray-100 pb-4 uppercase tracking-wide">
+                Tổng cộng giỏ hàng
               </h2>
 
-              <div className="space-y-4 mb-6 font-nunito">
+              <div className="space-y-4 mb-6 font-nunito text-sm">
                 <div className="flex justify-between items-center text-primary/80">
-                  <span>Tam tinh</span>
-                  <span className="font-bold">{totalPrice.toLocaleString('vi-VN')}d</span>
+                  <span>Tạm tính</span>
+                  <span className="font-bold">{totalPrice.toLocaleString('vi-VN')}đ</span>
                 </div>
                 <div className="flex justify-between items-center text-primary/80 pb-4 border-b border-gray-100">
-                  <span>Phi giao hang</span>
-                  <span className="italic text-sm text-primary/60">Tinh o buoc thanh toan</span>
+                  <span>Phí giao hàng</span>
+                  <span className="italic text-xs text-primary/60">Tính ở bước thanh toán</span>
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
-                  <span className="font-montserrat font-bold text-lg text-primary">Tong cong</span>
-                  <span className="font-montserrat font-black text-3xl text-red-custom">
-                    {totalPrice.toLocaleString('vi-VN')}d
+                  <span className="font-montserrat font-bold text-base text-primary">Tổng cộng</span>
+                  <span className="font-montserrat font-black text-2xl text-red-custom">
+                    {totalPrice.toLocaleString('vi-VN')}đ
                   </span>
                 </div>
               </div>
@@ -224,19 +225,19 @@ export default function Cart() {
                 type="button"
                 onClick={() => navigate('/checkout')}
                 disabled={!hasSelectedItems}
-                className={`w-full font-nunito font-bold py-4 rounded-full text-lg uppercase tracking-wider block text-center transition-all duration-300 ${
+                className={`w-full font-nunito font-bold py-4 rounded-full text-base uppercase tracking-wider block text-center transition-all duration-300 cursor-pointer shadow-md ${
                   hasSelectedItems
-                    ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-accent-1 hover:-translate-y-1 hover:scale-105'
-                    : 'bg-gray-300 text-gray-500 opacity-70 cursor-not-allowed shadow-none'
+                    ? 'bg-primary text-white hover:bg-accent-1 hover:-translate-y-0.5 hover:shadow-lg active:scale-98'
+                    : 'bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed shadow-none'
                 }`}
               >
-                Tien hanh thanh toan
+                Tiến hành thanh toán
               </button>
             </div>
 
-            <div className="mt-6 flex flex-col gap-4 bg-white/50 border border-white p-6 rounded-3xl text-sm font-nunito text-primary/70 shadow-lg">
-              <p>Ca phe rang tuoi moi ngay, giao hang nhanh chong.</p>
-              <p>Ho tro doi tra trong 7 ngay neu khong hai long vi.</p>
+            <div className="mt-6 flex flex-col gap-3 bg-[#f9f5e8]/30 border border-[#f9f5e8] p-6 rounded-3xl text-xs font-nunito text-primary/80 shadow-sm leading-relaxed">
+              <p>🌱 Cà phê rang tươi mới mỗi ngày, giao hàng nhanh chóng.</p>
+              <p>🤝 Hỗ trợ đổi trả trong 7 ngày nếu không hài lòng hương vị.</p>
             </div>
           </div>
         </div>

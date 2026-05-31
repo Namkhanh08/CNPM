@@ -28,7 +28,9 @@ export default function Navbar() {
     const displayName = user?.Name || user?.UserName || user?.name || user?.userName || "User";
     const offerIdentity = getUserOfferIdentity(user);
     const navLinkClass = ({ isActive }) =>
-        `hover:text-primary hover:-translate-y-0.5 transition-all duration-200 inline-block ${isActive ? "text-primary" : ""}`;
+        `relative py-2 hover:text-[#f9f5e8] transition-colors duration-300 ${
+            isActive ? "text-[#f9f5e8] after:scale-x-100" : "text-white after:scale-x-0"
+        } after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-0.5 after:bg-[#f9f5e8] after:origin-left hover:after:scale-x-100 after:transition-transform after:duration-300`;
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -86,17 +88,17 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className="sticky top-0 z-50 w-full flex items-center justify-between px-8 lg:px-16 py-3 bg-accent-1">
+            <nav className="sticky top-0 z-50 w-full flex items-center justify-between px-8 lg:px-16 py-4 bg-accent-1 shadow-md">
                 <div className="flex-shrink-0">
                     <Link to="/" className="inline-block">
-                        <h1 className="text-4xl font-bold font-nunito text-white hover:scale-105 transition-all duration-300 hover:text-primary">
+                        <h1 className="text-3xl font-black font-montserrat tracking-tight text-white hover:scale-[1.03] active:scale-95 transition-all duration-300 hover:text-[#f9f5e8]">
                             REVO Coffee.
                         </h1>
                     </Link>
                 </div>
 
                 <div className="hidden lg:flex flex-grow justify-center">
-                    <ul className="flex items-center gap-12 font-nunito font-bold text-xs uppercase tracking-[0.2em] text-white whitespace-nowrap">
+                    <ul className="flex items-center gap-10 font-nunito font-bold text-xs uppercase tracking-[0.2em] text-white whitespace-nowrap">
                         <li><NavLink to="/" end className={navLinkClass}>Trang chủ</NavLink></li>
                         <li><NavLink to="/shop" className={navLinkClass}>Sản phẩm</NavLink></li>
                         <li><NavLink to="/subscription" className={navLinkClass}>Đăng ký</NavLink></li>
@@ -108,11 +110,11 @@ export default function Navbar() {
                     <Link
                         to="/orders"
                         title="Đơn hàng của tôi"
-                        className="relative w-11 h-11 rounded-full border-2 border-white flex items-center justify-center hover:bg-primary hover:scale-110 transition-all"
+                        className="relative w-10 h-10 rounded-full border border-white/40 flex items-center justify-center hover:bg-white/15 active:scale-90 transition-all duration-200 shadow-sm"
                     >
-                        <FaShoppingBag className="text-white text-lg" />
+                        <FaShoppingBag className="text-white text-base" />
                         {totalOrders > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border border-accent-1 animate-pulse">
                                 {totalOrders > 99 ? "99+" : totalOrders}
                             </span>
                         )}
@@ -121,11 +123,11 @@ export default function Navbar() {
                     <Link
                         to="/cart"
                         title="Giỏ hàng"
-                        className="relative w-11 h-11 rounded-full border-2 border-white flex items-center justify-center hover:bg-primary hover:scale-110 transition-all"
+                        className="relative w-10 h-10 rounded-full border border-white/40 flex items-center justify-center hover:bg-white/15 active:scale-90 transition-all duration-200 shadow-sm"
                     >
-                        <img src={cartIcon} alt="Cart" className="w-5 h-5 brightness-0 invert" />
+                        <img src={cartIcon} alt="Cart" className="w-4 h-4 brightness-0 invert" />
                         {totalItems > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border border-accent-1 animate-pulse">
                                 {totalItems > 99 ? "99+" : totalItems}
                             </span>
                         )}
@@ -136,42 +138,42 @@ export default function Navbar() {
                             <button
                                 type="button"
                                 onClick={() => setOpenUserMenu((prev) => !prev)}
-                                className="flex items-center gap-2 cursor-pointer focus:outline-none"
+                                className="flex items-center gap-2 cursor-pointer focus:outline-none group active:scale-98 transition-all duration-150"
                             >
-                                <div className="relative w-11 h-11 rounded-full border-2 border-white bg-white/10 flex items-center justify-center hover:bg-primary hover:scale-110 transition-all">
-                                    <FaUserCircle className="text-white text-2xl" />
+                                <div className="relative w-10 h-10 rounded-full border border-white/40 bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all shadow-sm">
+                                    <FaUserCircle className="text-white text-xl" />
                                     {hasTodayOffers && (
-                                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-accent-1" />
+                                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border border-accent-1 animate-ping" />
                                     )}
                                 </div>
-                                <span className="hidden md:block text-white font-semibold font-nunito text-sm max-w-[100px] truncate">
+                                <span className="hidden md:block text-white font-bold font-nunito text-xs tracking-wider max-w-[100px] truncate uppercase">
                                     {displayName}
                                 </span>
                                 <svg
-                                    className={`w-3 h-3 text-white/80 transition-transform duration-200 ${openUserMenu ? "rotate-180" : ""}`}
+                                    className={`w-3 h-3 text-white/80 transition-transform duration-300 ${openUserMenu ? "rotate-180" : ""}`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
                                 >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
 
                             {openUserMenu && (
-                                <div className="absolute right-0 top-14 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-                                    <div className="px-4 py-3 bg-gradient-to-r from-[#7F5539] to-[#5C3D2E] text-white">
+                                <div className="absolute right-0 top-13 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-slide-up origin-top-right">
+                                    <div className="px-4 py-3.5 bg-gradient-to-br from-[#7F5539] to-[#5C3D2E] text-white">
                                         <p className="font-bold font-nunito text-sm truncate">{displayName}</p>
-                                        <p className="text-white/70 text-xs font-nunito mt-0.5">Tài khoản của tôi</p>
+                                        <p className="text-white/70 text-[10px] uppercase tracking-wider font-bold font-nunito mt-0.5">Tài khoản của tôi</p>
                                     </div>
 
                                     <Link
                                         to="/profile"
                                         onClick={() => setOpenUserMenu(false)}
-                                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-[#F7F2EC] hover:text-[#7F5539] transition-colors font-nunito font-semibold text-sm"
+                                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-[#F7F2EC] hover:text-[#7F5539] transition-all font-nunito font-semibold text-sm active:pl-5"
                                     >
-                                        <span className="relative">
+                                        <span className="relative flex items-center">
                                             <FaUser className="text-[#7F5539] shrink-0" />
-                                            {hasTodayOffers && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />}
+                                            {hasTodayOffers && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white" />}
                                         </span>
                                         Hồ sơ cá nhân
                                     </Link>
@@ -179,7 +181,7 @@ export default function Navbar() {
                                     <Link
                                         to="/orders"
                                         onClick={() => setOpenUserMenu(false)}
-                                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-[#F7F2EC] hover:text-[#7F5539] transition-colors font-nunito font-semibold text-sm"
+                                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-[#F7F2EC] hover:text-[#7F5539] transition-all font-nunito font-semibold text-sm active:pl-5"
                                     >
                                         <FaClipboardList className="text-[#7F5539] shrink-0" />
                                         Đơn hàng của tôi
@@ -190,7 +192,7 @@ export default function Navbar() {
                                     <button
                                         type="button"
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors font-nunito font-semibold text-sm"
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 transition-all font-nunito font-semibold text-sm active:pl-5"
                                     >
                                         <FaSignOutAlt className="shrink-0" />
                                         Đăng xuất
@@ -202,10 +204,10 @@ export default function Navbar() {
                         <button
                             type="button"
                             onClick={() => setOpenLogin(true)}
-                            title="Dang nhap"
-                            className="w-11 h-11 rounded-full border-2 border-white flex items-center justify-center hover:bg-primary hover:scale-110 transition-all"
+                            title="Đăng nhập"
+                            className="w-10 h-10 rounded-full border border-white/40 flex items-center justify-center hover:bg-white/15 active:scale-90 transition-all duration-200 shadow-sm"
                         >
-                            <FaUserCircle className="text-white text-2xl" />
+                            <FaUserCircle className="text-white text-xl" />
                         </button>
                     )}
                 </div>

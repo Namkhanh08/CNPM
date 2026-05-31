@@ -140,13 +140,10 @@ export default function Giftsets() {
     <section id="giftset" className="py-24 bg-white relative overflow-hidden">
       <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
         <div className="text-center mb-16">
-          <p className="text-accent-1 font-nunito font-bold tracking-[0.2em] uppercase mb-4">
-            Món quà từ trái tim
-          </p>
-          <h2 className="text-4xl md:text-5xl font-nunito font-bold text-primary mb-4">
+          <h2 className="text-4xl md:text-5xl font-nunito font-black text-primary mb-4 uppercase">
             SET QUÀ TẶNG THƯỢNG HẠNG
           </h2>
-          <p className="font-nunito text-primary/70 leading-relaxed max-w-2xl mx-auto">
+          <p className="font-nunito text-primary/70 leading-relaxed max-w-2xl mx-auto text-base">
             Trọn bộ quà tặng tinh tế và đẳng cấp từ Revo Coffee. Sự lựa chọn
             hoàn hảo để dành tặng đối tác, khách hàng hoặc những người thân yêu.
           </p>
@@ -155,42 +152,42 @@ export default function Giftsets() {
         <Slider {...settings}>
           {giftsets.map((set) => (
             <div key={set.id} className="p-4 h-full">
-              <div className="bg-white rounded-[40px] overflow-hidden border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group h-full flex flex-col min-h-[620px]">
-                <div className="bg-pinky-gray flex justify-center items-center p-10 relative overflow-hidden h-[300px] shrink-0">
+              <div className="bg-white rounded-3xl overflow-hidden border border-[#edf0f5] shadow-[0_10px_30px_rgba(65,81,103,0.03)] hover:shadow-[0_20px_45px_rgba(65,81,103,0.09)] transition-all duration-500 hover:-translate-y-1 group h-full flex flex-col min-h-[600px]">
+                <div className="bg-[#f9f5e8]/50 flex justify-center items-center p-10 relative overflow-hidden h-[280px] shrink-0">
                   <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <img
                     src={set.image}
                     alt={set.name}
-                    className="h-full max-h-[220px] w-full object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500 relative z-10"
+                    className="h-full max-h-[200px] w-full object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.12)] group-hover:scale-103 transition-transform duration-500 relative z-10"
                   />
                 </div>
 
                 <div className="p-8 text-center flex flex-col flex-1">
-                  <h3 className="font-montserrat font-black text-3xl text-primary mb-4">
+                  <h3 className="font-montserrat font-extrabold text-2xl text-primary mb-3 uppercase tracking-wide">
                     {set.name}
                   </h3>
-                  <p className="font-nunito text-primary/70 italic leading-relaxed mb-8 min-h-[78px] line-clamp-3">
+                  <p className="font-nunito text-primary/70 italic leading-relaxed mb-6 min-h-[72px] line-clamp-3 text-sm">
                     {set.desc}
                   </p>
 
-                  <div className="space-y-4 mb-8 min-h-[72px]">
+                  <div className="space-y-3 mb-8 min-h-[64px] border-t border-b border-[#edf0f5] py-4 flex flex-col justify-center">
                     <div className="flex items-center justify-center gap-3">
-                      <img src={coffeeBeansIcon} alt="Coffee Beans" className="w-5 h-5" />
-                      <span className="font-nunito text-primary line-clamp-1">{set.coffeeTypes}</span>
+                      <img src={coffeeBeansIcon} alt="Coffee Beans" className="w-4 h-4 opacity-80" />
+                      <span className="font-nunito text-xs text-primary/80 line-clamp-1">{set.coffeeTypes}</span>
                     </div>
                     <div className="flex items-center justify-center gap-3">
-                      <img src={mountainIcon} alt="Mountain" className="w-5 h-5" />
-                      <span className="font-nunito text-primary line-clamp-1">{set.altitude}</span>
+                      <img src={mountainIcon} alt="Mountain" className="w-4 h-4 opacity-80" />
+                      <span className="font-nunito text-xs text-primary/80 line-clamp-1">{set.altitude}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-4 mt-auto">
-                    <span className="font-montserrat font-black text-3xl text-accent-1">
+                    <span className="font-montserrat font-black text-2xl text-accent-1">
                       {set.price.toLocaleString('vi-VN')}đ
                     </span>
                     <button
                       onClick={() => handleAddGiftset(set)}
-                      className="bg-primary hover:bg-accent-1 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                      className="bg-primary hover:bg-accent-1 text-white font-bold py-3 px-6 rounded-full shadow-md hover:shadow-lg active:scale-95 hover:-translate-y-0.5 transition-all duration-300 text-sm"
                     >
                       CHỌN MUA
                     </button>

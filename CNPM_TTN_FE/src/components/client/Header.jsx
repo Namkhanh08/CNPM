@@ -111,166 +111,60 @@ export default function Header() {
         {heroData.map((item) => (
 
           <div key={item.id}>
-
-            <div
-              className="
-                h-[calc(100vh-80px)]
-                flex items-center
-                px-6 md:px-12 lg:px-20
-                bg-white font-nunito
-              "
-            >
-
-              <div
-                className="
-                  max-w-7xl
-                  mx-auto
-                  w-full
-                  grid
-                  lg:grid-cols-2
-                  items-center
-                  gap-16
-                "
-              >
-
+            <div className="min-h-[calc(100dvh-72px)] lg:min-h-[calc(100dvh-80px)] flex items-center px-6 md:px-12 lg:px-20 bg-white font-nunito py-12 lg:py-0">
+              <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 items-center gap-12 lg:gap-16">
+                
                 {/* LEFT */}
                 <div>
-
-                  <h1
-                    className="
-                      font-nunito
-                      text-5xl
-                      md:text-7xl
-                      xl:text-[82px]
-                      font-bold
-                      leading-[1]
-                      text-primary
-                      mb-8 font-nunito
-                    "
-                  >
+                  <h1 className="font-nunito text-4xl md:text-6xl xl:text-[72px] font-black leading-[1.1] text-primary mb-6">
                     {item.title}
                   </h1>
 
-                  <p
-                    className="
-                      font-nunito
-                      text-lg
-                      text-gray-600
-                      leading-relaxed
-                      max-w-xl
-                      mb-10
-                      text-justify
-                    "
-                  >
+                  <p className="font-nunito text-base md:text-lg text-gray-600 leading-relaxed max-w-xl mb-8 text-justify">
                     {item.desc}
                   </p>
 
                   {/* BUTTONS */}
-                  <div className="flex flex-wrap gap-4">
-
+                  <div className="flex flex-wrap items-center gap-4">
                     <Link
                       to="/shop"
-                      className="
-                        bg-primary
-                        text-white
-                        font-bold
-                        py-4 px-10
-                        rounded-full
-                        hover:bg-accent-1
-                        shadow-2xl hover:-translate-y-1 transition-all duration-300 hover:scale-110
-                      "
+                      className="bg-primary !text-white font-bold py-4 px-10 rounded-full hover:bg-accent-1 shadow-lg hover:shadow-xl active:scale-95 hover:-translate-y-0.5 transition-all duration-300"
                     >
-                      XEM SẢN PHẨM
+                      <span className="text-white">XEM SẢN PHẨM</span>
                     </Link>
 
-                    <button
-                      className="
-                        bg-accent-1
-                        px-5 py-5
-                        rounded-2xl
-                        text-white text-xl
-                        hover:bg-primary
-                        hover:scale-110
-                        transition-all duration-300
-                      "
-                    >
+                    <button className="bg-accent-1 w-12 h-12 rounded-full text-white text-lg flex items-center justify-center hover:bg-primary hover:-translate-y-0.5 active:scale-90 transition-all duration-300 shadow-md hover:shadow-lg">
                       <FaFacebookF />
                     </button>
 
-                    <button
-                      className="
-                        bg-accent-1
-                        px-5 py-5
-                        rounded-2xl
-                        text-white text-xl
-                        hover:bg-primary
-                        hover:scale-110
-                        transition-all duration-300
-                      "
-                    >
+                    <button className="bg-accent-1 w-12 h-12 rounded-full text-white text-lg flex items-center justify-center hover:bg-primary hover:-translate-y-0.5 active:scale-90 transition-all duration-300 shadow-md hover:shadow-lg">
                       <FaInstagram />
                     </button>
 
-                    <button
-                      className="
-                        bg-accent-1
-                        px-5 py-5
-                        rounded-2xl
-                        text-white text-xl
-                        hover:bg-primary
-                        hover:scale-110
-                        transition-all duration-300
-                      "
-                    >
+                    <button className="bg-accent-1 w-12 h-12 rounded-full text-white text-lg flex items-center justify-center hover:bg-primary hover:-translate-y-0.5 active:scale-90 transition-all duration-300 shadow-md hover:shadow-lg">
                       <FaTwitter />
                     </button>
-
                   </div>
                 </div>
 
                 {/* RIGHT IMAGE */}
                 <div className="flex justify-center lg:justify-end">
-
                   <div className="relative">
-
                     <img
                       src={item.image}
                       alt="Coffee"
-                      className="
-                        relative
-                        h-[650px]
-                        w-full
-                        object-contain
-                        transition-all duration-700
-                        drop-shadow-[10px_10px_20px_rgba(0,0,0,0.45)] hover:scale-110
-                      "
+                      className="relative h-[350px] md:h-[500px] lg:h-[550px] w-full object-contain transition-all duration-500 drop-shadow-[0_20px_50px_rgba(65,81,103,0.22)] hover:scale-[1.03]"
                     />
 
                     {/* FLOAT BUTTON */}
-                    <button
-                      className="
-                        absolute top-24 left-0
-                        px-6 py-4
-                        rounded-full
-                        bg-accent-1
-                        font-bold
-                        font-nunito
-                        text-white
-                        shadow-2xl
-                        hover:bg-primary
-                        hover:scale-105
-                        transition-all duration-300 hover:-translate-y-1
-                      "
-                    >
+                    <button className="absolute top-16 left-0 lg:top-24 px-5 py-3 rounded-full bg-accent-1 font-bold font-nunito text-xs md:text-sm text-white shadow-lg hover:shadow-xl hover:bg-primary hover:scale-105 active:scale-95 transition-all duration-300 hover:-translate-y-0.5">
                       Đặt hàng ngay!
                     </button>
-
                   </div>
                 </div>
 
               </div>
             </div>
-
           </div>
         ))}
       </Slider>
