@@ -33,24 +33,41 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="py-24 bg-white relative">
-      <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
-        <div className="text-center mb-16">
-          <p className="text-accent-1 font-nunito font-bold tracking-[0.2em] uppercase mb-4">Câu chuyện của chúng tôi</p>
-          <h2 className="text-4xl md:text-5xl font-nunito font-black text-primary uppercase">TẠI SAO LẠI CHỌN <br className="md:hidden"/> <span className="text-accent-1">REVO Coffee</span></h2>
+    <section id="features" className="py-24 bg-[#f4f1ea] relative overflow-hidden">
+      {/* Lớp phủ SVG Noise tạo độ nhám giấy mộc */}
+      <div 
+        className="absolute inset-0 opacity-[0.12] pointer-events-none mix-blend-multiply"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E")`
+        }}
+      />
+
+      <div className="container mx-auto px-6 lg:px-12 max-w-7xl relative z-10">
+        <div className="text-center mb-20">
+          <p className="text-accent-1 font-nunito font-bold tracking-[0.2em] uppercase mb-4">
+            Câu chuyện của chúng tôi
+          </p>
+          <h2 className="text-4xl md:text-5xl font-nunito font-bold text-amber-950 tracking-wide">
+            TẠI SAO LẠI CHỌN <br className="md:hidden"/> <span className="text-accent-1">REVO Coffe</span>
+          </h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
           {features.map((feature) => (
-            <div 
-              key={feature.id} 
-              className="flex flex-col items-center text-center p-8 bg-white border border-[#edf0f5] rounded-3xl transition-all duration-300 hover:shadow-[0_20px_40px_rgba(65,81,103,0.06)] hover:-translate-y-1 group"
-            >
-              <div className="mb-6 h-16 w-16 flex items-center justify-center bg-[#f9f5e8] rounded-2xl group-hover:scale-105 transition-transform duration-300">
-                <img src={feature.icon} alt={feature.title} className="h-8 w-8 object-contain" />
+            <div key={feature.id} className="flex flex-col text-center group px-4">
+              <div className="mb-8 h-24 flex items-center justify-center transform group-hover:-translate-y-2 transition-transform duration-300">
+                <img 
+                  src={feature.icon} 
+                  alt={feature.title} 
+                  className="h-full object-contain filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.05)]" 
+                />
               </div>
-              <h3 className="font-montserrat font-bold text-xl text-primary mb-3 uppercase tracking-wide">{feature.title}</h3>
-              <p className="font-nunito text-primary/80 text-sm leading-relaxed">{feature.desc}</p>
+              <h3 className="font-montserrat font-bold text-2xl text-amber-950 mb-4 uppercase tracking-wide">
+                {feature.title}
+              </h3>
+              <p className="font-nunito text-amber-900/85 leading-relaxed font-medium">
+                {feature.desc}
+              </p>
             </div>
           ))}
         </div>

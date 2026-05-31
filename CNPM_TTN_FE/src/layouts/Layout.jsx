@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Header, Footer, Navbar } from '../components';
+import { Header, Hero, Footer, Navbar } from '../components';
 
 export default function Layout() {
   const location = useLocation();
@@ -9,6 +9,7 @@ export default function Layout() {
   return (
     <div className="antialiased min-h-screen flex flex-col">
       <Navbar />
+      {isHomePage && <Hero />}
       {isHomePage && <Header />}
       <main className="flex-1">
         <Outlet />

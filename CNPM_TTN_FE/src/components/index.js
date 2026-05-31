@@ -2,6 +2,7 @@ export { default as ProtectedRoute } from './common/ProtectedRoute';
 export { default as Field } from './common/Field';
 
 export { default as Header } from './client/Header';
+export { default as Hero } from './client/Hero';
 export { default as Footer } from './client/Footer';
 export { default as Navbar } from './client/Navbar';
 export { default as LoginModal } from './client/LoginModal';

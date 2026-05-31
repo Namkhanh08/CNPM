@@ -17,6 +17,8 @@ const Profile = lazy(() => import('./pages/client/Profile'));
 const OrderDetail = lazy(() => import('./pages/client/OrderDetail'));
 const EditOrder = lazy(() => import('./pages/client/EditOrder'));
 const RecommendationResult = lazy(() => import('./pages/client/RecommendationResult'));
+const Contact = lazy(() => import('./pages/client/Contact'));
+const Policy = lazy(() => import('./pages/client/Policy'));
 
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -64,6 +66,8 @@ function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="orders/edit/:id" element={<EditOrder />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="policy" element={<Policy />} />
           </Route>
 
           <Route path="/quiz" element={<QuizCoffee />} />

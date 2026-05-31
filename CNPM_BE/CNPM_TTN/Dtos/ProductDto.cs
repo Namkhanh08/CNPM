@@ -127,6 +127,7 @@ namespace CNPM_TTN.Dtos
     {
         public string? SearchTerm { get; set; }
         public int? CategoryId { get; set; }
+        public string? Roast { get; set; }
         public string? Region { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }

@@ -22,6 +22,7 @@ namespace CNPM_TTN.Services
         {
             var searchTerm = filterDto.SearchTerm?.Trim();
             var categoryId = filterDto.CategoryId;
+            var roast = filterDto.Roast?.Trim();
             var minPrice = filterDto.MinPrice;
             var maxPrice = filterDto.MaxPrice;
             var region = filterDto.Region?.Trim();
@@ -36,6 +37,11 @@ namespace CNPM_TTN.Services
             if (categoryId.HasValue)
             {
                 query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(roast))
+            {
+                query = query.Where(p => p.ProductDetails.Any(d => d.Roast != null && d.Roast.ToLower().Contains(roast.ToLower())));
             }
 
             if (minPrice.HasValue)

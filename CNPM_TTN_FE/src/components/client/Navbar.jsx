@@ -103,6 +103,8 @@ export default function Navbar() {
                         <li><NavLink to="/shop" className={navLinkClass}>Sản phẩm</NavLink></li>
                         <li><NavLink to="/subscription" className={navLinkClass}>Đăng ký</NavLink></li>
                         <li><NavLink to="/quiz" className={navLinkClass}>Gợi ý cà phê</NavLink></li>
+                        <li><NavLink to="/contact" className={navLinkClass}>Liên hệ</NavLink></li>
+                        <li><NavLink to="/policy" className={navLinkClass}>Chính sách</NavLink></li>
                     </ul>
                 </div>
 

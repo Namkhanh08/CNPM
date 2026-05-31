@@ -48,6 +48,7 @@ function FilterSection({ title, summary, isOpen, onToggle, children }) {
 export default function Shop() {
   const [products, setProducts] = useState([]);
   const [filterType, setFilterType] = useState('all');
+  const [filterRoast, setFilterRoast] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(DEFAULT_MAX_PRICE);
@@ -86,6 +87,7 @@ export default function Shop() {
           pageSize,
           searchTerm: searchTerm.trim() || undefined,
           categoryId: filterType === 'all' ? undefined : Number(filterType),
+          roast: filterRoast === 'all' ? undefined : filterRoast,
           region: selectedRegion === 'all' ? undefined : selectedRegion,
           minPrice,
           maxPrice,
@@ -128,11 +130,12 @@ export default function Shop() {
     };
 
     fetchProducts();
-  }, [page, pageSize, searchTerm, filterType, minPrice, maxPrice, selectedRegion, sortBy]);
+  }, [page, pageSize, searchTerm, filterType, filterRoast, minPrice, maxPrice, selectedRegion, sortBy]);
 
   const hasActiveFilters =
     searchTerm ||
     filterType !== 'all' ||
+    filterRoast !== 'all' ||
     minPrice > 0 ||
     maxPrice < DEFAULT_MAX_PRICE ||
     selectedRegion !== 'all' ||
@@ -145,6 +148,11 @@ export default function Shop() {
     setPage(1);
   };
 
+  const updateFilterRoast = (roast) => {
+    setFilterRoast(roast);
+    setPage(1);
+  };
+
   const updateRegion = (regionName) => {
     setSelectedRegion(regionName);
     setPage(1);
@@ -153,6 +161,7 @@ export default function Shop() {
   const resetFilters = () => {
     setSearchTerm('');
     setFilterType('all');
+    setFilterRoast('all');
     setMinPrice(0);
     setMaxPrice(DEFAULT_MAX_PRICE);
     setSelectedRegion('all');
@@ -237,6 +246,33 @@ export default function Shop() {
                         name="type"
                         checked={filterType === value}
                         onChange={() => updateFilterType(value)}
+                        className="accent-accent-1"
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </FilterSection>
+
+              <FilterSection
+                title="Mức độ rang"
+                summary={filterRoast === 'all' ? 'Tất cả mức độ rang' : filterRoast === 'Light' ? 'Rang nhẹ (Light)' : filterRoast === 'Medium' ? 'Rang vừa (Medium)' : 'Rang đậm (Dark)'}
+                isOpen={openFilter === 'roast'}
+                onToggle={() => setOpenFilter(openFilter === 'roast' ? null : 'roast')}
+              >
+                <div className="space-y-2 font-nunito text-primary/80">
+                  {[
+                    ['all', 'Tất cả'],
+                    ['Light', 'Rang nhẹ (Light)'],
+                    ['Medium', 'Rang vừa (Medium)'],
+                    ['Dark', 'Rang đậm (Dark)'],
+                  ].map(([value, label]) => (
+                    <label key={value} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="roast"
+                        checked={filterRoast === value}
+                        onChange={() => updateFilterRoast(value)}
                         className="accent-accent-1"
                       />
                       <span>{label}</span>
