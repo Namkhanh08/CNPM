@@ -16,8 +16,31 @@ export default function Inventory() {
   const [rawMaterials, setRawMaterials] = useState([]);
   const [receipts, setReceipts] = useState([]);
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   const [restockForm, setRestockForm] = useState(null);
+
+  const [searchReceipt, setSearchReceipt] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const [searchLog, setSearchLog] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+
+  const [receiptPage, setReceiptPage] = useState(1);
+  const [receiptTotalPages, setReceiptTotalPages] = useState(1);
+
+  const [logPage, setLogPage] = useState(1);
+  const [logTotalPages, setLogTotalPages] = useState(1);
+
+  const [firstLoading, setFirstLoading] = useState(true);
+
+  const [debouncedReceipt, setDebouncedReceipt] = useState("");
+  const [debouncedLog, setDebouncedLog] = useState("");
+
+  const [newMaterialForm, setNewMaterialForm] = useState({
+    name: "",
+    unit: "kg",
+    categoryId: "",
+  });
 
   const [formData, setFormData] = useState({
     supplier: "",
@@ -26,27 +49,92 @@ export default function Inventory() {
     expiryDate: "",
   });
 
-  const fetchData = async () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedReceipt(searchReceipt);
+      setReceiptPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchReceipt]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedLog(searchLog);
+      setLogPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchLog]);
+  const fetchData = React.useCallback(async () => {
     try {
-      setLoading(true);
-      const [matRes, receiptRes, logRes] = await Promise.all([
+      const [matRes, receiptRes, logRes, categoryRes] = await Promise.all([
         API.getRawMaterials(),
-        API.getInventoryReceipts(),
-        API.getLogs(),
+
+        API.getInventoryReceipts(
+          receiptPage,
+          10,
+          debouncedReceipt,
+          statusFilter
+        ),
+
+        API.getLogs(logPage, 10, debouncedLog, actionFilter),
+        API.getCategories(),
       ]);
+
       setRawMaterials(matRes.data.data || []);
+      setCategories(categoryRes.data || []);
       setReceipts(receiptRes.data.data || []);
+      setReceiptTotalPages(receiptRes.data.totalPages);
+
       setLogs(logRes.data.data || []);
+      setLogTotalPages(logRes.data.totalPages);
     } catch (err) {
-      console.error("Lỗi khi đồng bộ dữ liệu:", err);
+      console.error(err);
     } finally {
-      setLoading(false);
+      setFirstLoading(false);
     }
-  };
+  }, [
+    receiptPage,
+    logPage,
+    debouncedReceipt,
+    statusFilter,
+    debouncedLog,
+    actionFilter,
+  ]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
+
+  const handleCreateRawMaterial = async (e) => {
+    e.preventDefault();
+
+    if (!newMaterialForm.name || !newMaterialForm.categoryId) {
+      alert("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
+    try {
+      await API.createRawMaterial({
+        name: newMaterialForm.name,
+        unit: newMaterialForm.unit,
+        categoryId: parseInt(newMaterialForm.categoryId),
+      });
+
+      alert("Tạo nguyên liệu thành công!");
+
+      setNewMaterialForm({
+        name: "",
+        unit: "kg",
+        categoryId: "",
+      });
+
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data || "Không thể tạo nguyên liệu mới");
+    }
+  };
 
   const handleRestockSubmit = async (e, materialId) => {
     e.preventDefault();
@@ -81,7 +169,7 @@ export default function Inventory() {
     }
   };
 
-  if (loading) {
+  if (firstLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="animate-spin text-primary mb-2" size={40} />
@@ -102,6 +190,67 @@ export default function Inventory() {
           Quản lý danh mục hạt thô và theo dõi thời hạn sử dụng các lô hàng
           nhập.
         </p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 className="font-bold text-lg mb-4">Tạo nguyên liệu thô mới</h2>
+
+        <form
+          onSubmit={handleCreateRawMaterial}
+          className="grid grid-cols-1 md:grid-cols-4 gap-3"
+        >
+          <input
+            type="text"
+            placeholder="Tên nguyên liệu"
+            value={newMaterialForm.name}
+            onChange={(e) =>
+              setNewMaterialForm({
+                ...newMaterialForm,
+                name: e.target.value,
+              })
+            }
+            className="px-4 py-2 border rounded-xl"
+          />
+
+          <input
+            type="text"
+            placeholder="Đơn vị"
+            value={newMaterialForm.unit}
+            onChange={(e) =>
+              setNewMaterialForm({
+                ...newMaterialForm,
+                unit: e.target.value,
+              })
+            }
+            className="px-4 py-2 border rounded-xl"
+          />
+
+          <select
+            value={newMaterialForm.categoryId}
+            onChange={(e) =>
+              setNewMaterialForm({
+                ...newMaterialForm,
+                categoryId: e.target.value,
+              })
+            }
+            className="px-4 py-2 border rounded-xl"
+          >
+            <option value="">Chọn danh mục</option>
+
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="submit"
+            className="bg-primary text-white rounded-xl px-4 py-2 font-bold"
+          >
+            Tạo mới
+          </button>
+        </form>
       </div>
 
       {/* Danh sách danh mục nguyên liệu thô */}
@@ -209,11 +358,34 @@ export default function Inventory() {
 
       {/* Bảng quản lý Lô hàng thực tế trong kho */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+        <div className="p-6 border-b border-gray-50 bg-gray-50/50 space-y-4">
           <h2 className="font-montserrat font-bold text-lg flex items-center gap-2">
-            <History size={20} className="text-primary" /> Trạng thái các lô hạt
-            thô nhập kho
+            <History size={20} className="text-primary" />
+            Trạng thái các lô hạt thô nhập kho
           </h2>
+
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              key="receipt-search"
+              type="text"
+              placeholder="Tìm theo loại hạt hoặc nhà cung cấp..."
+              value={searchReceipt}
+              onChange={(e) => setSearchReceipt(e.target.value)}
+              className="px-4 py-2 border rounded-xl text-sm outline-none w-full md:w-80"
+            />
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border rounded-xl text-sm outline-none"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="safe">An toàn</option>
+              <option value="warning">Gần hạn</option>
+              <option value="expired">Hết hạn</option>
+              <option value="empty">Hết hàng</option>
+            </select>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left font-nunito text-sm min-w-[800px]">
@@ -300,14 +472,57 @@ export default function Inventory() {
         </div>
       </div>
 
+      <div className="flex justify-center items-center gap-2 py-4">
+        <button
+          disabled={receiptPage === 1}
+          onClick={() => setReceiptPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded-lg disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-semibold">
+          {receiptPage} / {receiptTotalPages}
+        </span>
+
+        <button
+          disabled={receiptPage === receiptTotalPages}
+          onClick={() => setReceiptPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
       {/* Bảng hiển thị Nhật ký thay đổi kho nguyên liệu thô*/}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+        <div className="p-6 border-b border-gray-50 bg-gray-50/50 space-y-4">
           <h2 className="font-montserrat font-bold text-lg flex items-center gap-2">
-            <History size={20} className="text-accent-1" /> Nhật ký biến động
-            kho hạt thô
+            <History size={20} className="text-accent-1" />
+            Nhật ký biến động kho hạt thô
           </h2>
+
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              key="log-search"
+              type="text"
+              placeholder="Tìm kiếm nhật ký..."
+              value={searchLog}
+              onChange={(e) => setSearchLog(e.target.value)}
+              className="px-4 py-2 border rounded-xl text-sm outline-none w-full md:w-80"
+            />
+
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="px-4 py-2 border rounded-xl text-sm outline-none"
+            >
+              <option value="all">Tất cả hành động</option>
+              <option value="NHAP">Nhập kho</option>
+              <option value="XUAT">Xuất kho</option>
+            </select>
+          </div>
         </div>
+
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left font-nunito text-sm min-w-[1000px] table-layout-fixed">
             <thead className="bg-gray-50 text-gray-600 font-bold border-b whitespace-nowrap">
@@ -341,7 +556,6 @@ export default function Inventory() {
                       key={log.id}
                       className="hover:bg-gray-50/50 transition-colors"
                     >
-      
                       <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
                         {new Date(log.modifiedDate).toLocaleString("vi-VN")}
                       </td>
@@ -376,12 +590,10 @@ export default function Inventory() {
                         </div>
                       </td>
 
-                     
                       <td className="px-6 py-4 text-gray-700 text-xs whitespace-normal break-words">
                         {log.reason || "Thay đổi tồn kho hệ thống"}
                       </td>
 
-                     
                       <td className="px-6 py-4 text-gray-600 font-medium whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <User
@@ -411,6 +623,27 @@ export default function Inventory() {
               )}
             </tbody>
           </table>
+          <div className="flex justify-center items-center gap-2 py-4">
+            <button
+              disabled={logPage === 1}
+              onClick={() => setLogPage((prev) => prev - 1)}
+              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+            >
+              Prev
+            </button>
+
+            <span className="text-sm font-semibold">
+              {logPage} / {logTotalPages}
+            </span>
+
+            <button
+              disabled={logPage === logTotalPages}
+              onClick={() => setLogPage((prev) => prev + 1)}
+              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>

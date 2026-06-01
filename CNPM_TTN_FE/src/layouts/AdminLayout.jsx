@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { FaMotorcycle } from "react-icons/fa";
+import { FaMotorcycle } from "react-icons/fa6";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -10,9 +10,9 @@ import {
   Settings,
   LogOut,
   TicketPercent,
-  
   Users,
-} from "lucide-react";
+} from 'lucide-react';
+
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -26,6 +26,11 @@ export default function AdminLayout() {
       icon: <ShoppingCart size={20} />,
     },
     
+    {
+      name: 'Đăng ký định kỳ',
+      path: '/admin/subscriptions',
+      icon: <ShoppingCart size={20} />
+    },
     {
       name: 'Voucher',
       path: '/admin/vouchers',

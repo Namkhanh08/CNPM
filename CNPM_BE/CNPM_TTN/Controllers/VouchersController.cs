@@ -1,80 +1,73 @@
-﻿using CNPM_TTN.Dtos;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Collections.Generic;
+using CNPM_TTN.Dtos;
 using CNPM_TTN.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CNPM_TTN.Controllers
 {
     [ApiController]
-    [Route("vouchers")] 
+    [Route("api/vouchers")]
     public class VouchersController : ControllerBase
     {
-        private readonly IVoucherService _service;
+        private readonly VoucherService _voucherService;
 
-        public VouchersController(IVoucherService service)
+        public VouchersController(VoucherService voucherService)
         {
-            _service = service;
+            _voucherService = voucherService;
         }
 
-      
         [HttpGet]
-        public async Task<IActionResult> GetVouchersAdmin(
+        public IActionResult GetAllVouchersForDashboard(
             [FromQuery] int page = 1,
             [FromQuery] string searchTerm = "",
             [FromQuery] string status = "all")
         {
-            var result = await _service.GetVouchersAdminAsync(page, searchTerm, status);
-            return Ok(result);
+            var data = _voucherService.GetVouchersAdminPaged(page, searchTerm, status);
+            return Ok(data);
         }
 
-      
         [HttpPost("available")]
-        public async Task<IActionResult> GetAvailableVouchers([FromBody] CheckAvailableVoucherDto dto)
+        public IActionResult GetAvailableVouchers([FromBody] VoucherEligibilityRequest request)
         {
-            var result = await _service.GetAvailableVouchersAsync(dto);
-            return Ok(result);
+            var vouchers = _voucherService.GetEligibleVouchers(request);
+            return Ok(vouchers);
         }
 
-        
         [HttpGet("public")]
-        public async Task<IActionResult> GetPublicVouchers()
+        [AllowAnonymous] // Riêng API này cho phép khách vãng lai xem voucher chung
+        public IActionResult GetPublicVouchers()
         {
-            var result = await _service.GetPublicVouchersAsync();
-            return Ok(result);
+            return Ok(_voucherService.GetPublicVouchers());
         }
 
-      
         [HttpPost]
-        public async Task<IActionResult> CreateVoucher([FromBody] CreateUpdateVoucherDto dto)
+        public IActionResult CreateVoucher([FromBody] CreateVoucherRequest request)
         {
-            var result = await _service.CreateVoucherAsync(dto);
-            return CreatedAtAction(nameof(GetVouchersAdmin), new { id = result.Id }, result);
+            _voucherService.CreateVoucher(request);
+            return Ok(new { message = "Tạo voucher thành công" });
         }
 
-       
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateVoucher(int id, [FromBody] CreateUpdateVoucherDto dto)
+        public IActionResult UpdateVoucher(int id, [FromBody] CreateVoucherRequest request)
         {
-            var success = await _service.UpdateVoucherAsync(id, dto);
-            if (!success) return NotFound(new { message = "Không tìm thấy voucher để cập nhật" });
-            return Ok(new { message = "Cập nhật thành công!" });
+            _voucherService.UpdateVoucher(id, request);
+            return Ok(new { message = "Cập nhật voucher thành công" });
         }
 
-        
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVoucher(int id)
+        public IActionResult DeleteVoucher(int id)
         {
-            var success = await _service.DeleteVoucherAsync(id);
-            if (!success) return NotFound(new { message = "Không tìm thấy voucher để xóa" });
-            return Ok(new { message = "Xóa voucher thành công!" });
+            _voucherService.DeleteVoucher(id);
+            return Ok(new { message = "Xóa voucher thành công" });
         }
 
-        
         [HttpPatch("{id}/toggle")]
-        public async Task<IActionResult> ToggleVoucher(int id, [FromQuery] bool active)
+        public IActionResult ToggleVoucher(int id, [FromQuery] bool active)
         {
-            var success = await _service.ToggleVoucherAsync(id, active);
-            if (!success) return NotFound(new { message = "Không tìm thấy voucher" });
-            return Ok(new { message = "Thay đổi trạng thái thành công!" });
+            _voucherService.ToggleVoucher(id, active);
+            return Ok(new { message = "Cập nhật trạng thái thành công" });
         }
     }
 }

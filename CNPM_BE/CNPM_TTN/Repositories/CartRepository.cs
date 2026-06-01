@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CNPM_TTN.Repositories
 {
-    public class CartRepository : ICartRepository
+    public class CartRepository
     {
         private readonly ApplicationDbContext _context;
 
@@ -16,20 +16,21 @@ namespace CNPM_TTN.Repositories
             _context = context;
         }
 
-        // Lấy thông tin giỏ hàng theo UserId kèm theo tất cả các Item và Product của từng Item
+        // Lấy thông tin giỏ hàng theo UserId
         public Cart? FindByUserId(string userId)
         {
-            return _context.Carts
-                .Include(c => c.CartItems)               // Tự động nạp danh sách CartItems
-                    .ThenInclude(ci => ci.Product)   // Tự động nạp thông tin Product của từng dòng
-                .FirstOrDefault(c => c.UserId == userId);
+            return _context.Carts.FirstOrDefault(C => C.UserId == userId);
         }
 
-        // Giữ lại để đảm bảo đúng Interface, tối ưu lại câu lệnh nạp dữ liệu
+        //Lấy danh sách Item kèm thông tin Product liên kết
         public List<CartItem> GetCartItemsByUser(string userId)
         {
             var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
-            if (cart == null) return new List<CartItem>();
+
+            if (cart == null)
+            {
+                return new List<CartItem>();
+            }
 
             return _context.CartItems
                 .Include(ci => ci.Product)
@@ -37,7 +38,7 @@ namespace CNPM_TTN.Repositories
                 .ToList();
         }
 
-        // Tạo mới giỏ hàng trống cho User
+        //Tạo mới giỏ hàng trống cho User
         public void CreateCart(string userId)
         {
             var cart = new Cart { UserId = userId };
@@ -45,7 +46,7 @@ namespace CNPM_TTN.Repositories
             _context.SaveChanges();
         }
 
-        // Tìm kiếm chính xác các Item dựa trên tổ hợp các thuộc tính
+        //Tìm kiếm chính xác các Item dựa trên tổ hợp các thuộc tính
         public CartItem? FindByCartAndProduct(int cartId, int productId, int grindingOptionId, string? flavorNotes, string? weight)
         {
             string? normalizedFlavorNotes = string.IsNullOrWhiteSpace(flavorNotes) ? null : flavorNotes.Trim();
@@ -59,6 +60,7 @@ namespace CNPM_TTN.Repositories
                 ci.Weight == normalizedWeight
             );
         }
+
 
         // Thêm mới một dòng sản phẩm vào giỏ
         public void AddItem(CartItem item)

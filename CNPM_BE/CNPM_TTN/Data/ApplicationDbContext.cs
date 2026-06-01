@@ -31,7 +31,11 @@ namespace CNPM_TTN.Data
         public DbSet<Voucher> Vouchers { get; set; }
         public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
 
-        public virtual DbSet<Subscription> Subscriptions { get; set; }
+
+        public DbSet<Subscription> Subscriptions { get; set; }
+
+        public DbSet<SubscriptionConfig> SubscriptionConfigs { get; set; }
+        public DbSet<SubscriptionOrder> SubscriptionOrders { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -53,6 +57,8 @@ namespace CNPM_TTN.Data
                 .HasOne(pg => pg.GrindingOption)
                 .WithMany(g => g.ProductGrindingOptions) // Đảm bảo bên Entity GrindingOption.cs có thuộc tính này, nếu không có thì để trống .WithMany()
                 .HasForeignKey(pg => pg.GrindingOptionId);
+
+
         }
     }
 }

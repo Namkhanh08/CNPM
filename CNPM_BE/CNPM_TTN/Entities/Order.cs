@@ -49,8 +49,7 @@ public partial class Order
     public decimal? DiscountAmount { get; set; }
     public decimal? FinalAmount { get; set; }
 
-    [InverseProperty("Order")]
-    public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+    public List<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     [ForeignKey("UserId")]
     [InverseProperty("Orders")]

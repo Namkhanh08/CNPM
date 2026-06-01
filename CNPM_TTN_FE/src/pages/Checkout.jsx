@@ -123,6 +123,7 @@ export default function Checkout() {
 
   const selectedItems = cart.filter(item => item.selected);
   
+  
   useEffect(() => {
     if (!selectedItems.length) return;
     fetchAvailableVouchers(selectedItems, paymentMethod);

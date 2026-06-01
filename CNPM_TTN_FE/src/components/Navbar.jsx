@@ -265,6 +265,8 @@ export default function Navbar() {
                   >
                     Đơn hàng
                   </Link>
+                  <Link to="/portal" className="block px-4 py-3 hover:bg-zinc-800">Đăng ký định kỳ</Link>
+                  <Link to="/orders" className="block px-4 py-3 hover:bg-zinc-800">Điểm tích lũy</Link>
                   <button
                     onClick={handleLogout}
                     className="w-full px-4 py-3 text-red-400 hover:bg-zinc-800 border-t border-white/10 text-center"

@@ -2,24 +2,56 @@
 using System.Collections.Generic;
 using CNPM_TTN.Repositories;
 using CNPM_TTN.Entities;
+using CNPM_TTN.Dtos;
 
 namespace CNPM_TTN.Services
 {
-    public class CartService : ICartService
+    public class CartService
     {
-        private readonly ICartRepository _cartRepo;
+        private readonly CartRepository _cartRepo;
 
-        public CartService(ICartRepository cartRepo)
+        public CartService(CartRepository cartRepo)
         {
             _cartRepo = cartRepo;
         }
 
-        public Cart? GetCart(string userId)
+        public CartResponseDto? GetCart(string userId)
         {
-            // Repository đã dùng Include nạp đầy đủ thông tin, không cần gán thủ công nữa
-            return _cartRepo.FindByUserId(userId);
-        }
+            var cart = _cartRepo.FindByUserId(userId);
 
+            if (cart == null)
+            {
+                return null;
+            }
+
+            var items = _cartRepo.GetCartItemsByUser(userId);
+
+            return new CartResponseDto
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+
+                Items = items.Select(i => new CartItemResponseDto
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity,
+                    GrindingOptionId = (int)i.GrindingOptionId,
+                    FlavorNotes = i.FlavorNotes,
+                    Weight = i.Weight,
+
+                    Product = new ProductCartDto
+                    {
+                        Id = i.Product.Id,
+                        Name = i.Product.Name,
+                        Price = i.Product.Price,
+
+                        // QUAN TRỌNG
+                        ImageUrl = i.Product.ImageUrl
+                    }
+
+                }).ToList()
+            };
+        }
         public void AddToCart(string userId, int productId, int quantity, int grindingOptionId, string? flavorNotes, string? weight)
         {
             if (quantity <= 0)
@@ -40,6 +72,7 @@ namespace CNPM_TTN.Services
             {
                 int newQuantity = cartItem.Quantity + quantity;
                 _cartRepo.UpdateQuantity(userId, cartItem.ProductId, newQuantity, grindingOptionId, flavorNotes, weight);
+
             }
             else
             {
@@ -61,6 +94,7 @@ namespace CNPM_TTN.Services
             if (quantity <= 0)
             {
                 _cartRepo.DeleteItem(productId, grindingOptionId, flavorNotes, weight);
+
             }
             else
             {

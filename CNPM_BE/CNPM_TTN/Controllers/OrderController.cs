@@ -1,122 +1,162 @@
-﻿
-
-using CNPM_TTN.Dtos;
-using CNPM_TTN.Repositories;
+﻿﻿using CNPM_TTN.Dtos;
+using CNPM_TTN.Entities;
+using CNPM_TTN.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
 
 namespace CNPM_TTN.Controllers
 {
     [ApiController]
-    [Route("orders")]
-    [Authorize] 
-    public class OrderController : ControllerBase
+    [Route("api/[controller]")]
+    [Authorize]
+    public class OrdersController : ControllerBase
     {
-        private readonly IOrderRepository _orderRepository;
+        private readonly OrderService _orderService;
 
-        public OrderController(IOrderRepository orderRepository)
+        public OrdersController(OrderService orderService)
         {
-            _orderRepository = orderRepository;
-        }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-        private string GetCurrentUserId()
-        {
-            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.Identity?.Name ?? "Thành viên";
+            _orderService = orderService;
         }
 
-        
+        private string GetUserIdFromClaims()
+        {
+            // Trích xuất tự động Sub/Id từ JWT Bearer Token được cấu hình trong hệ thống
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? User.FindFirst("sub")?.Value
+                   ?? string.Empty;
+        }
+
         [HttpGet]
-        public async Task<IActionResult> GetMyOrders()
+        public IActionResult GetMyOrders()
         {
-            var userId = GetCurrentUserId();
-            var orders = await _orderRepository.GetMyOrdersAsync(userId);
-            return Ok(orders);
+            string userId = GetUserIdFromClaims();
+            return Ok(_orderService.GetMyOrders(userId));
         }
 
-        [HttpGet("admin/all")]
-        public async Task<IActionResult> FetchAllOrdersAdmin([FromQuery] int page = 1, [FromQuery] string searchTerm = "", [FromQuery] string status = "all")
-        {
-            var result = await _orderRepository.GetAllOrdersAdminAsync(page, searchTerm, status);
-            return Ok(result);
-        }
-
-    
-        [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateOrderStatus(int id, [FromQuery] string status)
-        {
-            if (string.IsNullOrEmpty(status)) return BadRequest("Trạng thái trống.");
-
-            var success = await _orderRepository.UpdateOrderStatusAsync(id, status);
-            if (!success) return NotFound("Không tìm thấy đơn hàng cần cập nhật.");
-
-            return Ok(new { message = "Cập nhật trạng thái thành công." });
-        }
-
-  
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrderById(int id)
+        public IActionResult GetById(int id)
         {
-            var order = await _orderRepository.GetOrderByIdAsync(id);
-            if (order == null) return NotFound("Đơn hàng không tồn tại.");
-            return Ok(order);
+            try
+            {
+                return Ok(_orderService.GetById(id));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
+        [HttpGet("all")]
+        public IActionResult GetAll() => Ok(_orderService.GetAllOrders());
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
+        public IActionResult CreateOrder([FromBody] CreateOrderDto dto)
         {
-            var userId = GetCurrentUserId();
-            var newOrder = await _orderRepository.CreateOrderAsync(userId, dto);
-            if (newOrder == null) return BadRequest("Tạo đơn hàng không thành công. Vui lòng kiểm tra lại sản phẩm.");
-            return Ok(newOrder);
+            try
+            {
+                string userId = GetUserIdFromClaims();
+                var result = _orderService.CreateOrder(userId, dto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-   
-        [HttpPut("{orderId}/cancel")]
-        public async Task<IActionResult> CancelOrder(int orderId)
+        [HttpPut("{id}")]
+        public IActionResult UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
         {
-            var success = await _orderRepository.CancelOrderAsync(orderId);
-            if (!success) return BadRequest("Không thể hủy đơn hàng này (Đơn đã được xác nhận hoặc không tồn tại).");
-            return Ok("Hủy đơn hàng thành công!");
+            try
+            {
+                return Ok(_orderService.UpdateOrder(id, dto));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-      
-        [HttpGet("shipper/list")]
-        public async Task<IActionResult> FetchShipperOrders([FromQuery] int page = 1, [FromQuery] string searchTerm = "")
+        [HttpPut("{id}/status")]
+        public IActionResult UpdateStatus(int id, [FromQuery] string status)
         {
-            var result = await _orderRepository.GetShipperOrdersAsync(page, searchTerm);
-            return Ok(result);
+            try
+            {
+                return Ok(_orderService.UpdateStatus(id, status));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
+        [HttpPut("{id}/cancel")]
+        public IActionResult CancelOrder(int id)
+        {
+            try
+            {
+                _orderService.CancelOrder(id);
+                return Ok(new { message = "Hủy đơn hàng thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ==================== ADMIN ENDPOINTS ====================
+        [HttpGet("admin/all")]
+        public IActionResult GetAllAdmin([FromQuery] int page = 1, [FromQuery] string? searchTerm = null, [FromQuery] string status = "all")
+        {
+            return Ok(_orderService.GetAllOrdersAdmin(page, searchTerm, status));
+        }
+
+        [HttpPut("{id}/confirm")]
+        public IActionResult ConfirmOrder(int id)
+        {
+            try
+            {
+                return Ok(_orderService.ConfirmOrder(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ==================== SHIPPER ENDPOINTS ====================
         [HttpPut("{id}/shipping-complete")]
-        public async Task<IActionResult> ShipperCompleteOrder(int id)
+        public IActionResult ShipperComplete(int id)
         {
-            var success = await _orderRepository.UpdateOrderStatusAsync(id, "Hoàn thành");
-            if (!success) return NotFound("Cập nhật thất bại.");
-            return Ok("Giao hàng thành công!");
+            try
+            {
+                return Ok(_orderService.ShipperCompleteOrder(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}/shipper-fail")]
-        public async Task<IActionResult> ShipperFailOrder(int id)
+        public IActionResult ShipperFail(int id)
         {
-            var success = await _orderRepository.UpdateOrderStatusAsync(id, "Chờ xử lý"); 
-            if (!success) return NotFound("Cập nhật thất bại.");
-            return Ok("Đã cập nhật trạng thái giao thất bại.");
+            try
+            {
+                return Ok(_orderService.ShipperFailOrder(id));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
-        [HttpPut("edit/{id}")]
-public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
-{
-    // Kiểm tra tính hợp lệ
-    if (dto == null) return BadRequest("Dữ liệu không hợp lệ.");
 
-    // Gọi Repository để cập nhật
-    var success = await _orderRepository.UpdateOrderAsync(id, dto);
-    
-    if (!success) 
-        return NotFound("Không tìm thấy đơn hàng hoặc không thể cập nhật (có thể đơn hàng đã ở trạng thái không được phép chỉnh sửa).");
-
-    return Ok(new { message = "Cập nhật đơn hàng thành công." });
-}
+        [HttpGet("shipper/list")]
+        public IActionResult GetShipperOrders([FromQuery] int page = 1, [FromQuery] string? searchTerm = null)
+        {
+            return Ok(_orderService.GetShipperOrders(page, searchTerm));
+        }
     }
 }

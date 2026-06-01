@@ -24,26 +24,88 @@ namespace CNPM_TTN.Repositories
             return await _context.RawMaterials.Include(r => r.Category).ToListAsync();
         }
 
-        public async Task<IEnumerable<object>> GetInventoryReceiptsAsync()
+        public async Task<PagedResultDto<object>> GetInventoryReceiptsAsync(
+            int page,
+            int pageSize,
+            string? search,
+            string? status)
         {
-            return await _context.InventoryReceipts
+            var query = _context.InventoryReceipts
                 .Include(i => i.RawMaterial)
                 .Include(i => i.User)
-                .OrderByDescending(i => i.ImportDate)
-                .Select(receipt => new
+                .AsQueryable();
+
+            // SEARCH
+            if (!string.IsNullOrEmpty(search))
+            {
+                search = search.ToLower();
+
+                query = query.Where(x =>
+                    x.RawMaterial.Name.ToLower().Contains(search) ||
+                    x.Supplier.ToLower().Contains(search));
+            }
+
+            // FILTER
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                var today = DateTime.Now;
+
+                query = status switch
                 {
-                    receipt.Id,
-                    RawMaterialName = receipt.RawMaterial.Name,
-                    receipt.Supplier,
-                    receipt.Quantity,
-                    receipt.RemainingQuantity,
-                    receipt.ImportDate,
-                    receipt.ExpiryDate,
-                    ManagerName = receipt.User != null ? receipt.User.Name : "Hệ thống",
-                    IsExpired = receipt.ExpiryDate < DateTime.Now,
-                    IsNearExpired = (receipt.ExpiryDate - DateTime.Now).TotalDays <= 30 && receipt.ExpiryDate > DateTime.Now
-                })
+                    "empty" => query.Where(x => x.RemainingQuantity == 0),
+
+                    "expired" => query.Where(x => x.ExpiryDate <= today),
+
+                    "warning" => query.Where(x =>
+                        x.ExpiryDate > today &&
+                        EF.Functions.DateDiffDay(today, x.ExpiryDate) <= 7),
+
+                    "safe" => query.Where(x =>
+                        x.RemainingQuantity > 0 &&
+                        x.ExpiryDate > today &&
+                        EF.Functions.DateDiffDay(today, x.ExpiryDate) > 7),
+
+                    _ => query
+                };
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var data = await query
+                .OrderByDescending(i => i.ImportDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+               .Select(receipt => new
+               {
+                   receipt.Id,
+                   receipt.RawMaterialId,
+
+                   RawMaterialName = receipt.RawMaterial.Name,
+
+                   receipt.Supplier,
+
+                   receipt.Quantity,
+                   receipt.RemainingQuantity,
+
+                   receipt.ImportDate,
+                   receipt.ExpiryDate,
+
+                   IsExpired = receipt.ExpiryDate <= DateTime.Now,
+
+                   ManagerName = receipt.User != null
+                   ? receipt.User.Name
+                   : "Hệ thống"
+                        })
                 .ToListAsync();
+
+            return new PagedResultDto<object>
+            {
+                Data = data,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            };
         }
 
         public async Task<bool> ImportRawMaterialAsync(int rawMaterialId, string supplier, double quantity, DateTime importDate, DateTime expiryDate, string userId)
@@ -86,12 +148,36 @@ namespace CNPM_TTN.Repositories
             return await _context.Products.ToListAsync();
         }
 
-        public async Task<IEnumerable<object>> GetRawMaterialLogsAsync()
+        public async Task<PagedResultDto<object>> GetRawMaterialLogsAsync(int page,int pageSize,string? search,string? action)
         {
-            return await _context.RawMaterialLogs
+            var query = _context.RawMaterialLogs
                 .Include(l => l.RawMaterial)
-                .Include(l => l.User) 
-                .OrderByDescending(l => l.ModifiedDate)
+                .Include(l => l.User)
+                .AsQueryable();
+
+            // SEARCH
+            if (!string.IsNullOrEmpty(search))
+            {
+                search = search.ToLower();
+
+                query = query.Where(x =>
+                    x.RawMaterial.Name.ToLower().Contains(search) ||
+                    x.Action.ToLower().Contains(search) ||
+                    x.Reason.ToLower().Contains(search));
+            }
+
+            // FILTER ACTION
+            if (!string.IsNullOrEmpty(action) && action != "all")
+            {
+                query = query.Where(x => x.Action.Contains(action));
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var data = await query
+                .OrderByDescending(x => x.ModifiedDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(l => new
                 {
                     id = l.Id,
@@ -102,39 +188,100 @@ namespace CNPM_TTN.Repositories
                     newQuantity = l.NewQuantity,
                     reason = l.Reason,
                     modifiedBy = l.ModifiedBy,
-                 
                     modifiedByName = l.User != null ? l.User.Name : "Hệ thống",
                     modifiedDate = l.ModifiedDate
                 })
                 .ToListAsync();
+
+            return new PagedResultDto<object>
+            {
+                Data = data,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            };
         }
-        public async Task<IEnumerable<object>> GetRoastingBatchesAsync()
+
+
+        public async Task<PagedResultDto<object>> GetRoastingBatchesAsync(int page,int pageSize,string? search,string? status)
         {
-            return await _context.RoastingBatches
+            var query = _context.RoastingBatches
                 .Include(b => b.User)
                 .Include(b => b.Product)
-                .Include(b => b.InventoryReceipt).ThenInclude(ir => ir.RawMaterial)
+                .Include(b => b.InventoryReceipt)
+                    .ThenInclude(ir => ir.RawMaterial)
+                .AsQueryable();
+
+            // SEARCH
+            if (!string.IsNullOrEmpty(search))
+            {
+                search = search.ToLower();
+
+                query = query.Where(x =>
+                    x.BatchCode.ToLower().Contains(search) ||
+                    x.Product.Name.ToLower().Contains(search) ||
+                    x.InventoryReceipt.RawMaterial.Name.ToLower().Contains(search));
+            }
+
+            // FILTER STATUS
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                query = query.Where(x => x.Status == status);
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var data = await query
                 .OrderByDescending(x => x.RoastDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(batch => new
                 {
                     batch.Id,
                     batch.BatchCode,
+
                     ProductName = batch.Product.Name,
-                    RawMaterialName = batch.InventoryReceipt != null ? batch.InventoryReceipt.RawMaterial.Name : "N/A",
+
+                    RawMaterialName = batch.InventoryReceipt != null
+                        ? batch.InventoryReceipt.RawMaterial.Name
+                        : "N/A",
+
                     batch.RoastLevel,
+
+                    Supplier = batch.InventoryReceipt != null
+                        ? batch.InventoryReceipt.Supplier
+                        : "N/A",
+
                     InputWeight = batch.InputWeight,
-                    OutputWeight = batch.OutputWeight ?? 0, 
 
-                    
-                    RecoveryRate = batch.OutputWeight.HasValue && batch.InputWeight > 0
-                        ? Math.Round(((double)batch.OutputWeight.Value / (double)batch.InputWeight) * 100, 1)
-                        : 0,
+                    OutputWeight = batch.OutputWeight ?? 0,
 
-                    RoasterName = batch.User != null ? batch.User.Name : "N/A",
+                    RecoveryRate =
+                        batch.OutputWeight.HasValue && batch.InputWeight > 0
+                            ? Math.Round(
+                                ((double)batch.OutputWeight.Value /
+                                (double)batch.InputWeight) * 100, 1)
+                            : 0,
+
+                    RoasterName = batch.User != null
+                        ? batch.User.Name
+                        : "N/A",
+
                     batch.Status,
+
                     Date = batch.RoastDate
                 })
                 .ToListAsync();
+
+            return new PagedResultDto<object>
+            {
+                Data = data,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            };
         }
         public async Task<InventoryResult> CreateRoastingBatchAsync(int productId, int inventoryReceiptId, string batchCode, string roastLevel, double inputWeight, string status, double? outputWeight, string userId)
         {
@@ -183,7 +330,8 @@ namespace CNPM_TTN.Repositories
                     OutputWeight = outputWeight, 
                     Status = status,
                     UserId = userId,
-                    RoastDate = DateTime.Now
+                    RoastDate = DateTime.Now,
+                    
                 };
 
                 var log = new RawMaterialLog
@@ -193,7 +341,11 @@ namespace CNPM_TTN.Repositories
                     Action = "XUAT_RANG_CA_PHE",
                     OldQuantity = oldRawMaterialQty,
                     NewQuantity = receipt.RemainingQuantity,
-                    Reason = $"Xuất kho {inputWeight} kg để thực hiện mẻ rang mã {batchCode} (Trạng thái: {status})",
+                    Reason = $"Xuất kho {inputWeight} kg ở lô nhập {receipt.Id} " +
+                     $"từ nhà cung cấp: {receipt.Supplier} " +
+                     $"để thực hiện mẻ rang mã {batchCode} " +
+                     $"(Trạng thái: {status})",
+
                     ModifiedBy = userId,
                     ModifiedDate = DateTime.Now
                 };
@@ -264,7 +416,65 @@ namespace CNPM_TTN.Repositories
                 return new InventoryResult { Success = false, Message = "Lỗi hệ thống: " + ex.Message };
             }
         }
-      
+
+        public async Task<bool> CreateRawMaterialAsync(string name, string unit, int categoryId)
+        {
+         
+            var exists = await _context.RawMaterials
+                .AnyAsync(x => x.Name.ToLower() == name.ToLower());
+
+            if (exists) return false;
+
+            var rawMaterial = new RawMaterial
+            {
+                Name = name,
+                Unit = string.IsNullOrEmpty(unit) ? "kg" : unit,
+                CategoryId = categoryId,
+                CreatedDate = DateTime.Now
+            };
+
+            _context.RawMaterials.Add(rawMaterial);
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<IEnumerable<object>> GetAvailableReceiptsAsync()
+        {
+            return await _context.InventoryReceipts
+                .Include(r => r.RawMaterial)
+
+              
+                .Where(r => r.RemainingQuantity > 0)
+
+           
+                .Where(r => r.ExpiryDate > DateTime.Now)
+
+               
+                .OrderBy(r => r.ExpiryDate)
+
+                .Select(r => new
+                {
+                    r.Id,
+
+                    r.RawMaterialId,
+
+                    RawMaterialName = r.RawMaterial.Name,
+
+                    r.Supplier,
+
+                    r.Quantity,
+
+                    r.RemainingQuantity,
+
+                    r.ImportDate,
+
+                    r.ExpiryDate,
+
+                    IsExpired = false
+                })
+
+                .ToListAsync();
+        }
         public async Task<double> GetTotalQuantityAsync()
         {
             return await _context.Products.SumAsync(p => p.Stock);

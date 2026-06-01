@@ -14,7 +14,7 @@ namespace CNPM_TTN.Entities
         public string UserId { get; set; } = null!;
 
         // Chỉ giữ lại một danh sách duy nhất trỏ sang CartItem
-        public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+        public List<CartItem> Items { get; set; } = new List<CartItem>();
 
         [ForeignKey("UserId")]
         public virtual User User { get; set; } = null!;

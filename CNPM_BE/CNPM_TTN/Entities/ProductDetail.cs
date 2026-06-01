@@ -37,7 +37,7 @@ public partial class ProductDetail
     public string? Height { get; set; }
     public string? MatchTags { get; set; }
 
-    
- 
+
+    public List<GrindingOption> GrindingOptions { get; set; } = new List<GrindingOption>();
     public virtual Product Product { get; set; } = null!;
 }

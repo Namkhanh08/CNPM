@@ -28,6 +28,11 @@ export default function Batches() {
 
   const currentUserName = localStorage.getItem("userName");
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  const [totalPages, setTotalPages] = useState(1);
+
   const [formData, setFormData] = useState({
     productId: "",
     inventoryReceiptId: "",
@@ -87,17 +92,19 @@ export default function Batches() {
     try {
       setLoading(true);
       const [batchRes, prodRes, receiptRes] = await Promise.all([
-        API.getBatchesDetail(),
+        API.getBatchesDetail(
+          page,
+          pageSize,
+          searchQuery,
+          statusFilter === "All" ? "all" : statusFilter
+        ),
         API.getProducts1(),
-        API.getInventoryReceipts(),
+        API.getAvailableReceipts(),
       ]);
       setBatches(batchRes.data.data || []);
+      setTotalPages(batchRes.data.totalPages || 1);
       setProducts(prodRes.data.data || []);
-      setReceipts(
-        (receiptRes.data.data || []).filter(
-          (r) => r.remainingQuantity > 0 && !r.isExpired
-        )
-      );
+      setReceipts(receiptRes.data.data || []);
     } catch (err) {
       console.error("Lỗi tải dữ liệu:", err);
     } finally {
@@ -107,7 +114,7 @@ export default function Batches() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, searchQuery, statusFilter]);
 
   const handleCreateBatch = async (e) => {
     e.preventDefault();
@@ -203,17 +210,6 @@ export default function Batches() {
     }
   };
 
-  const filteredBatches = batches.filter((batch) => {
-    const matchesSearch =
-      !searchQuery.trim() ||
-      batch.batchCode?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "All" || batch.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
   return (
     <div className="animate-fade-in p-4 md:p-6 w-full max-w-full box-border overflow-hidden">
       {/* Header */}
@@ -244,14 +240,20 @@ export default function Batches() {
             type="text"
             placeholder="Tìm kiếm theo mã lô rang..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             className="w-full font-nunito pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 ring-accent-1 transition-all"
           />
           {searchQuery && (
             <X
               size={16}
               className="absolute right-4 text-gray-400 hover:text-red-500 cursor-pointer"
-              onClick={() => setSearchQuery("")}
+              onClick={() => {
+                setSearchQuery("");
+                setPage(1);
+              }}
             />
           )}
         </div>
@@ -269,7 +271,10 @@ export default function Batches() {
           <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-40 opacity-0 invisible scale-95 -translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:scale-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto">
             <button
               type="button"
-              onClick={() => setStatusFilter("All")}
+              onClick={() => {
+                setStatusFilter("All");
+                setPage(1);
+              }}
               className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
                 statusFilter === "All"
                   ? "bg-primary/10 text-primary"
@@ -280,7 +285,10 @@ export default function Batches() {
             </button>
             <button
               type="button"
-              onClick={() => setStatusFilter("Đang xử lý")}
+              onClick={() => {
+                setStatusFilter("Đang xử lý");
+                setPage(1);
+              }}
               className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
                 statusFilter === "Đang xử lý"
                   ? "bg-sky-50 text-sky-700"
@@ -292,7 +300,10 @@ export default function Batches() {
             </button>
             <button
               type="button"
-              onClick={() => setStatusFilter("Hoàn thành")}
+              onClick={() => {
+                setStatusFilter("Hoàn thành");
+                setPage(1);
+              }}
               className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
                 statusFilter === "Hoàn thành"
                   ? "bg-emerald-50 text-emerald-700"
@@ -304,7 +315,10 @@ export default function Batches() {
             </button>
             <button
               type="button"
-              onClick={() => setStatusFilter("Đã đóng gói")}
+              onClick={() => {
+                setStatusFilter("Đã đóng gói");
+                setPage(1);
+              }}
               className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${
                 statusFilter === "Đã đóng gói"
                   ? "bg-indigo-50 text-indigo-700"
@@ -355,8 +369,11 @@ export default function Batches() {
                     <option value="">-- Chọn lô nguyên liệu thô --</option>
                     {receipts.map((r) => (
                       <option key={r.id} value={r.id}>
-                        Lô {r.id} - {r.rawMaterialName} (Còn:{" "}
-                        {r.remainingQuantity}kg)
+                        {`Lô ${r.id} | ${r.rawMaterialName} | NCC: ${
+                          r.supplier
+                        } | HSD: ${new Date(r.expiryDate).toLocaleDateString(
+                          "vi-VN"
+                        )} | Còn: ${r.remainingQuantity}kg`}
                       </option>
                     ))}
                   </select>
@@ -533,8 +550,8 @@ export default function Batches() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredBatches.length > 0 ? (
-                  filteredBatches.map((b) => (
+                {batches.length > 0 ? (
+                  batches.map((b) => (
                     <tr
                       key={b.id}
                       className="hover:bg-gray-50/50 transition-colors"
@@ -545,8 +562,16 @@ export default function Batches() {
                       <td className="px-4 py-4 text-gray-500">
                         {new Date(b.date).toLocaleDateString("vi-VN")}
                       </td>
-                      <td className="px-4 py-4 text-gray-600 italic max-w-[250px] break-words">
-                        {b.rawMaterialName}
+                      <td className="px-4 py-4 text-gray-600 max-w-[250px] break-words">
+                        <div className="flex flex-col">
+                          <span className="italic font-semibold">
+                            {b.rawMaterialName}
+                          </span>
+
+                          <span className="text-xs text-gray-400 mt-1">
+                            NCC: {b.supplier}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-4 font-semibold text-gray-700 max-w-[220px] break-words">
                         {b.productName}
@@ -642,6 +667,27 @@ export default function Batches() {
                 )}
               </tbody>
             </table>
+            <div className="flex justify-center items-center gap-3 py-5">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+                className="px-4 py-2 rounded-lg border disabled:opacity-40"
+              >
+                Trước
+              </button>
+
+              <span className="font-bold text-sm">
+                Trang {page} / {totalPages}
+              </span>
+
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(page + 1)}
+                className="px-4 py-2 rounded-lg border disabled:opacity-40"
+              >
+                Sau
+              </button>
+            </div>
           </div>
         )}
       </div>

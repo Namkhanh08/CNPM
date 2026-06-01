@@ -53,96 +53,100 @@ const API = {
   updateProduct: (id, data) => api.put(`/api/admin/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/api/admin/products/${id}`),
 
-  // CARTS
+  // CART
   getCart: () => api.get("/api/carts"),
   addToCart: (data) => api.post("/api/carts/add", data),
-
   updateCartItem: (data) => api.put("/api/carts/update", data),
-
   removeCartItem: (productId, grindingOptionId, flavorNotes, weight) =>
     api.delete("/api/carts/remove", {
-      data: {
-        productId,
-        grindingOptionId,
-        flavorNotes,
-        weight,
-      },
+      data: { productId, grindingOptionId, flavorNotes, weight },
     }),
 
-  // ORDERS
-  getMyOrders: () => api.get("/orders"),
-
+  // ORDER
+  getMyOrders: () => api.get("/api/orders"),
   fetchAllOrdersAdmin: (page = 1, searchTerm = "", status = "all") =>
-    api.get("/orders/admin/all", {
+    api.get("/api/orders/admin/all", {
       params: { page, searchTerm, status },
     }),
-
   updateOrderStatus: (id, status) =>
-    api.put(`/orders/${id}/status`, null, {
+    api.put(`/api/orders/${id}/status`, null, {
       params: { status },
     }),
+  confirmOrder: (id) => api.put(`/api/orders/${id}/confirm`),
+  getOrderById: (id) => api.get(`/api/orders/${id}`),
+  createOrder: (data) => api.post("/api/orders", data),
+  cancelOrder: (orderId) => api.put(`/api/orders/${orderId}/cancel`),
+  updateOrder: (id, data) => api.put(`/api/orders/${id}`, data),
 
-  confirmOrder: (id) => api.put(`/orders/${id}/confirm`),
-
-  getOrderById: (id) => api.get(`/orders/${id}`),
-
-  createOrder: (data) => api.post("/orders", data),
-
-  cancelOrder: (orderId) => api.put(`/orders/${orderId}/cancel`),
-
-  updateOrder: (id, data) => api.put(`/orders/edit/${id}`, data),
-
-  //SHIPPING
+  // SHIPPING
   fetchShipperOrders: (page = 1, searchTerm = "") =>
-    api.get("/orders/shipper/list", {
+    api.get("/api/orders/shipper/list", {
       params: { page, searchTerm },
     }),
-
-  shipperCompleteOrder: (id) => api.put(`/orders/${id}/shipping-complete`),
-
-  shipperFailOrder: (id) => api.put(`/orders/${id}/shipper-fail`),
+  shipperCompleteOrder: (id) => api.put(`/api/orders/${id}/shipping-complete`),
+  shipperFailOrder: (id) => api.put(`/api/orders/${id}/shipper-fail`),
 
   // DASHBOARD
-  getDashboard: () => api.get("/dashboard"),
+  getDashboard: () => api.get("/api/dashboard"),
 
   // VOUCHERS
   getVouchersAdmin: (page = 1, searchTerm = "", status = "all") =>
-    api.get("/vouchers", {
+    api.get("/api/vouchers", {
       params: { page, searchTerm, status },
     }),
-
-  getAvailableVouchers: (data) => api.post("/vouchers/available", data),
-
-  getPublicVouchers: () => api.get("/vouchers/public"),
-
-  createVoucher: (data) => api.post("/vouchers", data),
-
-  updateVoucher: (id, data) => api.put(`/vouchers/${id}`, data),
-
-  deleteVoucher: (id) => api.delete(`/vouchers/${id}`),
-
+  getAvailableVouchers: (data) => api.post("/api/vouchers/available", data),
+  getPublicVouchers: () => api.get("/api/vouchers/public"),
+  createVoucher: (data) => api.post("/api/vouchers", data),
+  updateVoucher: (id, data) => api.put(`/api/vouchers/${id}`, data),
+  deleteVoucher: (id) => api.delete(`/api/vouchers/${id}`),
   toggleVoucher: (id, active) =>
-    api.patch(`/vouchers/${id}/toggle`, null, {
+    api.patch(`/api/vouchers/${id}/toggle`, null, {
       params: { active },
     }),
+
+  // SUBSCRIPTIONS
+  createSubscription: (data) => api.post("/api/subscriptions/create", data),
+  getSubscriptions: () => api.get("/api/subscriptions"),
+  toggleSkipSubscription: (id) => api.put(`/api/subscriptions/${id}/toggle-skip`),
+  cancelSubscription: (id) => api.put(`/api/subscriptions/${id}/cancel`),
+  updateSubscriptionConfig: (id, data) =>
+    api.put(`/api/subscriptions/${id}/config`, data),
 
   // KHO
   getProducts1: () => api.get("/api/inventory/products"),
   getRawMaterials: () => api.get("/api/inventory/raw-materials"),
-  getInventoryReceipts: () => api.get("/api/inventory/receipts"),
+  getInventoryReceipts: (
+    page = 1,
+    pageSize = 10,
+    search = "",
+    status = "all"
+  ) =>
+    api.get("/api/inventory/receipts", {
+      params: { page, pageSize, search, status },
+    }),
+
+  createRawMaterial: (data) =>
+    api.post("/api/inventory/create-raw-material", data),
 
   // Nhập lô nguyên liệu mới
   importRawMaterial: (data) => api.post("/api/inventory/import-material", data),
-
-  getLogs: () => api.get("/api/inventory/logs"),
+  getLogs: (page = 1, pageSize = 10, search = "", action = "all") =>
+    api.get("/api/inventory/logs", {
+      params: { page, pageSize, search, action },
+    }),
   getTotalStock: () => api.get("/api/inventory/total-stock"),
 
   // Quản lý mẻ rang
-  getBatchesDetail: () => api.get("/api/inventory/batches"),
+  getAvailableReceipts: () => api.get("/api/inventory/available-receipts"),
+  getBatchesDetail: (page = 1, pageSize = 10, search = "", status = "all") =>
+    api.get("/api/inventory/batches", {
+      params: { page, pageSize, search, status },
+    }),
   createBatchDetail: (data) =>
     api.post("/api/inventory/create-batch-detail", data),
   updateBatchStatus: (id, statusData) =>
     api.put(`/api/Inventory/update-batch-status/${id}`, statusData),
+
   // User Profile
   getUserProfile: (id) => api.get(`/api/users/${id}`),
   updateUserProfile: (id, data) => api.put(`/api/users/${id}`, data),

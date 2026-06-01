@@ -13,6 +13,9 @@ import Profile from "./pages/Profile";
 import OrderDetail from "./pages/OrderDetail";
 import EditOrder from "./pages/EditOrder";
 import PaymentPage from "./pages/PaymentPage";
+import Contact from './pages/Contact';
+import SubscriptionPortal from './pages/SubscriptionPortal';
+
 
 // Admin imports
 import AdminLayout from "./layouts/AdminLayout";
@@ -24,12 +27,15 @@ import AdminInventory from "./pages/admin/Inventory";
 import AdminUsers from "./pages/admin/Users";
 import AdminVouchers from "./pages/admin/Vouchers";
 import AdminShipping from "./pages/admin/ShipperOrders";
+import AdminSubscriptions from './pages/admin/Subscription';
 
 import "./App.css";
 
 function App() {
   return (
     <Router>
+      
+
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -43,6 +49,8 @@ function App() {
           <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="orders/edit/:id" element={<EditOrder />} />
           <Route path="checkout/payment/:orderId" element={<PaymentPage />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="portal" element={<SubscriptionPortal />} />
         </Route>
 
         <Route
@@ -56,7 +64,7 @@ function App() {
             <Route path="inventory" element={<AdminInventory />} />
             <Route path="vouchers" element={<AdminVouchers />} />
             <Route path="shipping" element={<AdminShipping />} />
-
+            <Route path="subscriptions" element={<AdminSubscriptions />} />
             <Route
               element={
                 <ProtectedRoute allowedRoles={[1]} fallbackTo="/admin" />
@@ -67,6 +75,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+    
     </Router>
   );
 }

@@ -3,12 +3,9 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Copy, ArrowRight, CreditCard } from 'lucide-react';
 import vietinBank from '../assets/img/header/vietinbank.png';
 import QR from '../assets/img/header/qr.png';
+import axios from 'axios';
 import { BsQrCode } from "react-icons/bs";
-
-// IMPORT FILE CẤU HÌNH API CỦA BẠN
-// Lưu ý: Kiểm tra lại đường dẫn (.. hoặc ../..) sao cho đúng với cấu trúc thư mục thực tế của bạn
-import API from '../services/api.js';
-
+import API from '../services/api';
 export default function PaymentPage() {
     const { orderId } = useParams();
     const navigate = useNavigate();
@@ -36,8 +33,8 @@ export default function PaymentPage() {
     const handleConfirmPayment = async () => {
         setIsSubmitting(true);
         try {
-            // SỬA: Gọi qua hàm updateOrderStatus đã được định nghĩa trong file API của bạn
-            // Hàm này tự xử lý: endpoint `/orders/${id}/status`, đính params và port 5126
+            // Truyền trạng thái trực tiếp lên URL theo kiểu Query Parameter (?status=...)
+            // Đồng thời gọi trực tiếp port Backend để né lỗi cấu hình proxy của Vite
             const response = await API.updateOrderStatus(orderId, "Đã thanh toán");
 
             if (response.data) {
@@ -46,7 +43,7 @@ export default function PaymentPage() {
             }
         } catch (error) {
             console.error("Lỗi khi cập nhật trạng thái thanh toán:", error);
-            alert('Có lỗi xảy ra khi cập nhật đơn hàng. Vui lòng thử lại!');
+            alert('Có lỗi xảy ra khi cập nhật đơn hàng.');
         } finally {
             setIsSubmitting(false);
         }
@@ -134,6 +131,7 @@ export default function PaymentPage() {
 
                         {/* Cụm nút bấm xác nhận hành động */}
                         <div className="space-y-3">
+                            {/* ĐÃ SỬA: Bọc lại hàm bằng arrow function và gọi đúng hàm handleConfirmPayment của User */}
                             <button
                                 onClick={() => handleConfirmPayment()}
                                 disabled={isSubmitting}

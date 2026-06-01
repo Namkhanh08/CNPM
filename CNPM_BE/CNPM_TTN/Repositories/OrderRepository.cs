@@ -1,317 +1,361 @@
 ﻿using CNPM_TTN.Data;
-using CNPM_TTN.Dtos;
 using CNPM_TTN.Entities;
+using CNPM_TTN.Dtos;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace CNPM_TTN.Repositories
 {
-    public class OrderRepository : IOrderRepository
+    public class OrderRepository
     {
         private readonly ApplicationDbContext _context;
-        private const int PageSize = 10;
 
         public OrderRepository(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        private static OrderDto MapToOrderDto(Order order)
+        public List<Order> GetByUserId(string userId)
         {
-            return new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                OrderDate = order.OrderDate,
-                TotalAmount = order.TotalAmount,
-                Status = order.Status,
-                ReceiverName = order.ReceiverName,
-                ReceiverPhone = order.ReceiverPhone,
-                ReceiverEmail = order.ReceiverEmail,
-                ShippingProvince = order.ShippingProvince,
-                ShippingDistrict = order.ShippingDistrict,
-                ShippingWard = order.ShippingWard,
-                ShippingDetailAddress = order.ShippingDetailAddress,
-                ShippingNote = order.ShippingNote,
-                PaymentMethod = order.PaymentMethod,
-                VoucherCode = order.VoucherCode,
-                DiscountAmount = order.DiscountAmount,
-                FinalAmount = order.FinalAmount,
-                OrderDetails = order.OrderDetails.Select(d => new OrderDetailDto
-                {
-                    Id = d.Id,
-                    ProductId = d.ProductId,
-                    ProductName = d.Product?.Name ?? "Sản phẩm không tồn tại",
-                    ProductImageUrl = d.Product?.ImageUrl ?? "",
-                    Quantity = d.Quantity,
-                    UnitPrice = d.UnitPrice,
-                    FlavorNotes = d.FlavorNotes,
-                    GrindingOptionId = d.GrindingOptionId,
-                    Weight = d.Weight
-                }).ToList()
-            };
+            return _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
         }
 
-        public async Task<PagedOrderResultDto> GetAllOrdersAdminAsync(int page, string searchTerm, string status)
+        public Order? GetById(int orderId)
         {
-            var query = _context.Orders
+            return _context.Orders
                 .Include(o => o.OrderDetails)
-                .ThenInclude(d => d.Product)
-                .AsQueryable();
+                .ThenInclude(od => od.Product)
+                .FirstOrDefault(o => o.Id == orderId);
+        }
 
-            // Lọc theo trạng thái
-            if (!string.IsNullOrEmpty(status) && status.ToLower() != "all")
+        public List<Order> GetAll()
+        {
+            return _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
+        }
+
+        public List<OrderDetail> GetByOrder(int orderId)
+        {
+            return _context.OrderDetails
+                .Include(od => od.Product)
+                .Where(od => od.OrderId == orderId)
+                .ToList();
+        }
+
+        public void Create(Order order)
+        {
+            // EF Core tự động xử lý lấy Identity ID của Order nạp vào OrderDetails
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+        }
+
+        public void Update(Order order)
+        {
+            _context.Orders.Update(order);
+            _context.SaveChanges();
+        }
+
+        // TÍNH TOÁN CHO ADMIN DASHBOARD
+        public decimal GetExpectedRevenue()
+        {
+            return _context.Orders
+                .Where(o => o.Status != "Chờ thanh toán" && o.Status != "Đã hủy")
+                .Sum(o => (decimal?)o.TotalAmount) ?? 0;
+        }
+
+        public int GetPendingOrdersCount()
+        {
+            return _context.Orders.Count(o => o.Status != "Đã hủy" || o.Status != "Hoàn thành");
+        }
+
+        public List<Order> GetLatestOrders()
+        {
+            return _context.Orders
+                .OrderByDescending(o => o.OrderDate)
+                .Take(5)
+                .ToList();
+        }
+        public List<TopProductDto> GetTopProducts()
+        {
+            return _context.OrderDetails
+                .Include(od => od.Order)
+                .Include(od => od.Product)
+                .Where(od => od.Order!.Status != "Đã hủy")
+                .GroupBy(od => new
+                {
+                    od.ProductId,
+                    ProductName = od.Product!.Name,
+                    ImageUrl = od.Product!.ImageUrl
+                })
+                .Select(g => new TopProductDto
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.ProductName,
+                    ImageUrl = g.Key.ImageUrl,
+                    TotalSold = g.Sum(od => od.Quantity)
+                })
+                .OrderByDescending(p => p.TotalSold)
+                .Take(5)
+                .ToList();
+        }
+
+        public List<RevenueTimelineDto> GetRevenueLast7Days()
+        {
+            var sevenDaysAgo = DateTime.Today.AddDays(-6);
+
+            return _context.Orders
+                .Where(o => o.OrderDate >= sevenDaysAgo && o.Status != "Chờ thanh toán" && o.Status != "Đã hủy")
+                .Select(o => new { o.OrderDate, o.TotalAmount }) // Chỉ lấy các cột cần thiết để tối ưu hiệu năng
+                .AsEnumerable() // Chuyển sang xử lý trên bộ nhớ (Client-side) để tránh lỗi dịch LINQ to SQL
+                .GroupBy(o => o.OrderDate.Date) // Gom nhóm theo ngày cực kỳ an toàn
+                .Select(g => new RevenueTimelineDto
+                {
+                    Date = g.Key.ToString("dd/MM"), // Hàm ToString() chạy mượt mà trên RAM
+                    Amount = g.Sum(o => (decimal?)o.TotalAmount) ?? 0
+                })
+                .OrderBy(r => r.Date)
+                .ToList();
+        }
+
+        // 1. TÍNH DOANH THU THỰC TẾ: Chỉ tính các đơn đã "Hoàn thành" và "Đã thanh toán"
+        public decimal GetActualRevenue()
+        {
+            return _context.Orders
+                .Where(o => o.Status == "Hoàn thành" || o.Status == "Đã thanh toán")
+                .Sum(o => (decimal?)o.FinalAmount) ?? 0;
+        }
+
+        // 2. THỐNG KÊ SỐ LƯỢNG ĐƠN THEO TRẠNG THÁI (Dùng cho biểu đồ tròn)
+        public Dictionary<string, int> GetOrderStatusSummary()
+        {
+            return _context.Orders
+                .GroupBy(o => o.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToDictionary(
+                    x => string.IsNullOrEmpty(x.Status) ? "Không xác định" : x.Status,
+                    x => x.Count
+                );
+        }
+
+        // 3. TỶ LỆ HỦY ĐƠN (%)
+        public decimal GetCancellationRate()
+        {
+            var totalOrders = _context.Orders.Count();
+            if (totalOrders == 0) return 0;
+
+            var cancelledOrders = _context.Orders.Count(o => o.Status == "Đã hủy");
+            return Math.Round(((decimal)cancelledOrders / totalOrders) * 100, 1);
+        }
+
+        // 4. TỶ LỆ HOÀN THÀNH ĐƠN (%)
+        public decimal GetFulfillmentRate()
+        {
+            var totalOrders = _context.Orders.Count();
+            if (totalOrders == 0) return 0;
+
+            var completedOrders = _context.Orders.Count(o => o.Status == "Hoàn thành");
+            return Math.Round(((decimal)completedOrders / totalOrders) * 100, 1);
+        }
+
+        // 5. TỶ LỆ THANH TOÁN ONLINE (%) 
+        // (Giả sử thực thể Order của bạn có trường PaymentMethod. Nếu chưa có, bạn có thể tạm thời hardcode trả về 0 hoặc bỏ hàm này qua)
+        public decimal GetOnlinePaymentRate()
+        {
+            var totalOrders = _context.Orders.Count();
+            if (totalOrders == 0) return 0;
+
+            // Đếm các đơn không phải là Ship COD (Thanh toán khi nhận hàng)
+            // Bạn thay đổi chuỗi "COD" theo đúng DB thực tế của bạn nhé
+            var onlinePaidOrders = _context.Orders.Count(o => o.PaymentMethod != "COD");
+            return Math.Round(((decimal)onlinePaidOrders / totalOrders) * 100, 1);
+        }
+
+        // 1. Tính toán % tăng trưởng doanh thu hôm nay so với hôm qua
+        public decimal GetRevenueGrowthRate()
+        {
+            var today = DateTime.Today;
+            var yesterday = today.AddDays(-1);
+
+            // Doanh thu hôm nay
+            var revenueToday = _context.Orders
+                .Where(o => o.OrderDate >= today && o.Status != "Chờ thanh toán" && o.Status != "Đã hủy")
+                .Sum(o => (decimal?)o.TotalAmount) ?? 0;
+
+            // Doanh thu hôm qua
+            var revenueYesterday = _context.Orders
+                .Where(o => o.OrderDate >= yesterday && o.OrderDate < today && o.Status != "Chờ thanh toán" && o.Status != "Đã hủy")
+                .Sum(o => (decimal?)o.TotalAmount) ?? 0;
+
+            if (revenueYesterday == 0)
+                return revenueToday > 0 ? 100 : 0; // Nếu hôm qua không bán được gì mà hôm nay bán được thì tính là tăng 100%
+
+            // Công thức tính tăng trưởng: ((Hôm nay - Hôm qua) / Hôm qua) * 100
+            return Math.Round(((revenueToday - revenueYesterday) / revenueYesterday) * 100, 1);
+        }
+
+        // 2. Kiểm tra kho xem có sản phẩm nào sắp hết hàng không (Ví dụ số lượng < 10)
+        public bool CheckLowStockStatus()
+        {
+            // Giả sử thực thể Product của bạn có trường 'Stock' hoặc 'Quantity'
+            // Bạn có thể inject ProductContext hoặc dùng trực tiếp qua DbContext nếu có DbSet<Product>
+            return _context.Set<Entities.Product>().Any(p => p.Stock < 10);
+        }
+
+
+        //ADMIN
+        public List<Order> GetAllAdmin(int page, int pageSize, string? searchTerm, string status)
+        {
+            var query = _context.Orders.AsQueryable();
+
+            if (!string.Equals(status, "all", StringComparison.OrdinalIgnoreCase))
             {
                 query = query.Where(o => o.Status == status);
             }
 
-            // Lọc theo từ khóa tìm kiếm (Mã đơn hoặc Tên/SĐT khách hàng)
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                searchTerm = searchTerm.ToLower();
-                query = query.Where(o => o.Id.ToString().Contains(searchTerm) ||
-                                         (o.ReceiverName != null && o.ReceiverName.ToLower().Contains(searchTerm)) ||
-                                         (o.ReceiverPhone != null && o.ReceiverPhone.Contains(searchTerm)));
+                query = query.Where(o =>
+                    o.Id.ToString().Contains(searchTerm) ||
+                    (o.ReceiverName ?? "").Contains(searchTerm));
             }
 
-            var totalItems = await query.CountAsync();
-
-            var orders = await query
-                .OrderByDescending(o => o.OrderDate)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
-
-            return new PagedOrderResultDto
-            {
-                TotalItems = totalItems,
-                Orders = orders.Select(MapToOrderDto).ToList()
-            };
-        }
-
-        public async Task<IEnumerable<OrderDto>> GetMyOrdersAsync(string userId)
-        {
-            var orders = await _context.Orders
+            return query
                 .Include(o => o.OrderDetails)
-                .ThenInclude(d => d.Product)
-                .Where(o => o.UserId == userId)
+                .ThenInclude(od => od.Product)
                 .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
-
-            return orders.Select(MapToOrderDto);
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
         }
 
-        public async Task<OrderDto?> GetOrderByIdAsync(int id)
+        public int CountAllAdmin(string? searchTerm, string status)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(d => d.Product)
-                .FirstOrDefaultAsync(o => o.Id == id);
+            var query = _context.Orders.AsQueryable();
 
-            return order == null ? null : MapToOrderDto(order);
-        }
-
-        public async Task<bool> UpdateOrderStatusAsync(int id, string status)
-        {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null) return false;
-
-            order.Status = status;
-            return await _context.SaveChangesAsync() > 0;
-        }
-
-        public async Task<bool> CancelOrderAsync(int orderId)
-        {
-            var order = await _context.Orders.FindAsync(orderId);
-            if (order == null) return false;
-
-            // Chỉ cho hủy khi đơn ở trạng thái chờ xử lý hoặc chờ thanh toán
-            if (order.Status != "Chờ xử lý" && order.Status != "Chờ thanh toán")
-                return false;
-
-            order.Status = "Đã hủy";
-            return await _context.SaveChangesAsync() > 0;
-        }
-
-        public async Task<OrderDto?> CreateOrderAsync(string userId, CreateOrderDto dto)
-        {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
+            if (!string.Equals(status, "all", StringComparison.OrdinalIgnoreCase))
             {
-                decimal totalAmount = 0;
-                var orderDetails = new List<OrderDetail>();
+                query = query.Where(o => o.Status == status);
+            }
 
-                // 1. Tính tổng tiền đơn hàng dựa trên giá sản phẩm thực tế từ Database
-                foreach (var item in dto.Items)
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(o =>
+                    o.Id.ToString().Contains(searchTerm) ||
+                    (o.ReceiverName ?? "").Contains(searchTerm));
+            }
+
+            return query.Count();
+        }
+
+        // DÀNH CHO SHIPPER
+        public List<Order> GetOrdersForShipper(int page, int pageSize, string? searchTerm)
+        {
+            var query = _context.Orders.Where(o => o.Status == "Đang trung chuyển" || o.Status == "Shipper đã nhận" || o.Status == "Đang giao");
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(o =>
+                    o.Id.ToString().Contains(searchTerm) ||
+                    (o.ReceiverName ?? "").Contains(searchTerm));
+            }
+
+            return query
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+
+        public int CountOrdersForShipper(string? searchTerm)
+        {
+            var query = _context.Orders.Where(o => o.Status == "Đang giao" || o.Status == "Shipper đã nhận" || o.Status == "Đang trung chuyển");
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(o =>
+                    o.Id.ToString().Contains(searchTerm) ||
+                    (o.ReceiverName ?? "").Contains(searchTerm));
+            }
+
+            return query.Count();
+        }
+
+        //Tự động tăng usedCount khi tạo đơn hàng
+        public void CreateWithVoucherUpdate(Order order)
+        {
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                try
                 {
-                    var product = await _context.Products.FindAsync(item.ProductId);
-                    if (product == null) return null;
+                    _context.Orders.Add(order);
+                    _context.SaveChanges();
 
-                    decimal price = product.Price;
-                    totalAmount += price * item.Quantity;
-
-                    orderDetails.Add(new OrderDetail
+                    if (!string.IsNullOrEmpty(order.VoucherCode))
                     {
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity,
-                        UnitPrice = price,
-                        FlavorNotes = item.FlavorNotes,
-                        GrindingOptionId = item.GrindingOptionId,
-                        Weight = item.Weight
-                    });
-                }
+                        var voucher = _context.Set<Entities.Voucher>().FirstOrDefault(v => v.Code == order.VoucherCode);
 
-                // 2. Logic xử lý tính toán và áp dụng Voucher thực tế
-                decimal discount = 0;
-                Voucher? appliedVoucher = null;
-
-                if (!string.IsNullOrEmpty(dto.VoucherCode))
-                {
-                    var now = DateTime.UtcNow;
-
-                    // Tìm voucher trong cơ sở dữ liệu dựa theo Code nhập vào
-                    appliedVoucher = await _context.Vouchers
-                        .FirstOrDefaultAsync(v => v.Code == dto.VoucherCode);
-
-                    if (appliedVoucher != null)
-                    {
-                        // Kiểm tra toàn diện điều kiện hợp lệ của Voucher
-                        bool isValid = appliedVoucher.IsActive &&
-                                       appliedVoucher.StartDate <= now &&
-                                       appliedVoucher.EndDate >= now &&
-                                       appliedVoucher.UsedCount < appliedVoucher.UsageLimit &&
-                                       totalAmount >= appliedVoucher.MinOrderValue &&
-                                       (string.IsNullOrEmpty(appliedVoucher.PaymentMethod) ||
-                                        appliedVoucher.PaymentMethod.Equals(dto.PaymentMethod, StringComparison.OrdinalIgnoreCase));
-
-                        if (isValid)
+                        if (voucher != null)
                         {
-                            // Tính số tiền giảm giá dựa theo DiscountType
-                            if (appliedVoucher.DiscountType.Equals("Percentage", StringComparison.OrdinalIgnoreCase))
+                            if (voucher.UsedCount >= voucher.UsageLimit)
                             {
-                                discount = totalAmount * (appliedVoucher.DiscountValue / 100);
-
-                                // Áp dụng chặn trần giảm giá tối đa (MaxDiscount) nếu cấu hình lớn hơn 0
-                                if (appliedVoucher.MaxDiscount > 0 && discount > appliedVoucher.MaxDiscount)
-                                {
-                                    discount = appliedVoucher.MaxDiscount;
-                                }
-                            }
-                            else if (appliedVoucher.DiscountType.Equals("FixedAmount", StringComparison.OrdinalIgnoreCase) ||
-                                     appliedVoucher.DiscountType.Equals("Freeship", StringComparison.OrdinalIgnoreCase))
-                            {
-                                discount = appliedVoucher.DiscountValue;
+                                throw new Exception("Voucher này đã đạt giới hạn lượt sử dụng");
                             }
 
-                            // Đảm bảo số tiền giảm giá không vượt quá tổng tiền hóa đơn ban đầu
-                            if (discount > totalAmount) discount = totalAmount;
-                        }
-                        else
-                        {
-                            // Nếu không thỏa mãn bất kỳ điều kiện nào, hủy tham chiếu không áp dụng voucher này
-                            appliedVoucher = null;
+                            voucher.UsedCount++;
                         }
                     }
+
+                    _context.SaveChanges();
+                    transaction.Commit();
                 }
-
-                decimal finalAmount = totalAmount - discount;
-
-                // 3. Khởi tạo đối tượng Order thực thể mới
-                var order = new Order
+                catch (Exception ex)
                 {
-                    UserId = userId,
-                    OrderDate = DateTime.Now,
-                    TotalAmount = totalAmount,
-                    Status = "Chờ xử lý",
-                    ReceiverName = dto.ReceiverName,
-                    ReceiverPhone = dto.ReceiverPhone,
-                    ReceiverEmail = dto.ReceiverEmail,
-                    ShippingProvince = dto.ShippingProvince,
-                    ShippingDistrict = dto.ShippingDistrict,
-                    ShippingWard = dto.ShippingWard,
-                    ShippingDetailAddress = dto.ShippingDetailAddress,
-                    ShippingNote = dto.ShippingNote,
-                    PaymentMethod = dto.PaymentMethod,
-                    VoucherCode = appliedVoucher != null ? appliedVoucher.Code : null,
-                    DiscountAmount = discount,
-                    FinalAmount = finalAmount,
-                    OrderDetails = orderDetails
-                };
-
-                await _context.Orders.AddAsync(order);
-
-                // 4. Nếu áp dụng Voucher thành công -> Tiến hành tăng biến đếm số lần sử dụng của Voucher
-                if (appliedVoucher != null)
-                {
-                    appliedVoucher.UsedCount += 1;
-                    _context.Vouchers.Update(appliedVoucher);
+                    transaction.Rollback();
+                    throw ex;
                 }
-
-                // Lưu tất cả thay đổi đồng bộ xuống DB
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return await GetOrderByIdAsync(order.Id);
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
             }
         }
 
-        public async Task<PagedOrderResultDto> GetShipperOrdersAsync(int page, string searchTerm)
+        //Tự động hoàn lại voucher khi hủy đơn hàng
+        public void CancelOrderWithVoucherRelease(int orderId)
         {
-            var query = _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(d => d.Product)
-                .Where(o => o.Status == "Đang trung chuyển" || o.Status == "Shipper đã nhận" || o.Status == "Đang giao")
-                .AsQueryable();
+            var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
+            if (order == null) throw new Exception("Không tìm thấy đơn hàng");
+            if (order.Status == "Đã hủy") throw new Exception("Đơn hàng này đã được hủy từ trước");
 
-            if (!string.IsNullOrEmpty(searchTerm))
+            using (var transaction = _context.Database.BeginTransaction())
             {
-                searchTerm = searchTerm.ToLower();
-                query = query.Where(o => o.Id.ToString().Contains(searchTerm) ||
-                                         (o.ReceiverName != null && o.ReceiverName.ToLower().Contains(searchTerm)));
+                try
+                {
+                    order.Status = "Đã hủy";
+
+                    if (!string.IsNullOrEmpty(order.VoucherCode))
+                    {
+                        var voucher = _context.Set<Entities.Voucher>().FirstOrDefault(v => v.Code == order.VoucherCode);
+                        if (voucher != null && voucher.UsedCount > 0)
+                        {
+                            voucher.UsedCount--;
+                        }
+                    }
+
+                    _context.SaveChanges();
+                    transaction.Commit();
+                }
+                catch (Exception ex) { transaction.Rollback(); throw ex; }
             }
-
-            var totalItems = await query.CountAsync();
-            var orders = await query
-                .OrderByDescending(o => o.OrderDate)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
-
-            return new PagedOrderResultDto
-            {
-                TotalItems = totalItems,
-                Orders = orders.Select(MapToOrderDto).ToList()
-            };
         }
-        public async Task<bool> UpdateOrderAsync(int id, UpdateOrderDto dto)
-        {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null) return false;
 
-            // Kiểm tra logic trạng thái (không cho sửa nếu đã giao/hoàn thành)
-            var lockedStatuses = new[] { "Đã xác nhận", "Đang giao", "Hoàn thành", "Đã thanh toán" };
-            if (lockedStatuses.Contains(order.Status)) return false;
-
-            // Cập nhật thông tin
-            order.ReceiverName = dto.ReceiverName ?? order.ReceiverName;
-            order.ReceiverPhone = dto.ReceiverPhone ?? order.ReceiverPhone;
-            order.ShippingProvince = dto.ShippingProvince ?? order.ShippingProvince;
-            order.ShippingDistrict = dto.ShippingDistrict ?? order.ShippingDistrict;
-            order.ShippingWard = dto.ShippingWard ?? order.ShippingWard;
-            order.ShippingDetailAddress = dto.ShippingDetailAddress ?? order.ShippingDetailAddress;
-            order.ShippingNote = dto.ShippingNote ?? order.ShippingNote;
-            order.PaymentMethod = dto.PaymentMethod ?? order.PaymentMethod;
-
-            _context.Orders.Update(order);
-            return await _context.SaveChangesAsync() > 0;
-        }
     }
 }

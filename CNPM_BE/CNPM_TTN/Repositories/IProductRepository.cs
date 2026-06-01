@@ -14,5 +14,7 @@ namespace CNPM_TTN.Repositories
         // Hàm dành cho User
         Task<IEnumerable<ProductUserResponse>> GetAllProductsForUserAsync(int? categoryId = null);
         Task<ProductUserResponse?> GetProductDetailForUserAsync(int id);
+
+       
     }
 }

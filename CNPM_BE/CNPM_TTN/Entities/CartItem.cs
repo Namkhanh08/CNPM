@@ -22,14 +22,14 @@ namespace CNPM_TTN.Entities
 
         public string? Weight { get; set; }
 
-        // Ràng buộc chính xác khóa ngoại trỏ về bảng Carts
-        [ForeignKey("CartId")]
-        public virtual Cart Cart { get; set; } = null!;
+      
+      
 
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; } = null!;
 
         [ForeignKey("GrindingOptionId")]
         public virtual GrindingOption? GrindingOption { get; set; }
+        
     }
 }

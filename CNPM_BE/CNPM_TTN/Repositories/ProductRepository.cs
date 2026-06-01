@@ -244,5 +244,41 @@ namespace CNPM_TTN.Repositories
                     }).FirstOrDefault()
                 }).FirstOrDefaultAsync();
         }
+        public decimal GetProductPrice(long productId)
+        {
+            return _context.Products
+                .Where(p => p.Id == productId)
+                .Select(p => p.Price)
+                .FirstOrDefault();
+        }
+        public ProductDetail? FindProductById(int id)
+        {
+            return _context.ProductDetails
+                .Include(pd => pd.Product)
+                .Include(pd => pd.GrindingOptions)
+                .AsNoTracking()
+                .FirstOrDefault(pd => pd.ProductId == id);
+        }
+
+        public Product? GetById(int productId)
+        {
+            return _context.Products.Find(productId);
+        }
+
+        public void Update(Product product)
+        {
+            var existingProduct = _context.Products.Find(product.Id);
+            if (existingProduct != null)
+            {
+                existingProduct.Name = product.Name;
+                existingProduct.Description = product.Description;
+                existingProduct.Price = product.Price;
+                existingProduct.Stock = product.Stock;
+                existingProduct.ImageUrl = product.ImageUrl;
+                existingProduct.CategoryId = product.CategoryId;
+
+                _context.SaveChanges(); // Lưu thay đổi vào SQL Server
+            }
+        }
     }
 }

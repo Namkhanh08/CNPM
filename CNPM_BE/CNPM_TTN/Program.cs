@@ -45,17 +45,35 @@ builder.Services.AddAuthentication(options => {
 });
 
 // Trong Program.
-builder.Services.AddScoped<ICartRepository, CartRepository>();
-builder.Services.AddScoped<ICartService, CartService>();
-builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
-builder.Services.AddScoped<IVoucherService, VoucherService>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+//builder.Services.AddScoped<ICartRepository, CartRepository>();
+//builder.Services.AddScoped<ICartService, CartService>();
+//builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
+//builder.Services.AddScoped<IVoucherService, VoucherService>();
+//builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+builder.Services.AddScoped<CartRepository>();
+builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<VoucherRepository>();
+builder.Services.AddScoped<VoucherService>();
+builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<ProductRepository>();
+builder.Services.AddScoped<SubscriptionRepository>();
+builder.Services.AddScoped<SubscriptionService>();
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddControllers();
+
+builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler =
+                System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        }); 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

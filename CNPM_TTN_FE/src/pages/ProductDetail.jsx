@@ -4,9 +4,10 @@ import useStore from '../store/useStore';
 import API from '../services/api.js';
 
 import { LuPercent } from "react-icons/lu";
-import { BsFillTicketPerforatedFill } from "react-icons/bs";
+import { BsFillTicketPerforatedFill, BsStarFill, BsStarHalf  } from "react-icons/bs";
 import { MdOutlineLocalShipping } from "react-icons/md";
 import { IoBagCheck } from "react-icons/io5";
+import { FiShoppingCart } from "react-icons/fi";
 
 // Giữ lại duy nhất 1 ảnh làm fallback dự phòng lỗi ảnh trên server
 import defaultImage from '../assets/img/section2/image1.png';
@@ -132,7 +133,7 @@ export default function ProductDetail() {
     return `http://localhost:5126${imgSrc}`;
   };
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (isBuyNow = false) => {
     if (!grindType) {
       alert("Vui lòng chọn kiểu xay trước khi thêm vào giỏ hàng.");
       return;
@@ -146,7 +147,12 @@ export default function ProductDetail() {
       console.log("Gửi ID kiểu xay lên Store:", targetGrindId);
 
       await addToCart(product, quantity, targetGrindId, flavorNotes, weights);
-      alert("Sản phẩm đã được thêm vào giỏ hàng!");
+      if (isBuyNow) {
+        navigate('/cart');
+      } else {
+        alert("Sản phẩm đã được thêm vào giỏ hàng!");
+      }
+
     } catch (err) {
       console.error("Lỗi thêm vào giỏ hàng: ", err);
       alert("Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
@@ -154,190 +160,308 @@ export default function ProductDetail() {
   };
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><span className="text-primary font-nunito text-lg">Đang tải sản phẩm...</span></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 font-nunito">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-accent-1 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <span className="text-primary text-lg font-bold animate-pulse">Đang rang xay sản phẩm...</span>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500 font-nunito">{error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 font-nunito">
+        <div className="bg-white p-6 rounded-xl shadow-sm text-center max-w-md border border-gray-100">
+          <p className="text-red-500 font-bold text-lg mb-2">Đã xảy ra lỗi</p>
+          <p className="text-primary/60 text-sm mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold transition-all hover:bg-primary/90">Thử lại</button>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500 font-nunito">Sản phẩm không tồn tại.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500 font-nunito bg-gray-50">
+        Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
-        <button onClick={() => navigate('/shop')} className="text-primary font-nunito font-bold mb-8 hover:text-accent-1 flex items-center gap-2">
-          ← Quay lại cửa hàng
-        </button>
+    <div className="bg-neutral-50 min-h-screen py-10 antialiased selection:bg-accent-1/20 font-nunito">
+    <div className="container mx-auto px-4 max-w-7xl">
+      
+      {/* Breadcrumb điều hướng */}
+      <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-primary/50 mb-6 select-none uppercase">
+        <span className="hover:text-accent-1 cursor-pointer transition-colors" onClick={() => navigate('/')}>REVO Coffee</span>
+        <span className="text-primary/30">/</span>
+        <span className="hover:text-accent-1 cursor-pointer transition-colors" onClick={() => navigate('/shop')}>Cửa hàng</span>
+        <span className="text-primary/30">/</span>
+        <span className="text-primary/80 truncate max-w-[180px]">{product.name}</span>
+      </div>
 
-        <div className="bg-white rounded-[40px] p-8 lg:p-12 shadow-2xl flex flex-col lg:flex-row gap-12">
+  {/* Khối nội dung chính (Giao diện mua hàng) */}
+  <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-10 flex flex-col lg:flex-row gap-12">
+         
+         
           {/* Product Image Gallery */}
-          <div className="w-full lg:w-1/2 flex items-center justify-center bg-pinky-gray rounded-3xl p-8 relative">
-            <div className="absolute inset-0 bg-accent-1/5 opacity-50 rounded-3xl"></div>
+                   <div className="w-full lg:w-[42%] flex flex-col gap-4">
+
+                   <div className="w-full aspect-square bg-neutral-50 rounded-xl p-8 flex items-center justify-center border border-gray-100/80 overflow-hidden relative group">
             <img 
               src={renderProductImage(product.image)} 
               alt={product.name} 
               className="max-h-[500px] object-contain drop-shadow-2xl relative z-10 hover:scale-110 transition-all duration-300" 
               onError={(e) => { e.target.src = defaultImage; }}
             />
-          </div>
-
-          {/* Product Details Form */}
-          <div className="w-full lg:w-1/2 flex flex-col">
-            <h1 className="font-montserrat font-black text-4xl lg:text-5xl text-primary mb-2 text-center">{product.name}</h1>
-            <p className="font-nunito text-primary/70 mb-6 text-lg text-center">{product.desc}</p>
-            <div className="font-montserrat font-black text-3xl text-accent-1 mb-8 text-center">
-              {product.price ? Number(product.price).toLocaleString('vi-VN') : '0'}đ
-            </div>
-
-            {/* Spec Table */}
-            <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8 font-nunito text-sm border-t border-b border-accent-1 py-6 text-center">
-              <div><span className="text-primary/60 block mb-1">Giống cà phê</span><span className="font-bold text-primary">{CategoryMap[product.type] || product.type}</span></div>
-              <div><span className="text-primary/60 block mb-1">Vùng trồng</span><span className="font-bold text-primary">{product.region}</span></div>
-              <div><span className="text-primary/60 block mb-1">Phương pháp sơ chế</span><span className="font-bold text-primary">{product.process}</span></div>
-              <div><span className="text-primary/60 block mb-1">Mức độ rang</span><span className="font-bold text-primary">{product.roast}</span></div>
-              <div><span className="text-primary/60 block mb-1">Độ cao</span><span className="font-bold text-primary">{product.height}</span></div>
-              <div><span className="text-primary/60 block mb-1">Trọng lượng</span><span className="font-bold text-primary">{product.weight}</span></div>
-              <div className="col-span-2"><span className="text-primary/60 block mb-1">Hương vị (Flavor Notes)</span><span className="font-bold text-primary">{product.flavorNotes}</span></div>
-            </div>
-
-            {/* Flavor Notes Type Selection */}
-            <div className="mb-8 border-b border-accent-1 pb-10">
-              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chọn hương vị</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {flavorOptions.map((flavor, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setFlavorNotes(flavor)}
-                    className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${flavorNotes === flavor
-                      ? 'border-primary bg-primary text-white shadow-md'
-                      : 'border-gray-200 text-primary/70 hover:border-primary/50'
-                    }`}
-                  >
-                    {flavor}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Weight Type Selection */}
-            <div className="mb-8">
-              <h3 className="font-montserrat font-bold text-primary mb-4 uppercase text-center">Chọn khối lượng</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {weightOptions.map((weight, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setWeight(weight)}
-                    className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${weights === weight
-                      ? 'border-primary bg-primary text-white shadow-md'
-                      : 'border-gray-200 text-primary/70 hover:border-primary/50'
-                    }`}
-                  >
-                    {weight}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* GrindType Selection */}
-            <div className='mb-8 border-t border-accent-1 pt-6'>
-              <h3 className='font-montserrat font-bold text-primary mb-4 uppercase text-center'>Chọn kiểu xay</h3>
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
-                {grindOptions.map((grind, idx) => {
-                  const currentGrindId = grind.id ?? grind.Id ?? idx;
-                  const selectedGrindId = grindType?.id ?? grindType?.Id;
-                  return (
-                    <button
-                      key={currentGrindId}
-                      type="button"
-                      onClick={() => setGrindType(grind)}
-                      className={`border-2 py-3 px-4 rounded-xl font-nunito font-semibold text-sm transition-all text-center ${
-                        selectedGrindId === currentGrindId
-                          ? 'border-primary bg-primary text-white shadow-md'
-                          : 'border-gray-200 text-primary/70 hover:border-primary/50'
-                      }`}
-                    >
-                      {grind.name || grind.Name || 'Nguyên hạt'}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
             
-            {/* Vouchers */}
-            {publicVouchers.length > 0 && (
-              <div className="mb-8 border-t border-accent-1 pt-4">
-                <h3 className="font-montserrat font-bold text-primary mb-4 text-center uppercase flex justify-center items-center gap-2">
-                  <LuPercent size={20}/> Ưu đãi hôm nay
-                </h3>
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {publicVouchers.map((voucher, index) => (
-                    <div
-                      key={voucher.id || index}
-                      className="min-w-[180px] text-primary bg-accent-1/20 rounded-2xl p-2 shadow-lg shrink-0 text-center"
-                    >
-                      <div className="text-sm opacity-90 mt-1 flex gap-2 items-center justify-center">
-                        {voucher.discountType === 'percent' && (
-                          <>
-                            <BsFillTicketPerforatedFill size={20}/> Giảm {voucher.discountPreview}% tối đa!
-                          </>
-                        )}
-                        {voucher.discountType === 'fixed' && (
-                          <>
-                            <BsFillTicketPerforatedFill size={20}/>{voucher.title}
-                          </>
-                        )}
-                        {voucher.discountType === 'shipping' && (
-                          <>
-                            <MdOutlineLocalShipping size={20}/> Miễn phí vận chuyển !!!
-                          </>
-                        )}
+          </div>
+
+           {/* CỘT PHẢI: Thông tin biến thể & Hành động */}
+           <div className="w-full lg:w-[58%] flex flex-col text-left justify-between">
+            <div>
+              {/* Tag thương hiệu nhỏ */}
+              <div className="mb-2">
+                <span className="text-[10px] font-bold tracking-widest text-accent-1 uppercase bg-accent-1/5 px-2.5 py-1 rounded-full">Premium Coffee</span>
+              </div>
+              
+              {/* Tiêu đề sản phẩm */}
+              <h1 className="font-extrabold text-2xl lg:text-3xl text-primary leading-tight mb-4 tracking-tight">
+                {product.name}
+              </h1>
+
+              {/* Banner hiển thị giá độc quyền */}
+              <div className="bg-gradient-to-r from-neutral-50 to-neutral-50/30 rounded-xl p-5 border border-neutral-100 mb-6 flex items-baseline gap-4">
+                <span className="font-black text-3xl lg:text-4xl text-accent-1 tracking-tight">
+                  {product.price?.toLocaleString('vi-VN')}đ
+                </span>
+                <span className="text-sm text-primary/30 line-through">{(product.price * 1.2).toLocaleString('vi-VN')}đ</span>
+                <span className="bg-red-50 text-red-500 text-xs px-2 py-0.5 rounded-md font-bold border border-red-100">-20%</span>
+              </div>
+
+              {/* Khối Voucher giảm giá */}
+              {publicVouchers.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm py-2 mb-4 border-b border-gray-50 pb-4">
+                  <span className="w-28 text-primary/40 font-bold uppercase tracking-wider text-xs shrink-0">Ưu đãi độc quyền</span>
+                  <div className="flex flex-wrap gap-2">
+                    {publicVouchers.map((voucher) => (
+                      <div 
+                        key={voucher.id} 
+                        className="inline-flex items-center gap-1.5 bg-accent-1/[0.03] border border-dashed border-accent-1/60 text-accent-1 px-3 py-1.5 rounded-lg font-bold text-xs transition-colors hover:bg-accent-1/[0.06]"
+                      >
+                        <BsFillTicketPerforatedFill size={13} className="opacity-80"/>
+                        {voucher.discountType === 'percent' && `Giảm ${voucher.discountPreview}%`}
+                        {voucher.discountType === 'fixed' && `${voucher.title}`}
+                        {voucher.discountType === 'shipping' && `Freeship`}
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* KHU VỰC CHỌN BIẾN THỂ PHÂN LOẠI */}
+              <div className="flex flex-col gap-5 py-4 mb-8 text-sm">
+                
+                {/* Hương vị */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <span className="w-28 text-primary/50 font-bold shrink-0">Hương vị</span>
+                  <div className="flex flex-wrap gap-2">
+                    {flavorOptions.map((flavor, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setFlavorNotes(flavor)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${
+                          flavorNotes === flavor
+                            ? 'border-primary text-white bg-primary shadow-sm'
+                            : 'border-gray-200 text-primary/70 bg-white hover:border-primary/40 hover:text-primary'
+                        }`}
+                      >
+                        {flavor}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Khối lượng */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <span className="w-28 text-primary/50 font-bold shrink-0">Khối lượng</span>
+                  <div className="flex flex-wrap gap-2">
+                    {weightOptions.map((weight, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setWeight(weight)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${
+                          weights === weight
+                            ? 'border-primary text-white bg-primary shadow-sm'
+                            : 'border-gray-200 text-primary/70 bg-white hover:border-primary/40 hover:text-primary'
+                        }`}
+                      >
+                        {weight}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Kiểu xay */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <span className="w-28 text-primary/50 font-bold shrink-0">Kiểu xay</span>
+                  <div className="flex flex-wrap gap-2">
+                    {grindOptions.map((grind) => (
+                      <button
+                        key={grind.id}
+                        onClick={() => setGrindType(grind)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide border transition-all duration-200 ${
+                          grindType?.id === grind.id
+                            ? 'border-primary text-white bg-primary shadow-sm'
+                            : 'border-gray-200 text-primary/70 bg-white hover:border-primary/40 hover:text-primary'
+                        }`}
+                      >
+                        {grind.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tăng giảm số lượng */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+                  <span className="w-28 text-primary/50 font-bold shrink-0">Số lượng</span>
+                  <div className="flex items-center">
+                    <div className="flex items-center border border-gray-200 rounded-lg bg-neutral-50/50 h-9 p-0.5 overflow-hidden">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="w-8 h-full flex items-center justify-center text-primary/60 hover:bg-white hover:shadow-xs rounded font-extrabold text-base transition-all"
+                      >-</button>
+                      <span className="font-extrabold text-sm w-10 text-center text-primary">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="w-8 h-full flex items-center justify-center text-primary/60 hover:bg-white hover:shadow-xs rounded font-extrabold text-base transition-all"
+                      >+</button>
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* CẶP NÚT CTA HÀNH ĐỘNG */}
+            <div>
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                {/* Thêm Vào Giỏ Hàng */}
+                <button
+                  onClick={() => handleAddToCart(false)}
+                  className="flex items-center justify-center gap-2.5 px-6 h-13 rounded-xl border-2 border-primary text-primary bg-transparent font-bold text-sm hover:bg-primary hover:text-white transform active:scale-95 transition-all duration-200 sm:flex-1"
+                >
+                  <FiShoppingCart size={18} />
+                  Thêm Vào Giỏ Hàng
+                </button>
+
+                {/* Mua Ngay */}
+                <button
+                  onClick={() => handleAddToCart(true)}
+                  className="flex items-center justify-center px-8 h-13 rounded-xl bg-accent-1 text-white font-bold text-sm hover:bg-accent-1/90 shadow-md shadow-accent-1/10 transform active:scale-95 transition-all duration-200 sm:w-56"
+                >
+                  Mua Ngay
+                </button>
+              </div>
+
+              {/* Chân cam kết thương hiệu dạng tối giản */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-5 border-t border-gray-100 text-[11px] font-bold text-primary/40 uppercase tracking-wider">
+                <div className="flex items-center gap-2"><span className="text-accent-1 text-sm">✓</span> 7 Ngày Miễn Phí Trả Hàng</div>
+                <div className="flex items-center gap-2"><span className="text-accent-1 text-sm">✓</span> Hàng Chính Hãng 100%</div>
+                <div className="flex items-center gap-2"><span className="text-accent-1 text-sm">✓</span> Giao Toàn Quốc Miễn Phí</div>
+                <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/subscription')}>
+                  <span className="text-accent-1 text-sm group-hover:scale-110 transition-transform">✓</span> 
+                  <span className="group-hover:text-accent-1 transition-colors">Đăng ký định kỳ tiết kiệm 15%</span>
                 </div>
               </div>
-            )}
-
-            {/* Quantity and Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-              <div className="flex items-center border border-gray-200 rounded-full h-14 bg-white px-2 w-full sm:w-32 justify-between">
-                <button
-                  type="button"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-primary/50 hover:bg-accent-1 hover:text-white font-bold text-xl"
-                >-</button>
-                <span className="font-montserrat font-bold text-lg w-8 text-center">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-primary/50 hover:bg-accent-1 hover:text-white font-bold text-xl"
-                >+</button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="flex-1 bg-primary text-white font-nunito font-bold text-lg h-14 rounded-full hover:bg-accent-1 shadow-lg hover:shadow-xl transform hover:-translate-y-1 uppercase tracking-wider hover:scale-105 transition-all duration-300"
-              >
-                Thêm vào giỏ hàng
-              </button>
             </div>
 
-            {/* Footer Links */}
-            <div className="mt-6 text-center flex items-center justify-center">
-              <button type="button" onClick={() => navigate('/subscription')} className="text-primary/80 font-nunito font-bold hover:underline flex items-center gap-2">
-                <IoBagCheck size={20}/> Thanh toán khi giao hàng - Hoàn tiền tức thì
-              </button>
+          </div>
+        </div>
+
+        {/* THÔNG TIN CHI TIẾT VÀ MÔ TẢ PHÍA DƯỚI */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-10 mt-8 text-left">
+          
+          {/* Section Chi tiết */}
+          <h2 className="font-extrabold text-base text-primary uppercase tracking-wider mb-6 flex items-center gap-2">
+            <span className="w-1 h-5 bg-primary rounded-full"></span> Chi tiết sản phẩm
+          </h2>
+          
+          <div className="max-w-4xl divide-y divide-gray-100 border-b border-gray-100 mb-10">
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Danh Mục</span>
+              <span className="text-accent-1 font-extrabold hover:underline cursor-pointer transition-all">
+                Cà phê &gt; {CategoryMap[product.type] || product.type}
+              </span>
+            </div>
+            
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Vùng trồng (Region)</span>
+              <span className="text-primary font-bold">{product.region || "Đang cập nhật"}</span>
+            </div>
+            
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Phương pháp sơ chế</span>
+              <span className="text-primary/80 font-medium">{product.process || "Đang cập nhật"}</span>
+            </div>
+            
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Mức độ rang (Roast)</span>
+              <span className="text-primary/80 font-medium">{product.roast || "Đang cập nhật"}</span>
+            </div>
+            
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Độ cao nông trại</span>
+              <span className="text-primary/80 font-medium">{product.height || "Đang cập nhật"}</span>
             </div>
 
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Hương vị mặc định</span>
+              <span className="text-primary font-bold text-neutral-800">{product.flavorNotes || "Đang cập nhật"}</span>
+            </div>
+
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Trọng lượng đóng bao</span>
+              <span className="text-primary/80 font-medium">{product.weight || "250g"}</span>
+            </div>
+            
+            <div className="flex py-3.5 items-center text-sm">
+              <span className="w-52 text-primary/40 font-bold">Hạn sử dụng</span>
+              <span className="text-primary font-bold text-neutral-700">12 tháng kể từ ngày rang đóng gói</span>
+            </div>
+          </div>
+
+          {/* Section Mô tả */}
+          <h2 className="font-extrabold text-base text-primary uppercase tracking-wider mb-6 flex items-center gap-2">
+            <span className="w-1 h-5 bg-primary rounded-full"></span> Mô tả sản phẩm
+          </h2>
+          
+          <div className="text-primary/80 text-sm leading-relaxed whitespace-pre-line max-w-4xl space-y-4">
+            <p className="font-extrabold text-primary text-base flex items-center gap-1.5 text-neutral-800">
+              <span>☕</span> THƯỞNG THỨC HƯƠNG VỊ NGUYÊN BẢN TỪ HỆ THỐNG NÔNG SẢN CHẤT LƯỢNG CAO
+            </p>
+            
+            <p className="text-neutral-600 font-bold">{product.desc || "Thông tin mô tả sản phẩm hiện đang được cập nhật thêm nội dung chi tiết từ nhà rang..."}</p>
+            
+            {/* Box mẹo vặt nhỏ nhắn tinh tế */}
+            <div className="bg-neutral-50 p-5 rounded-xl border border-neutral-200/60 mt-8 text-xs text-primary/70 relative overflow-hidden">
+              <div className="absolute top-0 left-0 h-full w-1 bg-accent-1"></div>
+              <p className="font-extrabold text-primary mb-1.5 flex items-center gap-1 text-neutral-800">
+                <span>💡</span> Mẹo nhỏ bảo quản từ REVO:
+              </p>
+              <ul className="list-disc pl-4 space-y-1 text-neutral-500 font-bold">
+                <li>Giữ kín miệng túi sau mỗi lần sử dụng bằng nẹp hoặc khóa zip tích hợp sẵn trên bao bì.</li>
+                <li>Để sản phẩm ở không gian khô ráo, thoáng mát, tránh ánh nắng và các nguồn mùi tạp chất mạnh để giữ trọn vẹn hương vị mộc bản.</li>
+              </ul>
+            </div>
           </div>
 
         </div>
+
       </div>
     </div>
   );

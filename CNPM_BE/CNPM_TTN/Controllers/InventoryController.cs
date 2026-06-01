@@ -39,10 +39,16 @@ namespace CNPM_TTN.Controllers
 
         [HttpGet("receipts")]
         [Authorize(Roles = "1,2,3")]
-        public async Task<IActionResult> GetInventoryReceipts()
+        public async Task<IActionResult> GetInventoryReceipts(int page = 1,int pageSize = 10,string? search = "",string? status = "all")
         {
-            var receipts = await _inventoryRepo.GetInventoryReceiptsAsync();
-            return Ok(new { data = receipts });
+            var result = await _inventoryRepo.GetInventoryReceiptsAsync(
+                page,
+                pageSize,
+                search,
+                status
+            );
+
+            return Ok(result);
         }
 
 
@@ -67,11 +73,18 @@ namespace CNPM_TTN.Controllers
 
         [HttpGet("logs")]
         [Authorize(Roles = "1,3")]
-        public async Task<IActionResult> GetLogs()
+        public async Task<IActionResult> GetLogs(int page = 1,int pageSize = 10,string? search = "",string? action = "all")
         {
-            var logs = await _inventoryRepo.GetRawMaterialLogsAsync();
-            return Ok(new { data = logs });
+            var result = await _inventoryRepo.GetRawMaterialLogsAsync(
+                page,
+                pageSize,
+                search,
+                action
+            );
+
+            return Ok(result);
         }
+
 
         [HttpPost("create-batch-detail")]
         [Authorize(Roles = "1,3")]
@@ -97,11 +110,18 @@ namespace CNPM_TTN.Controllers
 
         [HttpGet("batches")]
         [Authorize(Roles = "1,2,3")]
-        public async Task<IActionResult> GetBatches()
+        public async Task<IActionResult> GetBatches(int page = 1,int pageSize = 10,string? search = "",string? status = "all")
         {
-            var batches = await _inventoryRepo.GetRoastingBatchesAsync();
-            return Ok(new { data = batches });
+            var result = await _inventoryRepo.GetRoastingBatchesAsync(
+                page,
+                pageSize,
+                search,
+                status
+            );
+
+            return Ok(result);
         }
+
 
         [HttpGet("total-stock")]
         [Authorize(Roles = "1,2,3")]
@@ -123,6 +143,42 @@ namespace CNPM_TTN.Controllers
 
             if (!result.Success) return BadRequest(result.Message); 
             return Ok(new { message = result.Message });
+        }
+
+
+
+        [HttpPost("create-raw-material")]
+        [Authorize(Roles = "1,3")]
+        public async Task<IActionResult> CreateRawMaterial([FromBody] CreateRawMaterialRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return BadRequest("Tên nguyên liệu không được để trống");
+
+            var result = await _inventoryRepo.CreateRawMaterialAsync(
+                request.Name,
+                request.Unit,
+                request.CategoryId
+            );
+
+            if (!result)
+                return BadRequest("Nguyên liệu đã tồn tại hoặc tạo thất bại");
+
+            return Ok(new
+            {
+                message = "Tạo nguyên liệu thô thành công"
+            });
+        }
+
+        [HttpGet("available-receipts")]
+        [Authorize(Roles = "1,2,3")]
+        public async Task<IActionResult> GetAvailableReceipts()
+        {
+            var receipts = await _inventoryRepo.GetAvailableReceiptsAsync();
+
+            return Ok(new
+            {
+                data = receipts
+            });
         }
     }
 

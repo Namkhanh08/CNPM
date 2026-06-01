@@ -1,200 +1,178 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization; 
 using System.Linq;
-using System.Threading.Tasks;
 using CNPM_TTN.Dtos;
 using CNPM_TTN.Entities;
 using CNPM_TTN.Repositories;
 
 namespace CNPM_TTN.Services
 {
-    public class VoucherService : IVoucherService
+    public class VoucherService
     {
-        private readonly IVoucherRepository _repository;
+        private readonly VoucherRepository _voucherRepo;
+        private readonly ProductRepository _productRepo; // Bạn cần tạo hoặc đã có ProductRepo tương tự
 
-        public VoucherService(IVoucherRepository repository)
+        public VoucherService(VoucherRepository voucherRepo, ProductRepository productRepo)
         {
-            _repository = repository;
+            _voucherRepo = voucherRepo;
+            _productRepo = productRepo;
         }
 
-        public async Task<object> GetVouchersAdminAsync(int page, string searchTerm, string status)
+        public VoucherAdminResponse GetVouchersAdminPaged(int page, string searchTerm, string status)
         {
-            var vouchers = await _repository.GetAllAsync();
-            
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                vouchers = vouchers.Where(v => v.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                              v.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
-            }
-
-           
-            if (status.ToLower() == "active") vouchers = vouchers.Where(v => v.IsActive);
-            else if (status.ToLower() == "inactive") vouchers = vouchers.Where(v => !v.IsActive);
-
-            var activeCount = vouchers.Count(v => v.IsActive);
-            var usedTodayCount = vouchers.Count(v => v.StartDate.Date == DateTime.UtcNow.Date && v.UsedCount > 0);
-            var freeshipCount = vouchers.Count(v => v.DiscountType.Equals("Freeship", StringComparison.OrdinalIgnoreCase));
-
-            
             int pageSize = 10;
-            var totalItems = vouchers.Count();
-            var pagedData = vouchers.Skip((page - 1) * pageSize).Take(pageSize);
 
-            var mappedData = pagedData.Select(v => MapToDto(v)).ToList();
+            var items = _voucherRepo.FindAllAdminPaged(page, pageSize, searchTerm, status);
+            int totalItems = _voucherRepo.CountAllAdmin(searchTerm, status);
 
-            return new
+            var pagedData = new PageResponse<Voucher>(items, totalItems, page, pageSize);
+
+            long active = _voucherRepo.CountActive();
+            long freeship = _voucherRepo.CountFreeship();
+            long totalUsed = _voucherRepo.CountTotalUsed();
+
+            return new VoucherAdminResponse(pagedData, active, totalUsed, freeship);
+        }
+
+        public VoucherDashboardResponse GetVoucherDashboardData()
+        {
+            var vouchers = _voucherRepo.FindAllManual();
+            long active = _voucherRepo.CountActive();
+            long freeship = _voucherRepo.CountFreeship();
+            long totalUsed = _voucherRepo.CountTotalUsed();
+
+            return new VoucherDashboardResponse(vouchers, active, totalUsed, freeship);
+        }
+
+        public List<EligibleVoucherResponse> GetEligibleVouchers(VoucherEligibilityRequest request)
+        {
+            decimal subtotal = 0;
+            foreach (var item in request.Items)
             {
-                voucher = mappedData,
-                totalItems,
-                activeCount,
-                usedTodayCount,
-                freeshipCount
+                decimal productPrice = _productRepo.GetProductPrice(item.ProductId);
+                subtotal += productPrice * item.Quantity;
+            }
+
+            var vouchers = _voucherRepo.FindEligibleVouchers(subtotal, request.PaymentMethod);
+            decimal finalSubtotal = subtotal;
+
+            return vouchers.Select(v => {
+                var dto = new EligibleVoucherResponse
+                {
+                    Id = v.Id,
+                    Code = v.Code,
+                    Title = v.Title,
+                    DiscountType = v.DiscountType
+                };
+
+                decimal preview = 0;
+                if (v.DiscountType == "percent")
+                {
+                    preview = finalSubtotal * (v.DiscountValue / 100);
+                    if (v.MaxDiscount.HasValue && preview > v.MaxDiscount.Value)
+                    {
+                        preview = v.MaxDiscount.Value;
+                    }
+                }
+                else if (v.DiscountType == "fixed" || v.DiscountType == "shipping")
+                {
+                    preview = v.DiscountValue;
+                }
+
+                dto.DiscountPreview = preview;
+                return dto;
+            }).ToList();
+        }
+
+        public List<EligibleVoucherResponse> GetPublicVouchers()
+        {
+            var vouchers = _voucherRepo.FindPublicVouchers();
+            return vouchers.Select(v => new EligibleVoucherResponse
+            {
+                Id = v.Id,
+                Code = v.Code,
+                Title = v.Title,
+                DiscountType = v.DiscountType,
+                DiscountPreview = v.DiscountValue
+            }).ToList();
+        }
+
+        public void CreateVoucher(CreateVoucherRequest request)
+        {
+            var v = new Voucher
+            {
+                Code = request.Code,
+                Title = request.Title,
+                DiscountType = request.DiscountType,
+                DiscountValue = request.DiscountValue,
+                MaxDiscount = request.MaxDiscount,
+                MinOrderValue = request.MinOrderValue,
+                UsageLimit = request.UsageLimit,
+                PaymentMethod = request.PaymentMethod,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                IsActive = request.IsActive
             };
+            _voucherRepo.CreateVoucher(v);
         }
 
-        public async Task<IEnumerable<VoucherDto>> GetAvailableVouchersAsync(CheckAvailableVoucherDto dto)
+        public void UpdateVoucher(int id, CreateVoucherRequest request)
         {
-            var now = DateTime.UtcNow;
-            var vouchers = await _repository.GetAllAsync();
-
-           
-            var availableVouchers = vouchers.Where(v =>
-                v.IsActive &&
-                v.StartDate <= now &&
-                v.EndDate >= now &&
-                v.UsedCount < v.UsageLimit &&
-                dto.OrderTotal >= v.MinOrderValue &&
-                (string.IsNullOrEmpty(v.PaymentMethod) || v.PaymentMethod.Equals(dto.PaymentMethod, StringComparison.OrdinalIgnoreCase))
-            );
-
-            return availableVouchers.Select(v => MapToDto(v));
-        }
-
-        public async Task<IEnumerable<VoucherDto>> GetPublicVouchersAsync()
-        {
-            var now = DateTime.UtcNow;
-            var vouchers = await _repository.GetAllAsync();
-
-            
-            var publicVouchers = vouchers.Where(v => v.IsActive && v.StartDate <= now && v.EndDate >= now);
-            return publicVouchers.Select(v => MapToDto(v));
-        }
-
-        public async Task<VoucherDto> CreateVoucherAsync(CreateUpdateVoucherDto dto)
-        {
-            
-            var cultureInfo = new CultureInfo("vi-VN");
-            string dateFormat = "dd/MM/yyyy hh:mm tt";
-
-            
-            if (!DateTime.TryParseExact(dto.StartDate, dateFormat, cultureInfo, DateTimeStyles.None, out DateTime startDateTime))
+            var v = new Voucher
             {
-                startDateTime = DateTime.UtcNow; 
-            }
-
-            
-            if (!DateTime.TryParseExact(dto.EndDate, dateFormat, cultureInfo, DateTimeStyles.None, out DateTime endDateTime))
-            {
-                endDateTime = DateTime.UtcNow.AddDays(30); 
-            }
-
-            var voucher = new Voucher
-            {
-                Code = dto.Code,
-                Title = dto.Title,
-                Description = dto.Description,
-                DiscountType = dto.DiscountType,
-                DiscountValue = dto.DiscountValue,
-                MaxDiscount = dto.MaxDiscount,
-                MinOrderValue = dto.MinOrderValue,
-                UsageLimit = dto.UsageLimit,
-                UsedCount = 0,
-                PaymentMethod = dto.PaymentMethod,
-                IsActive = dto.IsActive,
-                StartDate = startDateTime, 
-                EndDate = endDateTime      
+                Code = request.Code,
+                Title = request.Title,
+                DiscountType = request.DiscountType,
+                DiscountValue = request.DiscountValue,
+                MaxDiscount = request.MaxDiscount,
+                MinOrderValue = request.MinOrderValue,
+                UsageLimit = request.UsageLimit,
+                PaymentMethod = request.PaymentMethod,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                IsActive = request.IsActive
             };
-
-            await _repository.AddAsync(voucher);
-            await _repository.SaveChangesAsync();
-
-            return MapToDto(voucher);
+            _voucherRepo.UpdateVoucher(id, v);
         }
 
-        public async Task<bool> UpdateVoucherAsync(int id, CreateUpdateVoucherDto dto)
+        public void DeleteVoucher(int id)
         {
-            var voucher = await _repository.GetByIdAsync(id);
-            if (voucher == null) return false;
+            _voucherRepo.DeleteVoucher(id);
+        }
 
-            
-            var cultureInfo = new CultureInfo("vi-VN");
-            string dateFormat = "dd/MM/yyyy hh:mm tt";
+        public void ToggleVoucher(int id, bool active)
+        {
+            _voucherRepo.ToggleVoucher(id, active);
+        }
 
-            
-            if (!DateTime.TryParseExact(dto.StartDate, dateFormat, cultureInfo, DateTimeStyles.None, out DateTime startDateTime))
+        // Thêm vào cuối file VoucherService.cs
+
+        public void ApplyVoucher(string voucherCode)
+        {
+            if (string.IsNullOrWhiteSpace(voucherCode)) return;
+
+            var voucher = _voucherRepo.GetByCode(voucherCode);
+            if (voucher == null) throw new Exception("Voucher không tồn tại!");
+            if (!voucher.IsActive) throw new Exception("Voucher này đang bị khóa!");
+
+            var now = DateTime.Now;
+            if (voucher.StartDate > now || voucher.EndDate < now) throw new Exception("Voucher đã hết hạn sử dụng!");
+            if (voucher.UsedCount >= voucher.UsageLimit) throw new Exception("Voucher này đã hết lượt sử dụng!");
+
+            // Tăng lượt dùng lên 1
+            _voucherRepo.UpdateUsedCount(voucher, 1);
+        }
+
+        public void ReleaseVoucher(string voucherCode)
+        {
+            if (string.IsNullOrWhiteSpace(voucherCode)) return;
+
+            var voucher = _voucherRepo.GetByCode(voucherCode);
+            if (voucher != null)
             {
-                startDateTime = voucher.StartDate; 
+                // Giảm lượt dùng đi 1 khi hủy đơn
+                _voucherRepo.UpdateUsedCount(voucher, -1);
             }
-
-            if (!DateTime.TryParseExact(dto.EndDate, dateFormat, cultureInfo, DateTimeStyles.None, out DateTime endDateTime))
-            {
-                endDateTime = voucher.EndDate; 
-            }
-
-            voucher.Code = dto.Code;
-            voucher.Title = dto.Title;
-            voucher.Description = dto.Description;
-            voucher.DiscountType = dto.DiscountType;
-            voucher.DiscountValue = dto.DiscountValue;
-            voucher.MaxDiscount = dto.MaxDiscount;
-            voucher.MinOrderValue = dto.MinOrderValue;
-            voucher.UsageLimit = dto.UsageLimit;
-            voucher.PaymentMethod = dto.PaymentMethod;
-            voucher.IsActive = dto.IsActive;
-            voucher.StartDate = startDateTime;
-            voucher.EndDate = endDateTime;
-
-            _repository.Update(voucher);
-            return await _repository.SaveChangesAsync();
         }
-
-        public async Task<bool> DeleteVoucherAsync(int id)
-        {
-            var voucher = await _repository.GetByIdAsync(id);
-            if (voucher == null) return false;
-
-            _repository.Delete(voucher);
-            return await _repository.SaveChangesAsync();
-        }
-
-        public async Task<bool> ToggleVoucherAsync(int id, bool active)
-        {
-            var voucher = await _repository.GetByIdAsync(id);
-            if (voucher == null) return false;
-
-            voucher.IsActive = active;
-            _repository.Update(voucher);
-            return await _repository.SaveChangesAsync();
-        }
-
-        // Helper Map Entity sang DTO
-        private VoucherDto MapToDto(Voucher v) => new VoucherDto
-        {
-            Id = v.Id,
-            Code = v.Code,
-            Title = v.Title,
-            Description = v.Description,
-            DiscountType = v.DiscountType,
-            DiscountValue = v.DiscountValue,
-            MaxDiscount = v.MaxDiscount,
-            MinOrderValue = v.MinOrderValue,
-            UsageLimit = v.UsageLimit,
-            UsedCount = v.UsedCount,
-            PaymentMethod = v.PaymentMethod,
-            IsActive = v.IsActive,
-            StartDate = v.StartDate,
-            EndDate = v.EndDate
-        };
     }
 }

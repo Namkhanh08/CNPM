@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace CNPM_TTN.Entities;
 
@@ -25,9 +26,9 @@ public partial class OrderDetail
     public int? GrindingOptionId { get; set; }
     public string? Weight { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("OrderId")]
-    [InverseProperty("OrderDetails")]
-    public virtual Order Order { get; set; } = null!;
+    public Order? Order { get; set; }
 
     [ForeignKey("ProductId")]
     [InverseProperty("OrderDetails")]

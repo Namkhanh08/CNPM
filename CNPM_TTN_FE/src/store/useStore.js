@@ -13,7 +13,7 @@ const useStore = create(
       orders: [], // Chỉ chứa đơn hàng của USER hiện tại
 
       // --- STATE ADMIN / SHIPPER (KHÔNG lưu LocalStorage để tránh lỗi cache) ---
-      adminOrders: [], // Tách riêng mảng đơn hàng của Admin ra đây
+      //adminOrders: [], // Tách riêng mảng đơn hàng của Admin ra đây
       products: [],
       dashboard: null,
       totalItems: 0,
@@ -38,57 +38,30 @@ const useStore = create(
           user: null,
           cart: [],
           orders: [],
-          adminOrders: [],
-          dashboard: null,
+          //  adminOrders: [],
+          // dashboard: null,
         });
       },
 
       // CARTS
+      // CARTS
       loadCart: async () => {
         try {
           const res = await API.getCart();
-          // Backend trả về danh sách items, nếu null/undefined thì mặc định mảng rỗng
-          const items = res.data?.items || res.data || [];
-          
+          const items = res.data?.items || [];
           const mapped = items.map((item) => {
-            const currentProductId = item.productId || item.ProductId || item.product?.id || item.Product?.Id;
-            const currentGrindId = item.grindingOptionId || item.GrindingOptionId;
-            const currentFlavor = item.flavorNotes || item.FlavorNotes || "";
-            const currentWeight = item.weight || item.Weight || "";
-            const currentQuantity = item.quantity || item.Quantity || 1;
-            const currentPrice = item.price || item.Price || item.product?.price || item.Product?.Price || 0;
-
-            // Kiểm tra trạng thái selected từ LocalStorage cũ nếu có
-            const existed = (get().cart || []).find(
+            const existed = get().cart.find(
               (i) =>
-                ((i.productId || i.ProductId) === currentProductId) &&
-                ((i.grindingOptionId || i.GrindingOptionId) === currentGrindId) &&
-                ((i.flavorNotes || i.FlavorNotes) === currentFlavor) &&
-                ((i.weight || i.Weight) === currentWeight)
+                i.ProductId === item.ProductId &&
+                i.GrindingOptionId === item.GrindingOptionId &&
+                i.FlavorNotes === item.FlavorNotes &&
+                i.Weight === item.Weight
             );
-
             return {
               ...item,
-              id: item.id || item.Id,
-              productId: currentProductId,
-              grindingOptionId: currentGrindId,
-              flavorNotes: currentFlavor,
-              weight: currentWeight,
-              quantity: currentQuantity,
-              price: currentPrice,
-
-              Id: item.id || item.Id,
-              ProductId: currentProductId,
-              GrindingOptionId: currentGrindId,
-              FlavorNotes: currentFlavor,
-              Weight: currentWeight,
-              Quantity: currentQuantity,
-              Price: currentPrice,
-
               selected: existed ? existed.selected : true,
             };
           });
-
           set({ cart: mapped });
         } catch (err) {
           console.error(
@@ -103,25 +76,35 @@ const useStore = create(
         quantity,
         grindType,
         flavorNotes,
-        weight
-        // BỎ CÁC TRƯỜNG ĐỊA CHỈ GIAO HÀNG ĐÃ THỪA Ở ĐÂY
+        weight,
+        receiverName,
+        receiverPhone,
+        shippingProvince,
+        shippingDistrict,
+        shippingWard,
+        shippingDetailAddress,
+        shippingNote
       ) => {
         try {
-          // Đảm bảo dữ liệu gửi lên Backend chuẩn xác theo kiểu dữ liệu (số và chuỗi)
           await API.addToCart({
-            productId: Number(product.id || product.Id),
-            quantity: Number(quantity),
-            grindingOptionId: Number(grindType),
-            flavorNotes: flavorNotes || "",
-            weight: weight || "",
+            productId: product.id,
+            quantity: quantity,
+            grindingOptionId: grindType,
+            flavorNotes: flavorNotes,
+            weight: weight,
+            receiverName: receiverName,
+            receiverPhone: receiverPhone,
+            shippingProvince: shippingProvince,
+            shippingDistrict: shippingDistrict,
+            shippingWard: shippingWard,
+            shippingDetailAddress: shippingDetailAddress,
+            shippingNote: shippingNote,
           });
-          
-          // Sau khi backend lưu thành công vào Database, gọi hàm load lại giỏ hàng để cập nhật UI
           await get().loadCart();
         } catch (err) {
           console.error(
             "Add to cart failed:",
-            err.response?.data?.message || err.response?.data || err.message
+            err.response?.data?.message || err.message
           );
         }
       },
@@ -150,15 +133,13 @@ const useStore = create(
             flavorNotes: flavorNotes,
             weight: weight,
           });
-          
-          // ĐÃ SỬA: Đồng bộ kiểm tra chữ thường tại Store để cập nhật tức thì (State)
           set((state) => ({
             cart: state.cart.map((item) =>
-              (item.productId === productId) &&
-              (item.grindingOptionId === grindType) &&
-              (item.flavorNotes === flavorNotes) &&
-              (item.weight === weight)
-                ? { ...item, quantity: Math.max(1, newQuantity) }
+              item.ProductId === productId &&
+              item.GrindingOptionId === grindType &&
+              item.FlavorNotes === flavorNotes &&
+              item.Weight === weight
+                ? { ...item, Quantity: Math.max(1, newQuantity) }
                 : item
             ),
           }));
@@ -170,21 +151,19 @@ const useStore = create(
 
       clearCart: () => set({ cart: [] }),
 
-      // ĐÃ SỬA: Tính tổng số lượng dựa trên thuộc tính `item.quantity` chữ thường
       getTotalQuantity: () =>
-        (get().cart || []).reduce((total, item) => total + (item.quantity || item.Quantity || 0), 0),
+        get().cart.reduce((total, item) => total + item.quantity, 0),
 
       getTotalQuantityOrder: () =>
         (get().orders || []).reduce((total, order) => {
-          const details = order?.orderDetails || order?.OrderDetails || [];
+          const details = order?.orderDetails || [];
           const orderQty = details.reduce(
-            (sum, detail) => sum + (detail?.quantity || detail?.Quantity || 0),
+            (sum, detail) => sum + (detail?.quantity || 0),
             0
           );
           return total + orderQty;
         }, 0),
 
-      // ĐÃ SỬA: Đồng bộ chữ thường cho hàm toggle checkbox chọn hàng
       toggleSelected: (productId, grindType, flavorNotes, weight) =>
         set((state) => ({
           cart: state.cart.map((item) =>
@@ -197,10 +176,12 @@ const useStore = create(
           ),
         })),
 
-      // ORDERS (USER)
+      //ORDER
+      //ORDERS
       createOrder: async (payload) => {
         try {
           const res = await API.createOrder(payload);
+
           await get().fetchOrders();
           await get().loadCart();
           return res;
@@ -216,6 +197,7 @@ const useStore = create(
       fetchOrders: async () => {
         try {
           const res = await API.getMyOrders();
+          console.log("MY ORDER RESPONSE:", res.data);
           set({ orders: res.data || [] });
         } catch (err) {
           console.error(
@@ -226,21 +208,16 @@ const useStore = create(
       },
 
       cancelOrder: async (orderId) => {
-        try {
-          await API.cancelOrder(orderId);
-          await get().fetchOrders();
-        } catch (err) {
-          console.error("Cancel order failed:", err);
-          throw err;
-        }
+        await API.cancelOrder(orderId);
+        await get().fetchOrders();
       },
 
       fetchOrderById: async (id) => {
         try {
           const res = await API.getOrderById(id);
           set((state) => ({
-            orders: state.orders.find((o) => (o.id || o.Id) === (res.data.id || res.data.Id))
-              ? state.orders.map((o) => ((o.id || o.Id) === (res.data.id || res.data.Id) ? res.data : o))
+            orders: state.orders.find((o) => o.Id === res.data.Id)
+              ? state.orders.map((o) => (o.Id === res.data.Id ? res.data : o))
               : [...state.orders, res.data],
           }));
           return res.data;
@@ -248,22 +225,7 @@ const useStore = create(
           console.error("Fetch order detail failed:", err);
         }
       },
-      updateUserOrder: async (id, payload) => {
-        try {
-          const res = await API.updateOrder(id, payload); // Dùng chung API với Admin nếu backend hỗ trợ
-          set((state) => ({
-            orders: state.orders.map((o) => 
-              (o.id === id || o.Id === id) ? { ...o, ...res.data } : o
-            ),
-          }));
-          return res.data;
-        } catch (err) {
-          console.error("Update order failed:", err);
-          throw err;
-        }
-      },
 
-      // --- ORDERS (ADMIN) ---
       fetchAllOrdersAdmin: async (
         page = 1,
         searchTerm = "",
@@ -271,31 +233,39 @@ const useStore = create(
       ) => {
         try {
           const res = await API.fetchAllOrdersAdmin(page, searchTerm, status);
+          // Lưu ý: res.data bây giờ là object PageResponse { items, totalItems, page, pageSize }
           set({
-            adminOrders: res.data.orders || [], 
-            totalItems: res.data.totalItems || 0,
-            currentPage: res.data.page || 1,
+            orders: res.data.items || [],
+            totalItems: res.data.totalItems,
+            currentPage: res.data.page,
           });
         } catch (err) {
           console.error("Lỗi lấy danh sách admin:", err);
-          set({ adminOrders: [], totalItems: 0 }); 
         }
       },
 
       updateOrder: async (id, payload) => {
         try {
           const res = await API.updateOrder(id, payload);
+
           set((state) => ({
-            adminOrders: state.adminOrders.map((order) =>
-              (order.id === id || order.Id === id) ? { ...order, ...res.data } : order
+            orders: state.orders.map((order) =>
+              order.Id === id
+                ? {
+                    ...order,
+                    ...res.data,
+                  }
+                : order
             ),
           }));
+
           return res.data;
         } catch (err) {
           console.error(
             "Update order failed:",
             err.response?.data?.message || err.message
           );
+
           throw err;
         }
       },
@@ -303,6 +273,7 @@ const useStore = create(
       confirmOrder: async (id) => {
         try {
           await API.confirmOrder(id);
+          // Sau khi confirm thành công, refresh lại danh sách để cập nhật Stock và Status
           const { currentPage } = get();
           await get().fetchAllOrdersAdmin(currentPage);
         } catch (err) {
@@ -316,17 +287,20 @@ const useStore = create(
       updateOrderStatus: async (id, status) => {
         try {
           const res = await API.updateOrderStatus(id, status);
+
           set((state) => ({
-            adminOrders: state.adminOrders.map((order) =>
-              (order.id === id || order.Id === id) ? { ...order, ...res.data } : order
+            orders: state.orders.map((order) =>
+              order.Id === id ? res.data : order
             ),
           }));
+
           return res.data;
         } catch (err) {
           console.error(
             "Update status failed:",
             err.response?.data?.message || err.message
           );
+
           throw err;
         }
       },
@@ -371,7 +345,12 @@ const useStore = create(
       fetchDashboard: async () => {
         try {
           const res = await API.getDashboard();
-          set({ dashboard: res.data });
+
+          set({
+            dashboard: res.data,
+          });
+
+          console.log("Dashboard data:", res.data);
         } catch (err) {
           console.error(
             "Fetch dashboard failed:",
@@ -379,25 +358,23 @@ const useStore = create(
           );
         }
       },
-
       // VOUCHERS ADMIN
       fetchVouchersAdmin: async (page = 1, searchTerm = "", status = "all") => {
         try {
           const res = await API.getVouchersAdmin(page, searchTerm, status);
+          const pagedData = res.data.pagedData || {};
           set({
-            vouchers: res.data.voucher || [],
-            totalItems: res.data.totalItems || 0,
+            vouchers: pagedData.items || [],
+            totalItems: pagedData.totalItems || 0,
+            currentPage: pagedData.page || page,
             voucherStats: {
               activeCount: res.data.activeCount || 0,
-              usedTodayCount: res.data.usedTodayCount || 0,
+              usedTodayCount: res.data.usedCount || 0,
               freeshipCount: res.data.freeshipCount || 0,
             },
           });
         } catch (err) {
-          console.error(
-            "Fetch vouchers failed:",
-            err.response?.data?.message || err.message
-          );
+          console.error("Lỗi lấy danh sách voucher:", err.message);
         }
       },
 
@@ -405,8 +382,8 @@ const useStore = create(
         try {
           const payload = {
             items: items.map((item) => ({
-              productId: item.productId || item.ProductId,
-              quantity: item.quantity || item.Quantity,
+              productId: item.productId,
+              quantity: item.quantity,
             })),
             paymentMethod: paymentMethod === "cod" ? "COD" : "VNPAY",
           };
@@ -425,7 +402,7 @@ const useStore = create(
           const res = await API.getPublicVouchers();
           set({ publicVouchers: res.data });
         } catch (err) {
-          console.error(err);
+          console.error("Fetch public vouchers failed:", err.message);
         }
       },
 
@@ -481,6 +458,7 @@ const useStore = create(
         }
       },
 
+      // SHIPPER
       fetchShipperOrders: async (page = 1, searchTerm = "") => {
         try {
           const res = await API.fetchShipperOrders(page, searchTerm);
@@ -507,19 +485,76 @@ const useStore = create(
           }
           set((state) => ({
             shipperOrders: (state.shipperOrders || []).filter(
-              (order) => order.id !== id && order.Id !== id
+              (order) => order.Id !== id
             ),
             totalItems: Math.max(0, state.totalItems - 1),
           }));
           return { success: true, data: res.data };
         } catch (err) {
           console.error("Cập nhật đơn hàng Shipper thất bại:", err);
-          const errorMsg =
-            err.response?.data || "Cập nhật trạng thái đơn hàng thất bại";
-          return { success: false, error: errorMsg };
+          return {
+            success: false,
+            error: err.response?.data || "Cập nhật trạng thái thất bại",
+          };
+        }
+      },
+
+      //SUBSCRIPTIONS
+      fetchSubscriptions: async () => {
+        try {
+          const res = await API.getSubscriptions();
+
+          set({
+            subscriptions: res.data || [],
+          });
+        } catch (err) {
+          console.error(
+            "Fetch subscriptions failed:",
+            err.response?.data || err.message
+          );
+        }
+      },
+
+      toggleSkipSubscription: async (id) => {
+        try {
+          await API.toggleSkipSubscription(id);
+
+          await get().fetchSubscriptions();
+        } catch (err) {
+          console.error(
+            "Toggle subscription failed:",
+            err.response?.data || err.message
+          );
+        }
+      },
+
+      cancelSubscription: async (id) => {
+        try {
+          await API.cancelSubscription(id);
+
+          await get().fetchSubscriptions();
+        } catch (err) {
+          console.error(
+            "Cancel subscription failed:",
+            err.response?.data || err.message
+          );
+        }
+      },
+
+      updateSubscriptionConfig: async (id, payload) => {
+        try {
+          await API.updateSubscriptionConfig(id, payload);
+
+          await get().fetchSubscriptions();
+        } catch (err) {
+          console.error(
+            "Update subscription config failed:",
+            err.response?.data || err.message
+          );
         }
       },
     }),
+
     {
       name: "revo-coffee-storage",
       version: 2,

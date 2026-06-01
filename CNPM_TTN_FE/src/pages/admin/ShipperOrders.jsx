@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useStore from '../../store/useStore';
-import { Search, CheckCircle, XCircle, Phone, Package, RefreshCw, MapPin } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Phone, Package, RefreshCw, MapPin, Navigation, DollarSign, ArrowRight } from 'lucide-react';
 import { MdOutlineLocalShipping } from "react-icons/md";
 import { TiTick } from "react-icons/ti";
 
@@ -16,7 +16,6 @@ export default function ShipperOrders() {
     updateOrderStatus
   } = useStore();
 
-  // Khởi chạy lấy danh sách đơn của riêng shipper này
   useEffect(() => {
     fetchShipperOrders(currentPage, searchTerm);
   }, [currentPage, searchTerm]);
@@ -29,7 +28,7 @@ export default function ShipperOrders() {
     try {
       await updateOrderStatus(id, newStatus);
       await fetchShipperOrders(currentPage, searchTerm);
-      alert(`Bạn đã xác nhận đơn hàng #${id}`);
+      alert(`Đã chuyển trạng thái đơn hàng #${id} thành: ${newStatus}`);
     } catch (error) {
       console.error(error);
       alert("Cập nhật trạng thái thất bại!");
@@ -49,7 +48,7 @@ export default function ShipperOrders() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    fetchShipperOrders(1, e.target.value); // Tìm kiếm đẩy về trang 1
+    fetchShipperOrders(1, e.target.value);
   };
 
   const handlePageChange = (direction) => {
@@ -58,212 +57,255 @@ export default function ShipperOrders() {
   };
 
   return (
-    <div className="p-6 animate-fade-in font-nunito">
-      {/* Tiêu đề & Thanh công cụ */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="p-4 md:p-6 bg-slate-50 min-h-screen font-nunito antialiased text-slate-800">
+      
+      {/* HEADER & THÔNG TIN ĐƠN */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-gray-800 tracking-tight">Tuyến Đường Giao Hàng</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Bạn có <span className="text-amber-700 font-extrabold">{totalItems || 0} đơn hàng</span> cần xử lý công việc.
+          <span className="text-xs uppercase font-extrabold tracking-widest text-white bg-accent-1 px-2.5 py-1 rounded-full">
+            Shipper Revo
+          </span>
+          <h1 className="font-nunito font-bold text-2xl text-slate-900 tracking-tight mt-1.5">
+            Tuyến Đường Giao Hàng
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            Bạn đang đảm nhận <span className="text-primary font-nunito font-bold text-base">{totalItems || 0} đơn hàng</span> trong ca làm việc.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all text-sm font-bold shadow-sm"
-          >
-            <RefreshCw size={16} /> Làm mới
-          </button>
-
-          <div className="relative flex-1 md:w-64">
+        {/* CÔNG CỤ TÌM KIẾM NHANH */}
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
             <input
               type="text"
-              placeholder="Tìm tên khách, số điện thoại..."
+              placeholder="Tìm khách, số điện thoại, mã đơn..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 outline-none text-sm transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-sm transition-all"
             />
-            <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
+            <Search size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
           </div>
+          <button
+            onClick={handleRefresh}
+            className="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-xs"
+            title="Tải lại danh sách"
+          >
+            <RefreshCw size={18} />
+          </button>
         </div>
       </div>
 
-      {/* Danh sách đơn hàng dưới dạng Bảng (Table) tương thích Admin Layout */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-gray-600 font-bold border-b border-gray-100">
-              <tr>
-                <th className="px-6 py-4">Mã Đơn</th>
-                <th className="px-6 py-4">Khách Hàng</th>
-                <th className="px-6 py-4">Địa Chỉ Nhận Hàng</th>
-                <th className="px-6 py-4">Sản Phẩm Đóng Gói</th>
-                <th className="px-6 py-4 text-right">Tiền Thu Hộ</th>
-                <th className="px-6 py-4 text-center">Thao Tác Giao Hàng</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {shipperOrders && shipperOrders.length > 0 ? (
-                shipperOrders.map((order) => (
-                  <tr key={order.Id} className="hover:bg-gray-50/40 transition-colors">
-                    {/* 1. Mã đơn & Huy hiệu Trạng thái */}
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-amber-800">#{order.Id}</div>
-                    </td>
+      {/* DANH SÁCH ĐƠN HÀNG DẠNG THẺ (CARD GRID) - TỐI ƯU CHO DI ĐỘNG & ĐẸP TRÊN PC */}
+      {shipperOrders && shipperOrders.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {shipperOrders.map((order) => (
+            <div 
+              key={order.id} 
+              className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
+            >
+              {/* PHẦN ĐẦU THẺ: Mã đơn và Phương thức thanh toán */}
+              <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-primary text-base">OD{order.id}</span>
+                  <StatusIndicator status={order.status} />
+                </div>
+                <div>
+                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                    order.paymentMethod === 'VNPAY' 
+                      ? 'bg-blue-50 text-blue-600 border-blue-200' 
+                      : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                  }`}>
+                    {order.paymentMethod || "COD"}
+                  </span>
+                </div>
+              </div>
 
-                    {/* 2. Khách hàng */}
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-gray-800">{order.ReceiverName || "Khách mua lẻ"}</div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-1 font-nunito">
-                        <Phone size={12} className="text-gray-400" /> {order.ReceiverPhone}
+              {/* PHẦN THÂN THẺ: tin khách hàng và Địa chỉ */}
+              <div className="p-4 space-y-3.5 flex-1">
+                {/* Khách hàng */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base">{order.receiverName || "Khách mua lẻ"}</h3>
+                    <div className="text-slate-500 font-medium text-xs mt-0.5 flex items-center gap-1">
+                      <Phone size={12} className="text-slate-400" /> {order.receiverPhone}
+                    </div>
+                  </div>
+                  {/* Nút Call To hành động nhanh lớn dễ bấm */}
+                  <a
+                    href={`tel:${order.receiverPhone}`}
+                    className="flex items-center justify-center p-3 bg-accent-1 text-white hover:opacity-90 rounded-xl shadow-md shadow-accent-1/20 transition-transform active:scale-90"
+                    title="Gọi cho khách"
+                  >
+                    <Phone size={16} fill="currentColor" />
+                  </a>
+                </div>
+
+                {/* Địa chỉ giao nhận */}
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5">
+                  <MapPin size={16} className="text-primary shrink-0 mt-0.5" />
+                  <div className="text-xs sm:text-sm font-semibold text-slate-700 leading-relaxed">
+                    {order.shippingDetailAddress
+                      ? `${order.shippingDetailAddress}, ${order.shippingWard}, ${order.shippingDistrict}, ${order.shippingProvince}`
+                      : "Chưa cập nhật địa chỉ nhận hàng"}
+                    
+                    {order.shippingNote && (
+                      <div className="text-xs text-rose-500 font-bold mt-1.5 bg-rose-50 border border-rose-100 px-2 py-1 rounded-md">
+                        ⚠️ Ghi chú: {order.shippingNote}
                       </div>
-                    </td>
+                    )}
+                  </div>
+                </div>
 
-                    {/* 3. Địa chỉ chuẩn PascalCase từ Backend Revo Coffee */}
-                    <td className="px-6 py-4 max-w-xs">
-                      <div className="text-gray-600 text-xs bg-amber-50/40 p-2 rounded-xl border border-amber-100/60 line-clamp-2 whitespace-normal flex items-start gap-1">
-                        <MapPin size={14} className="text-amber-700 shrink-0 mt-0.5" />
-                        <span>
-                          {order.ShippingDetailAddress
-                            ? `${order.ShippingDetailAddress}, ${order.ShippingWard}, ${order.ShippingDistrict}, ${order.ShippingProvince}`
-                            : "Chưa cập nhật địa chỉ"}
-                        </span>
-                      </div>
-                      {order.ShippingNote && (
-                        <div className="text-[11px] text-red-500 font-medium mt-1 pl-4 italic">
-                          * Chú ý: {order.ShippingNote}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* 4. Sản phẩm hiển thị chi tiết cân nặng & cách xay */}
-                    <td className="px-6 py-4">
-                      <div className="space-y-1.5">
-                        {order.OrderDetails && order.OrderDetails.length > 0 ? (
-                          order.OrderDetails.map((item, idx) => (
-                            <div key={idx} className="flex flex-col border-b border-gray-50 last:border-0 pb-1">
-                              <div className="flex items-center gap-1 text-xs">
-                                <Package size={13} className="text-amber-700 shrink-0" />
-                                <span className="font-semibold text-gray-800">
-                                  {item.Product?.Name || `Sản phẩm #${item.ProductId}`}
-                                </span>
-                                <span className="text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded ml-1 text-[10px]">
-                                  x{item.Quantity}
-                                </span>
-                              </div>
-                              <div className="text-[10px] text-gray-400 ml-4 mt-0.5">
-                                {item.Weight && <span>{item.Weight}g</span>}
-                                {item.GrindingOptionId && <span> | {translateGrind(item.GrindingOptionId)}</span>}
-                                {item.FlavorNotes && <span className="italic text-gray-400"> ({item.FlavorNotes})</span>}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <span className="text-gray-400 italic text-xs">Không có thông tin mặt hàng</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* 5. Tiền thu hộ */}
-                    <td className="px-6 py-4 font-bold text-right whitespace-nowrap">
-                      <div className="text-red-600 font-nunito text-base">
-                        {(order.FinalAmount || 0).toLocaleString('vi-VN')}₫
-                      </div>
-                      <span className="inline-block text-[9px] uppercase tracking-wider font-extrabold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-md mt-1">
-                        {order.PaymentMethod || "COD"}
-                      </span>
-                    </td>
-
-                    {/* 6. Thao tác điều hướng thông minh rẽ nhánh theo ĐÚNG LUỒNG LOGIC */}
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap justify-center items-center gap-2 max-w-[220px] mx-auto">
-                        {/* Nút gọi điện luôn hiện để liên lạc bất cứ lúc nào */}
-                        <a
-                          href={`tel:${order.ReceiverPhone}`}
-                          title="Gọi điện cho khách hàng"
-                          className="p-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-amber-800 hover:text-white transition-all shadow-sm"
-                        >
-                          <Phone size={15} />
-                        </a>
-
-                        {/* BƯỚC 1: Chỉ hiện nút "Xác nhận đơn hàng" khi đơn ở trạng thái 'Đang trung chuyển' */}
-                        {order.Status === 'Đang trung chuyển' && (
-                          <button
-                            onClick={() => handleUpdateStatus(order.Id, 'Shipper đã nhận')}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold shadow-sm"
-                          >
-                            <TiTick size={14} /> Xác nhận đơn hàng
-                          </button>
-                        )}
-
-                        {/* BƯỚC 2: Chỉ hiện nút "Bắt đầu giao" khi đơn đã ở trạng thái 'Shipper đã nhận' */}
-                        {order.Status === 'Shipper đã nhận' && (
-                          <button
-                            onClick={() => handleUpdateStatus(order.Id, 'Đang giao')}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white transition-all text-xs font-bold shadow-sm"
-                          >
-                            <MdOutlineLocalShipping size={14} /> Bắt đầu giao
-                          </button>
-                        )}
-
-                        {/* BƯỚC 3: Chỉ hiện nút "Hoàn thành" & "Thất bại" khi xe đang chạy trên đường ('Đang giao') */}
-                        {order.Status === 'Đang giao' && (
-                          <div className='flex justify-center items-center'>
-                            <button
-                              onClick={() => handleUpdateStatus(order.Id, 'Hoàn thành')}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm"
-                            >
-                              <CheckCircle size={14} /> Hoàn thành
-                            </button>
-
-                            <button
-                              onClick={() => handleUpdateStatus(order.Id, 'Đã hủy')}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white transition-all text-xs font-bold shadow-sm"
-                            >
-                              <XCircle size={14} /> Thất bại
-                            </button>
+                {/* Chi tiết kiện hàng sản phẩm Revo Coffee */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Package size={12} /> Kiện hàng bao gồm:
+                  </div>
+                  <div className="max-h-24 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                    {order.orderDetails && order.orderDetails.length > 0 ? (
+                      order.orderDetails.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-xs bg-slate-50/50 p-2 rounded-lg border border-slate-100">
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-slate-800 block truncate">
+                              {item.product?.name || `Mặt hàng #${item.productId}`}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              {item.weight ? `${item.weight}` : ""} {item.grindingOptionId ? `| Xay: ${translateGrind(item.grindingOptionId)}` : ""}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-16 text-gray-400 italic">
-                    Không tìm thấy đơn hàng nào cần giao trong danh sách của bạn.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                          <span className="font-extrabold text-primary bg-primary/5 border border-primary/10 px-2 py-0.5 rounded ml-2">
+                            x{item.quantity}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-slate-400 italic text-xs">Không có dữ liệu đóng gói</span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-        {/* Bộ phân trang dữ liệu từ Backend */}
-        <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/40">
-          <span className="text-gray-400 text-xs italic">Hiển thị trang số {currentPage}</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handlePageChange('prev')}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl bg-white disabled:opacity-40 hover:bg-gray-50 transition-colors text-xs font-bold shadow-sm"
-            >
-              Trước
-            </button>
-            <div className="px-3 py-1.5 bg-amber-800 text-white rounded-xl font-bold text-xs shadow-sm min-w-[28px] text-center">
-              {currentPage}
+              {/* PHẦN ĐUÔI THẺ: Số tiền thu và Action Bar */}
+              <div className="p-4 bg-slate-50/30 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                {/* Số tiền cần thu */}
+                <div className="flex items-center sm:block justify-between">
+                  <span className="text-xs font-bold text-slate-400 sm:block">TIỀN THU HỘ (COD):</span>
+                  <div className="font-black text-rose-600 text-lg sm:mt-0.5">
+                    {order.paymentMethod === 'VNPAY' ? '0 ₫ (Đã Thanh Toán)' : `${order.finalAmount?.toLocaleString('vi-VN')} ₫`}
+                  </div>
+                </div>
+
+                {/* KHU VỰC THAO TÁC RẼ NHÁNH CHO SHIPPER */}
+                <div className="shrink-0 flex items-center">
+                  {/* BƯỚC 1: Đang trung chuyển -> Shipper nhận */}
+                  {order.status === 'Đang trung chuyển' && (
+                    <button
+                      onClick={() => handleUpdateStatus(order.id, 'Shipper đã nhận')}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all text-xs font-nunito font-bold flex items-center justify-center gap-1.5 shadow-md shadow-blue-200"
+                    >
+                      <TiTick size={16} /> Xác nhận đơn hàng
+                    </button>
+                  )}
+
+                  {/* BƯỚC 2: Shipper đã nhận -> Đang giao */}
+                  {order.status === 'Shipper đã nhận' && (
+                    <button
+                      onClick={() => handleUpdateStatus(order.id, 'Đang giao')}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-primary text-white transition-all text-xs font-nunito font-bold flex items-center justify-center gap-1.5 shadow-md shadow-primary/20"
+                    >
+                      <MdOutlineLocalShipping size={16} /> Bắt đầu đi giao
+                    </button>
+                  )}
+
+                  {/* BƯỚC 3: Đang giao -> Hoàn thành / Thất bại */}
+                  {order.status === 'Đang giao' && (
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <button
+                        onClick={() => handleUpdateStatus(order.id, 'Hoàn thành')}
+                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-extrabold flex items-center justify-center gap-1 shadow-md shadow-emerald-200"
+                      >
+                        <CheckCircle size={14} /> Thành công
+                      </button>
+
+                      <button
+                        onClick={() => handleUpdateStatus(order.id, 'Đã hủy')}
+                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-rose-600 transition-all text-xs font-nunito font-bold flex items-center justify-center gap-1"
+                      >
+                        <XCircle size={14} /> Thất bại
+                      </button>
+                    </div>
+                  )}
+
+                  {/* CÁC TRẠNG THÁI CUỐI ĐƯỜNG ĐUA */}
+                  {['Hoàn thành', 'Đã hủy'].includes(order.status) && (
+                    <span className="w-full sm:w-auto text-center px-4 py-1.5 bg-slate-100 text-slate-400 font-bold text-xs rounded-lg border border-slate-200">
+                      Đã đóng hồ sơ đơn
+                    </span>
+                  )}
+                </div>
+              </div>
+
             </div>
-            <button
-              onClick={() => handlePageChange('next')}
-              disabled={currentPage * 10 >= totalItems}
-              className="px-3 py-1.5 border border-gray-200 rounded-xl bg-white disabled:opacity-40 hover:bg-gray-50 transition-colors text-xs font-bold shadow-sm"
-            >
-              Sau
-            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center shadow-xs">
+          <div className="flex flex-col items-center justify-center gap-3 max-w-sm mx-auto">
+            <div className="p-4 bg-slate-50 text-slate-300 rounded-full">
+              <Package size={40} />
+            </div>
+            <h3 className="font-extrabold text-slate-800 text-base">Hành trình trống</h3>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Hiện tại không tìm thấy đơn hàng nào cần bạn xử lý hoặc giao nhận. Thử bấm "Làm mới" xem nhé!
+            </p>
           </div>
         </div>
+      )}
+
+      {/* BỘ PHÂN TRANG HIỆN ĐẠI (PAGINATION) */}
+      <div className="mt-6 flex flex-col sm:flex-row justify-between items-center bg-white border border-slate-200 p-4 rounded-2xl gap-3 shadow-xs">
+        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+          Trang hiện tại: {currentPage}
+        </span>
+        <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <button
+            onClick={() => handlePageChange('prev')}
+            disabled={currentPage === 1}
+            className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 rounded-xl bg-white disabled:opacity-40 font-bold text-xs text-slate-700 transition-colors shadow-2xs"
+          >
+            Trước
+          </button>
+          <div className="px-4 py-2 bg-primary text-white rounded-xl font-black text-xs shadow-sm flex items-center justify-center min-w-[32px]">
+            {currentPage}
+          </div>
+          <button
+            onClick={() => handlePageChange('next')}
+            disabled={currentPage * 10 >= totalItems}
+            className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 rounded-xl bg-white disabled:opacity-40 font-bold text-xs text-slate-700 transition-colors shadow-2xs"
+          >
+            Sau
+          </button>
+        </div>
       </div>
+
     </div>
   );
 }
+
+// SUB-COMPONENT: ĐÈN CHỈ BÁO TRẠNG THÁI NHỎ GỌN TẬP TRUNG CHUYÊN MÔN
+const StatusIndicator = ({ status }) => {
+  const styles = {
+    'Đang trung chuyển': 'bg-indigo-500',
+    'Shipper đã nhận': 'bg-blue-500',
+    'Đang giao': 'bg-amber-500 animation-pulse',
+    'Hoàn thành': 'bg-emerald-500',
+    'Đã hủy': 'bg-rose-500',
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+      <span className={`w-2 h-2 rounded-full ${styles[status] || 'bg-slate-400'}`} />
+      <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">{status}</span>
+    </div>
+  );
+};

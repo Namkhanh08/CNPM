@@ -140,7 +140,7 @@ export default function Cart() {
                   {/* Quantity */}
                   <div className="col-span-2 w-full flex md:justify-center justify-between items-center font-montserrat">
                     <span className="md:hidden font-nunito text-sm text-primary/60">Số lượng:</span>
-                    <div className="flex items-center border border-gray-200 rounded-full bg-white px-1 py-1">
+                    <div className="flex items-center border border-gray-200 rounded-xl bg-white px-1 py-1">
                       <button
                         onClick={() => updateQuantity(item.productId, item.grindingOptionId, item.quantity - 1, item.flavorNotes, item.weight)}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-primary/50 hover:bg-pinky-gray"
@@ -154,7 +154,7 @@ export default function Cart() {
                   </div>
 
                   {/* Total per item */}
-                  <div className="col-span-2 w-full flex md:justify-end justify-between items-center font-montserrat font-black text-primary text-base">
+                  <div className="col-span-2 w-full flex md:justify-end justify-between items-center font-nunito font-bold text-primary text-xl">
                     <span className="md:hidden font-nunito text-xs text-primary/60 font-bold">Thành tiền:</span>
                     {((item.product?.price || 0) * (item.quantity || 0)).toLocaleString('vi-VN')}đ
                   </div>
@@ -187,7 +187,7 @@ export default function Cart() {
               <button
                 onClick={() => navigate('/checkout')}
                 disabled={!hasSelectedItems}
-                className={`w-full font-nunito font-bold py-4 rounded-full text-lg uppercase tracking-wider block text-center transition-all duration-300
+                className={`w-full font-nunito font-bold py-4 rounded-xl text-lg uppercase tracking-wider block text-center transition-all duration-300
     ${hasSelectedItems
                     ? "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-accent-1 hover:-translate-y-1 hover:scale-110 cursor-pointer"
                     : "bg-gray-300 text-gray-500 opacity-60 cursor-not-allowed shadow-none transform-none"
