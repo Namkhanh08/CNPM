@@ -27,6 +27,10 @@ const formatVoucherExpiry = (voucher) => {
     return Number.isNaN(date.getTime()) ? "Không giới hạn" : date.toLocaleDateString("vi-VN");
 };
 
+const unwrapApiData = (response) => response?.data?.Data ?? response?.data?.data ?? response?.data;
+const normalizeSubscriptionStatus = (sub) =>
+    String(sub?.status ?? sub?.Status ?? "").toUpperCase();
+
 export default function Profile() {
     const navigate = useNavigate();
     const user = useStore((state) => state.user);
@@ -85,9 +89,11 @@ export default function Profile() {
         setSubsLoading(true);
         try {
             const res = await API.getMySubscriptions();
-            setSubs(res.data);
+            const data = unwrapApiData(res);
+            setSubs(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Fetch subscriptions failed:", err);
+            setSubs([]);
         } finally {
             setSubsLoading(false);
         }
@@ -793,7 +799,10 @@ export default function Profile() {
                                     </div>
                                 ) : (
                                     <div className="space-y-6">
-                                        {subs.map((sub) => (
+                                        {subs.map((sub) => {
+                                            const status = normalizeSubscriptionStatus(sub);
+
+                                            return (
                                             <div
                                                 key={sub.id || sub.Id}
                                                 className="bg-white rounded-3xl border border-[#F2ECE4] p-6 shadow-sm hover:shadow-md transition-all duration-300 grid grid-cols-1 md:grid-cols-12 gap-6"
@@ -814,13 +823,13 @@ export default function Profile() {
                                                         </h4>
                                                         <div className="mt-2 flex flex-wrap gap-2 justify-center md:justify-start">
                                                             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                                                                (sub.status || sub.Status) === "active"
+                                                                status === "ACTIVE"
                                                                     ? "bg-green-100 text-green-700"
-                                                                    : (sub.status || sub.Status) === "paused"
+                                                                    : status === "SKIPPED" || status === "PAUSED"
                                                                     ? "bg-amber-100 text-amber-700"
                                                                     : "bg-gray-100 text-gray-500"
                                                             }`}>
-                                                                {(sub.status || sub.Status) === "active" ? "Đang hoạt động" : (sub.status || sub.Status) === "paused" ? "Đang tạm dừng" : "Đã hủy"}
+                                                                {status === "ACTIVE" ? "Đang hoạt động" : status === "SKIPPED" || status === "PAUSED" ? "Đang tạm dừng" : "Đã hủy"}
                                                             </span>
                                                             <span className="px-3 py-1 rounded-full bg-[#EEDFCE] text-[#7F5539] text-xs font-bold">
                                                                 {(sub.frequency || sub.Frequency) === "weekly"
@@ -873,7 +882,7 @@ export default function Profile() {
 
                                                     {/* Control Actions */}
                                                     <div className="mt-4 md:mt-0 flex flex-row md:flex-col gap-2 w-full">
-                                                        {(sub.status || sub.Status) === "active" && (
+                                                        {status === "ACTIVE" && (
                                                             <button
                                                                 onClick={() => handlePauseSub(sub.id || sub.Id)}
                                                                 className="flex-1 md:w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl transition-colors uppercase tracking-wider text-[10px]"
@@ -881,7 +890,7 @@ export default function Profile() {
                                                                 Tạm dừng
                                                             </button>
                                                         )}
-                                                        {(sub.status || sub.Status) === "paused" && (
+                                                        {(status === "SKIPPED" || status === "PAUSED") && (
                                                             <button
                                                                 onClick={() => handleResumeSub(sub.id || sub.Id)}
                                                                 className="flex-1 md:w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition-colors uppercase tracking-wider text-[10px]"
@@ -889,7 +898,7 @@ export default function Profile() {
                                                                 Kích hoạt lại
                                                             </button>
                                                         )}
-                                                        {(sub.status || sub.Status) !== "cancelled" && (
+                                                        {status !== "CANCELLED" && (
                                                             <button
                                                                 onClick={() => handleCancelSub(sub.id || sub.Id)}
                                                                 className="flex-1 md:w-full border border-red-200 text-red-500 hover:bg-red-50 font-bold py-2 rounded-xl transition-colors uppercase tracking-wider text-[10px]"
@@ -900,7 +909,8 @@ export default function Profile() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
