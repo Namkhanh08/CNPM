@@ -13,6 +13,7 @@ namespace CNPM_TTN.Dtos
         public string Description { get; set; } = null!;
         public int CategoryId { get; set; }
         public string? Region { get; set; }
+        public int SoldCount { get; set; }
     }
 
     public class ProductDetailDto
@@ -133,7 +134,7 @@ namespace CNPM_TTN.Dtos
         public decimal? MaxPrice { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 10;
-        public string? SortBy { get; set; } // "price", "name", etc.
+        public string? SortBy { get; set; } // "price", "name", "newest", "sold", "popular", etc.
         public bool Descending { get; set; } = false;
     }
 }

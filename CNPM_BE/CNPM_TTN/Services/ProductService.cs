@@ -27,7 +27,10 @@ namespace CNPM_TTN.Services
             var maxPrice = filterDto.MaxPrice;
             var region = filterDto.Region?.Trim();
 
-            var query = _productRepository.Query().Include(p => p.ProductDetails).AsQueryable();
+            var query = _productRepository.Query()
+                .Include(p => p.ProductDetails)
+                .Include(p => p.OrderDetails)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -70,12 +73,20 @@ namespace CNPM_TTN.Services
                     query = filterDto.Descending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name);
                 else if (sort == "stock")
                     query = filterDto.Descending ? query.OrderByDescending(p => p.Stock) : query.OrderBy(p => p.Stock);
+                else if (sort == "newest")
+                    query = query.OrderByDescending(p => p.Id);
+                else if (sort == "sold" || sort == "popular")
+                    query = query
+                        .OrderByDescending(p => p.OrderDetails.Sum(d => d.Quantity))
+                        .ThenByDescending(p => p.Id);
                 else
                     query = filterDto.Descending ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id);
             }
             else
             {
-                query = filterDto.Descending ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id);
+                query = query
+                    .OrderByDescending(p => p.OrderDetails.Sum(d => d.Quantity))
+                    .ThenByDescending(p => p.Id);
             }
 
             var pagedProducts = await query
@@ -92,7 +103,8 @@ namespace CNPM_TTN.Services
                 ImageUrl = p.ImageUrl,
                 Description = p.Description,
                 CategoryId = p.CategoryId,
-                Region = p.ProductDetails?.FirstOrDefault()?.Region
+                Region = p.ProductDetails?.FirstOrDefault()?.Region,
+                SoldCount = p.OrderDetails?.Sum(d => d.Quantity) ?? 0
             }).ToList();
 
             return (items, totalCount);

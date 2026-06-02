@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { ChevronDown, Filter, Search, X } from 'lucide-react';
 import API from '../../services/api.js';
 import { getImageUrl, handleImageError } from '../../utils/imageUrl';
 
@@ -13,10 +13,18 @@ const CATEGORY_MAP = {
 
 const DEFAULT_MAX_PRICE = 500000;
 
+const PRICE_PRESETS = [
+  { label: 'Dưới 100.000đ', min: 0, max: 100000 },
+  { label: '100.000đ - 200.000đ', min: 100000, max: 200000 },
+  { label: 'Trên 200.000đ', min: 200000, max: DEFAULT_MAX_PRICE },
+];
+
 const SORT_PARAMS = {
+  popular: { sortBy: 'popular', descending: true },
+  newest: { sortBy: 'newest', descending: true },
+  'best-selling': { sortBy: 'sold', descending: true },
   'price-asc': { sortBy: 'price', descending: false },
   'price-desc': { sortBy: 'price', descending: true },
-  name: { sortBy: 'name', descending: false },
 };
 
 function FilterSection({ title, summary, isOpen, onToggle, children }) {
@@ -55,11 +63,11 @@ export default function Shop() {
   const [availableRegions, setAvailableRegions] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [openFilter, setOpenFilter] = useState('type');
-  const [sortBy, setSortBy] = useState('default');
+  const [sortBy, setSortBy] = useState('popular');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(9);
+  const [pageSize] = useState(12);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
@@ -80,7 +88,6 @@ export default function Shop() {
       try {
         setLoading(true);
         setError(null);
-        const sortParams = SORT_PARAMS[sortBy] || {};
 
         const res = await API.getProducts({
           page,
@@ -91,7 +98,7 @@ export default function Shop() {
           region: selectedRegion === 'all' ? undefined : selectedRegion,
           minPrice,
           maxPrice,
-          ...sortParams,
+          ...(SORT_PARAMS[sortBy] || SORT_PARAMS.popular),
         });
 
         const pageData = res.data?.data || res.data?.Data || {};
@@ -117,6 +124,7 @@ export default function Shop() {
           type: String(p.CategoryId ?? p.categoryId ?? ''),
           stock: p.Stock ?? p.stock,
           region: p.Region ?? p.region,
+          soldCount: Number(p.SoldCount ?? p.soldCount ?? 0),
         }));
 
         setTotalCount(pageData.totalCount || pageData.TotalCount || formattedProducts.length);
@@ -139,7 +147,7 @@ export default function Shop() {
     minPrice > 0 ||
     maxPrice < DEFAULT_MAX_PRICE ||
     selectedRegion !== 'all' ||
-    sortBy !== 'default';
+    sortBy !== 'popular';
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -158,6 +166,17 @@ export default function Shop() {
     setPage(1);
   };
 
+  const updatePricePreset = (min, max) => {
+    setMinPrice(min);
+    setMaxPrice(max);
+    setPage(1);
+  };
+
+  const updateSort = (value) => {
+    setSortBy(value);
+    setPage(1);
+  };
+
   const resetFilters = () => {
     setSearchTerm('');
     setFilterType('all');
@@ -165,15 +184,13 @@ export default function Shop() {
     setMinPrice(0);
     setMaxPrice(DEFAULT_MAX_PRICE);
     setSelectedRegion('all');
-    setSortBy('default');
+    setSortBy('popular');
     setPage(1);
   };
 
-  const filteredProducts = products;
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-primary font-nunito font-bold text-lg">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 text-primary font-nunito font-bold text-lg">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mr-3" />
         Đang tải sản phẩm...
       </div>
@@ -181,15 +198,15 @@ export default function Shop() {
   }
 
   return (
-    <div className="bg-pinky-gray min-h-screen py-12">
-      <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
-        <div className="flex flex-col md:flex-row gap-8">
-          <aside className="w-full md:w-1/4 flex flex-col gap-4">
-            <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-2">
+    <div className="bg-[#f8f9fa] min-h-screen py-8 text-[14px] font-nunito">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex flex-col md:flex-row gap-6">
+          <aside className="w-full md:w-[270px] shrink-0 flex flex-col gap-4">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 flex items-center gap-2">
               <Search size={20} className="text-gray-400 shrink-0" />
               <input
                 type="text"
-                placeholder="Tìm kiếm sản phẩm..."
+                placeholder="Tìm cà phê..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -212,29 +229,32 @@ export default function Shop() {
               )}
             </div>
 
-            <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
-              <div className="flex justify-between items-center mb-2 border-b border-gray-100 pb-4">
-                <h2 className="font-montserrat font-bold text-xl text-primary uppercase">Bộ lọc</h2>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200/80">
+              <div className="flex justify-between items-center mb-2 border-b border-accent-1/30 pb-4">
+                <h2 className="font-montserrat font-bold text-base text-primary uppercase tracking-wide flex items-center gap-2">
+                  <Filter size={18} className="text-accent-1" />
+                  Bộ lọc tìm kiếm
+                </h2>
                 {hasActiveFilters && (
                   <button
                     type="button"
                     onClick={resetFilters}
                     className="text-xs font-nunito font-bold text-accent-1 hover:underline"
                   >
-                    Xóa bộ lọc
+                    Xóa
                   </button>
                 )}
               </div>
 
               <FilterSection
-                title="Giống cà phê"
-                summary={filterType === 'all' ? 'Tất cả giống cà phê' : CATEGORY_MAP[filterType]}
+                title="Theo danh mục"
+                summary={filterType === 'all' ? 'Tất cả sản phẩm' : CATEGORY_MAP[filterType]}
                 isOpen={openFilter === 'type'}
                 onToggle={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
               >
                 <div className="space-y-2 font-nunito text-primary/80">
                   {[
-                    ['all', 'Tất cả'],
+                    ['all', 'Tất cả sản phẩm'],
                     ['1', 'Arabica'],
                     ['2', 'Blend'],
                     ['3', 'Robusta'],
@@ -248,24 +268,26 @@ export default function Shop() {
                         onChange={() => updateFilterType(value)}
                         className="accent-accent-1"
                       />
-                      <span>{label}</span>
+                      <span className={filterType === value ? 'font-bold text-accent-1' : ''}>
+                        {label}
+                      </span>
                     </label>
                   ))}
                 </div>
               </FilterSection>
 
               <FilterSection
-                title="Mức độ rang"
-                summary={filterRoast === 'all' ? 'Tất cả mức độ rang' : filterRoast === 'Light' ? 'Rang nhẹ (Light)' : filterRoast === 'Medium' ? 'Rang vừa (Medium)' : 'Rang đậm (Dark)'}
+                title="Mức rang"
+                summary={filterRoast === 'all' ? 'Tất cả mức rang' : `${filterRoast} Roast`}
                 isOpen={openFilter === 'roast'}
                 onToggle={() => setOpenFilter(openFilter === 'roast' ? null : 'roast')}
               >
                 <div className="space-y-2 font-nunito text-primary/80">
                   {[
                     ['all', 'Tất cả'],
-                    ['Light', 'Rang nhẹ (Light)'],
-                    ['Medium', 'Rang vừa (Medium)'],
-                    ['Dark', 'Rang đậm (Dark)'],
+                    ['Light', 'Light Roast'],
+                    ['Medium', 'Medium Roast'],
+                    ['Dark', 'Dark Roast'],
                   ].map(([value, label]) => (
                     <label key={value} className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -275,7 +297,9 @@ export default function Shop() {
                         onChange={() => updateFilterRoast(value)}
                         className="accent-accent-1"
                       />
-                      <span>{label}</span>
+                      <span className={filterRoast === value ? 'font-bold text-accent-1' : ''}>
+                        {label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -287,6 +311,26 @@ export default function Shop() {
                 isOpen={openFilter === 'price'}
                 onToggle={() => setOpenFilter(openFilter === 'price' ? null : 'price')}
               >
+                <div className="space-y-2 mb-4">
+                  {PRICE_PRESETS.map((preset) => {
+                    const active = minPrice === preset.min && maxPrice === preset.max;
+                    return (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => updatePricePreset(preset.min, preset.max)}
+                        className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors ${
+                          active
+                            ? 'border-accent-1 bg-accent-1/10 text-accent-1 font-bold'
+                            : 'border-gray-100 text-primary/80 hover:border-accent-1/50'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex-1">
                     <span className="text-xs font-nunito text-primary/60 block mb-1">Từ (đ)</span>
@@ -297,7 +341,7 @@ export default function Shop() {
                         setMinPrice(Math.max(0, Number(e.target.value)));
                         setPage(1);
                       }}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-nunito text-primary focus:outline-none focus:border-accent-1 focus:ring-1 focus:ring-accent-1"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-nunito text-primary focus:outline-none focus:border-accent-1 focus:ring-1 focus:ring-accent-1"
                     />
                   </div>
                   <span className="text-primary/40 mt-4">-</span>
@@ -310,7 +354,7 @@ export default function Shop() {
                         setMaxPrice(Math.max(minPrice, Number(e.target.value)));
                         setPage(1);
                       }}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-nunito text-primary focus:outline-none focus:border-accent-1 focus:ring-1 focus:ring-accent-1"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-nunito text-primary focus:outline-none focus:border-accent-1 focus:ring-1 focus:ring-accent-1"
                     />
                   </div>
                 </div>
@@ -369,90 +413,106 @@ export default function Shop() {
                 </div>
               </FilterSection>
 
-              <div className="mt-5">
-                <span className="font-montserrat font-bold text-primary block mb-2">Sắp xếp</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                     setSortBy(e.target.value);
-                     setPage(1);
-                  }}
-                  className="w-full border border-gray-200 rounded-full px-4 py-3 outline-none focus:border-accent-1 font-nunito text-primary"
-                >
-                  <option value="default">Mặc định</option>
-                  <option value="price-asc">Giá tăng dần</option>
-                  <option value="price-desc">Giá giảm dần</option>
-                  <option value="name">Tên A-Z</option>
-                </select>
-              </div>
-
               <button
                 type="button"
                 onClick={resetFilters}
-                className="w-full mt-5 bg-gray-100 text-primary font-nunito font-bold py-2.5 rounded-full hover:bg-gray-200 transition-colors text-sm"
+                className="w-full mt-5 border border-accent-1 text-accent-1 font-bold py-2.5 rounded-lg text-xs uppercase tracking-wider hover:bg-accent-1 hover:text-white transition-all"
               >
-                THIẾT LẬP LẠI
+                Xóa tất cả bộ lọc
               </button>
             </div>
           </aside>
 
-          <section className="w-full md:w-3/4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
-              <h1 className="font-montserrat font-black text-3xl text-primary">CỬA HÀNG</h1>
-              <span className="font-nunito text-primary/70">
-                Hiển thị {filteredProducts.length}/{totalCount} sản phẩm
-              </span>
+          <section className="flex-1">
+            <div className="bg-[#eaeaea]/60 px-4 py-2.5 rounded-xl flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2 flex-wrap text-sm">
+                <span className="text-primary/70">Sắp xếp theo</span>
+                {[
+                  ['popular', 'Phổ biến'],
+                  ['newest', 'Mới nhất'],
+                  ['best-selling', 'Bán chạy'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateSort(value)}
+                    className={`px-4 py-1.5 rounded-lg font-bold text-xs shadow-sm transition-all ${
+                      sortBy === value ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <select
+                  value={sortBy.startsWith('price') ? sortBy : ''}
+                  onChange={(e) => updateSort(e.target.value || 'popular')}
+                  className="bg-white text-primary font-bold text-xs px-4 py-1.5 rounded-lg shadow-sm outline-none border-none cursor-pointer min-w-[150px] h-[32px]"
+                >
+                  <option value="">Giá</option>
+                  <option value="price-asc">Giá: Thấp đến Cao</option>
+                  <option value="price-desc">Giá: Cao đến Thấp</option>
+                </select>
+              </div>
+
+              <div className="text-primary/80 text-xs font-medium">
+                Hiển thị <span className="font-bold text-accent-1">{products.length}</span>/{totalCount} sản phẩm
+              </div>
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-3xl font-nunito text-center mb-8">
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl font-nunito text-center mb-4">
                 {error}
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <div
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {products.map((product) => (
+                <Link
+                  to={`/product/${product.id}`}
                   key={product.id}
-                  className="bg-white rounded-3xl p-6 flex flex-col hover:shadow-xl transition-all group border border-gray-50 hover:-translate-y-1"
+                  className="bg-white rounded-xl overflow-hidden flex flex-col hover:shadow-md border border-gray-100 hover:border-accent-1/50 transition-all relative duration-300 group"
                 >
-                  <div className="flex justify-center mb-4 h-48 relative overflow-hidden bg-gray-50 rounded-2xl p-4">
+                  {product.soldCount > 0 && (
+                    <div className="absolute top-2.5 left-[-4px] bg-accent-1 text-white text-[10px] px-2 py-0.5 rounded-r font-bold z-10 shadow-sm uppercase tracking-wider">
+                      Hot
+                    </div>
+                  )}
+
+                  <div className="w-full aspect-square bg-gray-50/50 flex items-center justify-center relative overflow-hidden p-3 border-b border-gray-100/50">
                     <img
                       src={getImageUrl(product.image)}
                       onError={handleImageError}
                       alt={product.name}
-                      className="h-full object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <div className="mt-auto">
-                    <span className="text-xs font-nunito tracking-widest text-accent-1 uppercase font-bold mb-1 block">
-                      {CATEGORY_MAP[product.type] || 'Khác'}
-                    </span>
-                    <h3 className="font-montserrat font-bold text-xl text-primary mb-2 line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm font-nunito text-primary/60 mb-4 line-clamp-2">
-                      {product.description || 'Đang cập nhật mô tả sản phẩm.'}
-                    </p>
-                    <div className="flex items-center justify-between gap-3 mt-4 border-t border-gray-50 pt-4">
-                      <span className="font-montserrat font-bold text-lg text-primary whitespace-nowrap">
+
+                  <div className="p-3 flex flex-col flex-1 justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-accent-1 uppercase tracking-widest block mb-1">
+                        {CATEGORY_MAP[product.type] || 'Khác'}
+                      </span>
+
+                      <h3 className="font-montserrat font-bold text-primary text-xs sm:text-sm leading-snug line-clamp-2 mb-2 group-hover:text-accent-1 transition-colors min-h-[36px]">
+                        {product.name}
+                      </h3>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between flex-wrap gap-1">
+                      <span className="font-montserrat font-bold text-primary text-sm sm:text-base">
                         {product.price.toLocaleString('vi-VN')}đ
                       </span>
-                      <Link
-                        to={`/product/${product.id}`}
-                        className="bg-primary text-white px-4 py-2 rounded-full text-sm font-nunito font-bold hover:bg-accent-1 transition-colors min-w-[130px] text-center"
-                        style={{ color: '#ffffff' }}
-                      >
-                        XEM CHI TIẾT
-                      </Link>
+                      <span className="text-[11px] text-primary/50 font-medium">
+                        Đã bán {product.soldCount}
+                      </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm mt-6">
+            {products.length === 0 && (
+              <div className="text-center py-20 bg-white rounded-xl shadow-sm border border-gray-100 mt-2">
                 <Search size={48} className="text-primary/40 mx-auto mb-4" />
                 <p className="font-nunito text-lg text-primary/60">
                   Không tìm thấy sản phẩm nào phù hợp với bộ lọc.
