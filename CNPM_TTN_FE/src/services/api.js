@@ -47,7 +47,28 @@ const API = {
     }),
 
   // Sản phẩm
-  getAll: () => api.get("/api/admin/products"),
+  getAll: (
+    search = "",
+    categoryIds = [],
+    minPrice = "",
+    maxPrice = "",
+   status = "all"
+  ) => {
+    const params = new URLSearchParams();
+  
+    if (search) params.append("search", search);
+  
+    categoryIds.forEach(id => {
+      params.append("categoryIds", id);
+    });
+  
+    if (minPrice) params.append("minPrice", minPrice);
+    if (maxPrice) params.append("maxPrice", maxPrice);
+  
+    params.append("status", status);
+  
+    return api.get(`/api/admin/products?${params.toString()}`);
+  },
   //getProductById: (id) => api.get(`/api/admin/products/${id}`),
   createProduct: (data) => api.post("/api/admin/products", data),
   updateProduct: (id, data) => api.put(`/api/admin/products/${id}`, data),
@@ -107,7 +128,8 @@ const API = {
   // SUBSCRIPTIONS
   createSubscription: (data) => api.post("/api/subscriptions/create", data),
   getSubscriptions: () => api.get("/api/subscriptions"),
-  toggleSkipSubscription: (id) => api.put(`/api/subscriptions/${id}/toggle-skip`),
+  toggleSkipSubscription: (id) =>
+    api.put(`/api/subscriptions/${id}/toggle-skip`),
   cancelSubscription: (id) => api.put(`/api/subscriptions/${id}/cancel`),
   updateSubscriptionConfig: (id, data) =>
     api.put(`/api/subscriptions/${id}/config`, data),

@@ -15,6 +15,7 @@ import EditOrder from "./pages/EditOrder";
 import PaymentPage from "./pages/PaymentPage";
 import Contact from './pages/Contact';
 import SubscriptionPortal from './pages/SubscriptionPortal';
+import Policy from "./pages/Policy";
 
 
 // Admin imports
@@ -51,6 +52,7 @@ function App() {
           <Route path="checkout/payment/:orderId" element={<PaymentPage />} />
           <Route path="contact" element={<Contact />} />
           <Route path="portal" element={<SubscriptionPortal />} />
+          <Route path="policy" element={<Policy />} />
         </Route>
 
         <Route

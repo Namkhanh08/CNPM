@@ -14,34 +14,79 @@ namespace CNPM_TTN.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<object>> GetAllProductsAsync()
+        public async Task<IEnumerable<object>> GetAllProductsAsync(ProductFilterRequest filter)
         {
-           
-            return await _context.Products
+            var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductDetails)
-                .Select(p => new {
-                    id = p.Id,
-                    name = p.Name,
-                    price = p.Price,
-                    stock = p.Stock,
-                    imageUrl = p.ImageUrl,
-                    description = p.Description,
-                    categoryId = p.CategoryId,
-                   
-                    type = p.Category != null ? p.Category.Name : "N/A",
-               
-                    details = p.ProductDetails.Select(d => new {
-                        d.Region,
-                        d.Process,
-                        d.Roast,
-                        d.FlavorNotes,
-                        d.AcidityLevel,
-                        d.BitternessLevel,
-                        d.BodyLevel
-                    }).FirstOrDefault()
-                })
-                .ToListAsync();
+                .AsQueryable();
+
+            // tên sản phẩm
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                query = query.Where(x =>
+                    x.Name.Contains(filter.Search));
+            }
+
+            // nhiều category
+            if (filter.CategoryIds.Any())
+            {
+                query = query.Where(x =>
+                    filter.CategoryIds.Contains(x.CategoryId));
+            }
+
+            // giá
+            if (filter.MinPrice.HasValue)
+            {
+                query = query.Where(x =>
+                    x.Price >= filter.MinPrice.Value);
+            }
+
+            if (filter.MaxPrice.HasValue)
+            {
+                query = query.Where(x =>
+                    x.Price <= filter.MaxPrice.Value);
+            }
+
+            // trạng thái
+            switch (filter.Status)
+            {
+                case "instock":
+                    query = query.Where(x => x.Stock > 20);
+                    break;
+
+                case "lowstock":
+                    query = query.Where(x => x.Stock > 0 && x.Stock <= 20);
+                    break;
+
+                case "outstock":
+                    query = query.Where(x => x.Stock == 0);
+                    break;
+            }
+
+            return await query.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name,
+                price = p.Price,
+                stock = p.Stock,
+                imageUrl = p.ImageUrl,
+                description = p.Description,
+                categoryId = p.CategoryId,
+
+                type = p.Category.Name,
+
+                details = p.ProductDetails.Select(d => new
+                {
+                    d.Region,
+                    d.Process,
+                    d.Roast,
+                    d.FlavorNotes,
+                    d.AcidityLevel,
+                    d.BitternessLevel,
+                    d.BodyLevel
+                }).FirstOrDefault()
+            }).ToListAsync();
         }
 
 
@@ -280,5 +325,7 @@ namespace CNPM_TTN.Repositories
                 _context.SaveChanges(); // Lưu thay đổi vào SQL Server
             }
         }
+
+
     }
 }

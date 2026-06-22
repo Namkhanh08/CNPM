@@ -15,7 +15,24 @@ namespace CNPM_TTN.Controllers
         public ProductController(IProductRepository productRepo) { _productRepo = productRepo; }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll() => Ok(await _productRepo.GetAllProductsAsync());
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? search,
+            [FromQuery] List<int>? categoryIds,
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            [FromQuery] string status = "all")
+        {
+            var filter = new ProductFilterRequest
+            {
+                Search = search,
+                CategoryIds = categoryIds ?? new List<int>(),
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                Status = status
+            };
+
+            return Ok(await _productRepo.GetAllProductsAsync(filter));
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
